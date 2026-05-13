@@ -1,0 +1,9 @@
+{
+"type": "FeatureCollection",
+"name": "patchtest_tabularasa",
+"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+"features": [
+{ "type": "Feature", "properties": { "NAME": "Runline", "LENGTH": 329.82451544066703, "Z_VALUE": 0 }, "geometry": { "type": "MultiLineString", "coordinates": [ [ [ 106.606946356078254, -5.747840460295226, 0.0 ], [ 106.609529750910909, -5.749323767699931, 0.0 ] ] ] } },
+{ "type": "Feature", "properties": { "NAME": "40.00 m", "LENGTH": 329.823149514487, "Z_VALUE": 0 }, "geometry": { "type": "MultiLineString", "coordinates": [ [ [ 106.606766759540136, -5.748154274804619, 0.0 ], [ 106.609350146723045, -5.749637573723626, 0.0 ] ] ] } }
+]
+}

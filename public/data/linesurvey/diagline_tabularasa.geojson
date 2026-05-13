@@ -1,0 +1,9 @@
+{
+"type": "FeatureCollection",
+"name": "diagline_tabularasa",
+"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+"features": [
+{ "type": "Feature", "properties": { "NAME": "Runline 82", "LENGTH": 109.5035852059, "Z_VALUE": 0, "layer": "surveyline_5", "path": "C:/Users/alena/Downloads/survey_line/surveyline_5.shp" }, "geometry": { "type": "MultiLineString", "coordinates": [ [ [ 106.617666234517884, -5.751402182248669, 0.0 ], [ 106.618533589079945, -5.751238776798359, 0.0 ] ] ] } },
+{ "type": "Feature", "properties": { "NAME": "Runline 81", "LENGTH": 112.9845249447, "Z_VALUE": 0, "layer": "surveyline_7", "path": "C:/Users/alena/Downloads/survey_line/surveyline_7.shp" }, "geometry": { "type": "MultiLineString", "coordinates": [ [ [ 106.618013420656339, -5.751859181813693, 0.0 ], [ 106.618125806658881, -5.750843704580292, 0.0 ] ] ] } }
+]
+}

@@ -1,0 +1,15 @@
+{
+"type": "FeatureCollection",
+"name": "mainline_poso2",
+"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+"features": [
+{ "type": "Feature", "properties": { "NAME": "Runline 1", "LENGTH": 265.72615419389899, "Z_VALUE": 0 }, "geometry": { "type": "MultiLineString", "coordinates": [ [ [ 106.595935193697997, -5.706047697210941, 0.0 ], [ 106.59777523888242, -5.70450597075488, 0.0 ] ] ] } },
+{ "type": "Feature", "properties": { "NAME": "+0,00 m", "LENGTH": 265.72615419398898, "Z_VALUE": 0 }, "geometry": { "type": "MultiLineString", "coordinates": [ [ [ 106.595413898815067, -5.705423431736819, 0.0 ], [ 106.597253944331698, -5.703881707084269, 0.0 ] ] ] } },
+{ "type": "Feature", "properties": { "NAME": "+30,00 m", "LENGTH": 265.72615419398898, "Z_VALUE": 0 }, "geometry": { "type": "MultiLineString", "coordinates": [ [ [ 106.595587663644409, -5.70563152031719, 0.0 ], [ 106.597427709050322, -5.704089795063497, 0.0 ] ] ] } },
+{ "type": "Feature", "properties": { "NAME": "+60,00 m", "LENGTH": 265.72615419389899, "Z_VALUE": 0 }, "geometry": { "type": "MultiLineString", "coordinates": [ [ [ 106.595761428605371, -5.705839608808573, 0.0 ], [ 106.597601473900554, -5.704297882953709, 0.0 ] ] ] } },
+{ "type": "Feature", "properties": { "NAME": "+90,00 m", "LENGTH": 265.72615419389899, "Z_VALUE": 0 }, "geometry": { "type": "MultiLineString", "coordinates": [ [ [ 106.596108958922287, -5.706255785524293, 0.0 ], [ 106.597949003995907, -5.704714058467007, 0.0 ] ] ] } },
+{ "type": "Feature", "properties": { "NAME": "+120,00 m", "LENGTH": 265.72615419380998, "Z_VALUE": 0 }, "geometry": { "type": "MultiLineString", "coordinates": [ [ [ 106.59628272427824, -5.706463873748619, 0.0 ], [ 106.598122769241044, -5.704922146090087, 0.0 ] ] ] } },
+{ "type": "Feature", "properties": { "NAME": "+150,00 m", "LENGTH": 265.72615419389899, "Z_VALUE": 0 }, "geometry": { "type": "MultiLineString", "coordinates": [ [ [ 106.59645648976587, -5.706671961883899, 0.0 ], [ 106.59829653461783, -5.70513023362409, 0.0 ] ] ] } },
+{ "type": "Feature", "properties": { "NAME": "+180,00 m", "LENGTH": 265.72615419398898, "Z_VALUE": 0 }, "geometry": { "type": "MultiLineString", "coordinates": [ [ [ 106.596630255385179, -5.706880049930156, 0.0 ], [ 106.598470300126252, -5.705338321069048, 0.0 ] ] ] } }
+]
+}

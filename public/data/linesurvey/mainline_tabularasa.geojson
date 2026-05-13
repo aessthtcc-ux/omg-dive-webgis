@@ -1,0 +1,13 @@
+{
+"type": "FeatureCollection",
+"name": "mainline_tabularasa",
+"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+"features": [
+{ "type": "Feature", "properties": { "NAME": "+0,00 m", "LENGTH": 207.656406482509, "Z_VALUE": 0 }, "geometry": { "type": "MultiLineString", "coordinates": [ [ [ 106.61740509404278, -5.752074968637608, 0.0 ], [ 106.618597500051692, -5.75062592664875, 0.0 ] ] ] } },
+{ "type": "Feature", "properties": { "NAME": "+0,00 m", "LENGTH": 207.65576828069899, "Z_VALUE": 0 }, "geometry": { "type": "MultiLineString", "coordinates": [ [ [ 106.617056752557644, -5.751787398665298, 0.0 ], [ 106.618249150229261, -5.75033835733676, 0.0 ] ] ] } },
+{ "type": "Feature", "properties": { "NAME": "+25,00 m", "LENGTH": 207.65717635007499, "Z_VALUE": 0 }, "geometry": { "type": "MultiLineString", "coordinates": [ [ [ 106.617579269449209, -5.752218762535997, 0.0 ], [ 106.618771675087032, -5.75076971118701, 0.0 ] ] ] } },
+{ "type": "Feature", "properties": { "NAME": "+50,00 m", "LENGTH": 207.65653815063101, "Z_VALUE": 0 }, "geometry": { "type": "MultiLineString", "coordinates": [ [ [ 106.617753444912836, -5.752362547313138, 0.0 ], [ 106.618945841176824, -5.750913495672382, 0.0 ] ] ] } },
+{ "type": "Feature", "properties": { "NAME": "+75,00 m", "LENGTH": 207.65717635007499, "Z_VALUE": 0 }, "geometry": { "type": "MultiLineString", "coordinates": [ [ [ 106.617927611430943, -5.752506332037384, 0.0 ], [ 106.61912001637765, -5.751057280053647, 0.0 ] ] ] } },
+{ "type": "Feature", "properties": { "NAME": "TABULARASA_LINE2", "LENGTH": 207.65576828069899, "Z_VALUE": 0 }, "geometry": { "type": "MultiLineString", "coordinates": [ [ [ 106.617230927772979, -5.751931183677899, 0.0 ], [ 106.618423325099101, -5.750482142031998, 0.0 ] ] ] } }
+]
+}

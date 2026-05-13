@@ -1,0 +1,9 @@
+{
+"type": "FeatureCollection",
+"name": "diagline_poso",
+"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+"features": [
+{ "type": "Feature", "properties": { "NAME": "DL_poso2", "LENGTH": 123.21118008117099, "Z_VALUE": 0, "layer": "surveyline_6", "path": "C:/Users/alena/Downloads/survey_line/surveyline_6.shp" }, "geometry": { "type": "MultiLineString", "coordinates": [ [ [ 106.596347278045741, -5.704997120581618, 0.0 ], [ 106.597278868898215, -5.7052786035002, 0.0 ] ] ] } },
+{ "type": "Feature", "properties": { "NAME": "DL_poso1", "LENGTH": 123.28278470559501, "Z_VALUE": 0, "layer": "surveyline_8", "path": "C:/Users/alena/Downloads/survey_line/surveyline_8.shp" }, "geometry": { "type": "MultiLineString", "coordinates": [ [ [ 106.596961330040443, -5.704480498161204, 0.0 ], [ 106.596523675057668, -5.705906895808833, 0.0 ] ] ] } }
+]
+}

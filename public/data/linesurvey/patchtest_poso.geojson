@@ -1,0 +1,9 @@
+{
+"type": "FeatureCollection",
+"name": "patchtest_poso",
+"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+"features": [
+{ "type": "Feature", "properties": { "NAME": "PT1", "LENGTH": 290.34038285603799, "Z_VALUE": 0 }, "geometry": { "type": "MultiLineString", "coordinates": [ [ [ 106.591940098784235, -5.709404294734683, 0.0 ], [ 106.593877245170702, -5.711172983622589, 0.0 ] ] ] } },
+{ "type": "Feature", "properties": { "NAME": "+40.00 m", "LENGTH": 290.33964567368503, "Z_VALUE": 0 }, "geometry": { "type": "MultiLineString", "coordinates": [ [ [ 106.591696841869108, -5.709671618432115, 0.0 ], [ 106.593633979835687, -5.71144030810726, 0.0 ] ] ] } }
+]
+}

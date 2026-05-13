@@ -1,0 +1,423 @@
+@import url('https://unpkg.com/leaflet@1.9.4/dist/leaflet.css');
+
+.thumb .slick-list .slick-track{
+    @apply !flex !items-center !gap-5;
+}
+.thumb .slick-next:before, .thumb .slick-prev:before{
+    @apply text-primary;
+}
+.upcoming .slick-next:before, .upcoming .slick-prev:before{
+    @apply text-primary;
+}
+.slick-dots li.slick-active button:before{
+    @apply !text-primary;
+}
+.slick-dots li button:before{
+    @apply !text-base;
+}
+.slick-dots li button:before{
+    @apply !text-blue-700;
+}
+/*  */
+.year_slider .slick-list{
+    padding: 0px 15% 0 0 !important;
+}
+.upcoming .slick-slide{
+    @apply px-2;
+}
+.testimonial .slick-prev{
+    @apply left-[90%];
+}
+.testimonial .slick-next{
+    @apply left-[95%];
+}
+.testimonial .slick-prev, .testimonial .slick-next{
+    @apply top-[28%];
+}
+.testimonial .slick-prev:before, .testimonial .slick-next:before{
+    @apply text-[32px] leading-[2.5rem] text-primary dark:text-white lg:inline-block hidden;
+}
+.testimonial .slick-prev, .testimonial .slick-next {
+    @apply z-10;
+}
+.upcoming .slick-next:before, .upcoming .slick-prev:before, .thumb .slick-next:before, .thumb .slick-prev:before{
+    @apply lg:inline-block hidden;
+}
+.animation-delay-1000 { animation-delay: 1s; }
+.animation-delay-2000 { animation-delay: 2s; }
+.animation-delay-4000 { animation-delay: 4s; }
+
+@keyframes sway {
+  0%, 100% { transform: rotate(-5deg) translateY(0); }
+  50% { transform: rotate(5deg) translateY(-5px); }
+}
+
+.animate-sway {
+  animation: sway 3s ease-in-out infinite;
+}
+
+/* Memperbaiki z-index Leaflet agar tidak menutupi navbar */
+.leaflet-container {
+  z-index: 1 !important;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+@keyframes reveal {
+  from {
+    opacity: 0;
+    transform: translateY(100px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.scroll-reveal {
+  view-timeline-name: --reveal;
+  view-timeline-axis: block;
+  animation-linear: both;
+  animation-name: reveal;
+  animation-timeline: --reveal;
+  animation-range: entry 10% cover 30%;
+}
+
+/* Pastikan warna primary sesuai dengan brand kamu */
+:root {
+  --primary-color: #YOUR_HEX_COLOR; /* Sesuaikan dengan warna biru di hero */
+}
+
+/* Custom AOS adjustment jika diperlukan */
+[data-aos] {
+  pointer-events: none;
+}
+.aos-animate {
+  pointer-events: auto;
+}
+
+/* Jika container kamu belum didefinisikan secara global */
+.container {
+  width: 100%;
+  margin-right: auto;
+  margin-left: auto;
+  padding-right: 1rem;
+  padding-left: 1rem;
+}
+
+@media (min-width: 1024px) {
+  .container {
+    max-width: 1200px; /* Sesuaikan dengan max-width hero kamu */
+  }
+}
+
+/* Line clamp untuk deskripsi jika diperlukan */
+.line-clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Menghilangkan scroll saat modal terbuka (opsional, perlu ditangani via JS) */
+body.modal-open {
+  overflow: hidden;
+}
+
+/* Animasi sederhana untuk Backdrop */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.bg-black\/60 {
+  animation: fadeIn 0.3s ease-out;
+}
+
+/* Custom Scrollbar untuk Modal */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(100, 100, 100, 0.2);
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(100, 100, 100, 0.5);
+}
+
+/* Dark mode adjustment */
+.dark .custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* Card SDG Hover Effect */
+.dark .darkmode-card-glow:hover {
+  box-shadow: 0 0 40px -10px rgba(59, 130, 246, 0.2);
+}
+
+/* Typography smoothing */
+h2, h3 {
+  letter-spacing: -0.02em;
+}
+
+/* Custom AOS for smoother cards */
+[data-aos="fade-up"] {
+  transform: translateY(30px);
+  opacity: 0;
+  transition-property: transform, opacity;
+}
+
+[data-aos="fade-up"].aos-animate {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+/* Custom Slider Style */
+input[type='range']::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  background: #3B82F6; /* Warna Primary */
+  border: 4px solid white;
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(59, 130, 246, 0.3);
+  transition: all 0.2s ease;
+}
+
+input[type='range']::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+  box-shadow: 0 0 0 8px rgba(59, 130, 246, 0.1);
+}
+
+.dark input[type='range']::-webkit-slider-thumb {
+  border: 4px solid #1e293b;
+}
+
+
+  /* Scrollbar styling untuk tabel assessment */
+  .overflow-x-auto::-webkit-scrollbar {
+    height: 6px;
+  }
+  .overflow-x-auto::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .overflow-x-auto::-webkit-scrollbar-thumb {
+    background: rgba(59, 130, 246, 0.2);
+    border-radius: 10px;
+  }
+
+  /* Animasi hover untuk bar chart */
+  .recharts-bar-rectangle {
+    transition: all 0.3s ease;
+  }
+  
+  .recharts-bar-rectangle:hover {
+    filter: brightness(1.2);
+    cursor: pointer;
+  }
+
+  /* Recharts Custom Styling */
+.recharts-cartesian-grid-horizontal line {
+  stroke: #e2e8f0;
+}
+
+.dark .recharts-cartesian-grid-horizontal line {
+  stroke: rgba(255, 255, 255, 0.1);
+}
+
+.recharts-legend-item-text {
+  color: #64748b !important;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Animasi saat pindah unit */
+.recharts-rectangle, .recharts-line-curve {
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Menangani warna background custom yang dipanggil di script */
+.bg-IcyBreeze {
+  background-color: #F0F9FF;
+}
+
+/* Animasi Rotasi Logo yang Smooth (Slow Spin) */
+@keyframes spin-slow {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Class ini otomatis aktif karena di script kamu pakai animate-spin (opsional) 
+   atau kamu bisa menambahkan class ini secara manual jika ingin durasi custom */
+.animate-slow-rotate {
+  animation: spin-slow 20s linear infinite;
+}
+
+/* Mengatur scrollbar agar lebih clean ala Gen-Z */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #3b82f6;
+  border-radius: 10px;
+}
+
+/* Responsivitas tambahan untuk font yang sangat besar di mobile */
+@media (max-width: 640px) {
+  .text-6xl {
+    font-size: 3.5rem;
+    line-height: 1;
+  }
+}
+
+/* Custom Team Styling */
+.team-grid-bg {
+  background-image: radial-gradient(circle at 2px 2px, rgba(59, 130, 246, 0.05) 1px, transparent 0);
+  background-size: 24px 24px;
+}
+
+.dark .team-grid-bg {
+  background-image: radial-gradient(circle at 2px 2px, rgba(255, 255, 255, 0.02) 1px, transparent 0);
+}
+
+/* Styling Scrollbar di dalam Panel Mapping */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(59, 130, 246, 0.2);
+  border-radius: 10px;
+}
+
+/* Fix z-index Leaflet agar tidak 'bocor' ke Header */
+.leaflet-container {
+  z-index: 1 !important;
+  background-color: #f8fafc !important; /* warna light */
+}
+.dark .leaflet-container {
+  background-color: #0f172a !important; /* warna dark */
+}
+
+/* Modernize Leaflet Controls */
+.leaflet-control-layers {
+  border-radius: 1.5rem !important;
+  border: none !important;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1) !important;
+  padding: 8px 12px !important;
+  font-family: inherit !important;
+  font-size: 10px !important;
+  font-weight: 800 !important;
+  text-transform: uppercase;
+}
+
+.leaflet-control-zoom {
+  border: none !important;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1) !important;
+}
+.leaflet-control-zoom-in, .leaflet-control-zoom-out {
+  border-radius: 12px !important;
+  border: 1px solid rgba(0,0,0,0.05) !important;
+  margin-bottom: 4px !important;
+}
+
+/* --- Cesium Canvas Resizer --- */
+.cesium-container .cesium-viewer {
+  border-radius: 0;
+  overflow: hidden;
+}
+
+.cesium-container .cesium-widget canvas {
+  width: 100% !important;
+  height: 100% !important;
+  outline: none;
+}
+
+/* --- Gen-Z Scrollbar --- */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #3b82f6; /* Warna primary */
+  border-radius: 10px;
+}
+
+/* --- Glassmorphism for 3D --- */
+.dark .cesium-viewer-bottom {
+  display: none; /* Hide credits for cleaner look, check license first */
+}
+
+/* Custom Zoom for 3D (Jika ingin manual) */
+.cesium-navigation-help-button {
+  display: none !important;
+}
+
+/* Custom Popup Styling */
+.custom-popup .leaflet-popup-content-wrapper {
+  border-radius: 12px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+  padding: 4px;
+}
+
+/* Pulsing Icon Animation */
+.custom-pulsing-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.pulse-dot {
+  width: 8px;
+  height: 8px;
+  background-color: #ef4444; /* Merah Alert */
+  border-radius: 50%;
+  position: absolute;
+  z-index: 2;
+}
+
+.pulse-ring {
+  width: 24px;
+  height: 24px;
+  background-color: rgba(239, 68, 68, 0.4);
+  border-radius: 50%;
+  position: absolute;
+  z-index: 1;
+  animation: radar-pulse 2s infinite ease-out;
+}
+
+@keyframes radar-pulse {
+  0% {
+    transform: scale(0.5);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(3);
+    opacity: 0;
+  }
+}

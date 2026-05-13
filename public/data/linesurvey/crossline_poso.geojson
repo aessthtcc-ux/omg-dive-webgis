@@ -1,0 +1,10 @@
+{
+"type": "FeatureCollection",
+"name": "crossline_poso",
+"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+"features": [
+{ "type": "Feature", "properties": { "NAME": "cl_poso2", "LENGTH": 239.99172341703999, "Z_VALUE": 0, "layer": "surveyline_10", "path": "C:/Users/alena/Downloads/survey_line/surveyline_10.shp" }, "geometry": { "type": "MultiLineString", "coordinates": [ [ [ 106.597775719953106, -5.70627091028753, 0.0 ], [ 106.596331591472961, -5.704653094277074, 0.0 ] ] ] } },
+{ "type": "Feature", "properties": { "NAME": "cl_poso1", "LENGTH": 239.00129503644999, "Z_VALUE": 0, "layer": "surveyline_11", "path": "C:/Users/alena/Downloads/survey_line/surveyline_11.shp" }, "geometry": { "type": "MultiLineString", "coordinates": [ [ [ 106.596094200712827, -5.70486608146816, 0.0 ], [ 106.597534694040448, -5.706475136541607, 0.0 ] ] ] } },
+{ "type": "Feature", "properties": { "NAME": "cl_poso3", "LENGTH": 238.32783139468, "Z_VALUE": 0, "layer": "surveyline_9", "path": "C:/Users/alena/Downloads/survey_line/surveyline_9.shp" }, "geometry": { "type": "MultiLineString", "coordinates": [ [ [ 106.596573819150592, -5.704455792173671, 0.0 ], [ 106.598010993589, -5.706059646464545, 0.0 ] ] ] } }
+]
+}
