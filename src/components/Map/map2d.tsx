@@ -187,7 +187,7 @@ const layerGroups = [
     icon: <ImageIcon size={18} className="text-purple-500" />,
     subLayers: [
       // Perbaikan title untuk dem_poso dan penambahan dem_tabu
-      { id: "dem_poso", filePath: "/data/dem/DTM_Poso_1m.tif", title: "DEM Poso", project: "Poso", color: "#8b5cf6", dash: "0", isDummy: false, isRaster: true },
+      { id: "dem_poso", filePath: "/data/dem/", title: "DEM Poso", project: "Poso", color: "#8b5cf6", dash: "0", isDummy: false, isRaster: true },
       { id: "dem_tabu", filePath: "/data/dem/DEM_Tabularasa_1.5m.tif", title: "DEM Tabularasa", project: "Tabularasa", color: "#ec4899", dash: "0", isDummy: false, isRaster: true }
     ]
   }
