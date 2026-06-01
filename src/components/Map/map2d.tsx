@@ -299,7 +299,7 @@ const Mapping2D = () => {
 
       {/* ✅ TOMBOL TOGGLE — posisi dinamis berdasarkan winWidth */}
       <div
-        className="absolute top-[120px] z-[101] flex flex-col justify-center h-[calc(100vh-160px)] pointer-events-none transition-all duration-500"
+        className="absolute top-[120px] z-[10] flex flex-col justify-center h-[calc(100vh-160px)] pointer-events-none transition-all duration-500"
         style={{ left: toggleLeft }}
       >
         <button onClick={() => setIsPanelOpen(!isPanelOpen)}

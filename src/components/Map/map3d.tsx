@@ -242,7 +242,7 @@ const Mapping3D = () => {
 
       {/* ✅ TOGGLE BUTTON — posisi dinamis via inline style, identik Mapping2D */}
       <div
-        className="absolute top-[120px] z-[101] flex flex-col justify-center h-[calc(100vh-160px)] pointer-events-none transition-all duration-500"
+        className="absolute top-[120px] z-[10] flex flex-col justify-center h-[calc(100vh-160px)] pointer-events-none transition-all duration-500"
         style={{ left: toggleLeft }}
       >
         <button
