@@ -62,28 +62,6 @@ const stats = [
   { value: "1970", label: "Oldest Wreck",        icon: <BookOpen size={16} /> },
 ];
 
-// ---------------------------------------------------------------------------
-// STAT CARD
-// ---------------------------------------------------------------------------
-const StatCard = ({ value, label, icon }: { value: string; label: string; icon: React.ReactNode }) => {
-  const ref = useRef(null);
-  const inView = useInView(ref, { once: true });
-  return (
-    <motion.div
-      ref={ref}
-      initial={{ opacity: 0, y: 20 }}
-      animate={inView ? { opacity: 1, y: 0 } : {}}
-      transition={{ duration: 0.6, ease: "easeOut" }}
-      className="flex flex-col items-center text-center p-4 sm:p-5 rounded-2xl bg-white/5 border border-white/10 hover:border-primary/40 hover:bg-white/8 transition-all duration-300 group"
-    >
-      <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-primary/20 flex items-center justify-center text-primary mb-2 sm:mb-3 group-hover:bg-primary group-hover:text-white transition-all duration-300">
-        {icon}
-      </div>
-      <span className="text-xl sm:text-2xl font-black text-white tracking-tighter leading-none mb-1">{value}</span>
-      <span className="text-[9px] sm:text-[10px] font-bold text-white/40 uppercase tracking-widest leading-tight">{label}</span>
-    </motion.div>
-  );
-};
 
 // ---------------------------------------------------------------------------
 // MAIN FOOTER
