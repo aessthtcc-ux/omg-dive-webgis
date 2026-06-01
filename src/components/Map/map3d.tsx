@@ -237,7 +237,7 @@ const Mapping3D = () => {
       <motion.div
         animate={{ x: isPanelOpen ? 0 : -(panelWidth + 20) }}
         transition={{ type: "spring", stiffness: 260, damping: 25 }}
-        className="absolute top-[120px] left-2 md:left-6 bottom-10 w-[calc(100vw-60px)] md:w-[360px] z-[100] pointer-events-none h-[calc(100vh-160px)]"
+        className="absolute top-[120px] left-2 md:left-6 bottom-10 w-[calc(100vw-60px)] md:w-[360px] z-[1] pointer-events-none h-[calc(100vh-160px)]"
       >
         <div className="bg-white/90 dark:bg-gray-900/95 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-[2rem] md:rounded-[2.5rem] shadow-2xl p-5 md:p-8 flex flex-col pointer-events-auto overflow-hidden h-full">
           <div className="mb-4 md:mb-6 shrink-0">
@@ -305,7 +305,7 @@ const Mapping3D = () => {
       </motion.div>
 
       {/* ✅ MOBILE LEGEND: floating card pojok kanan bawah */}
-      <div className="md:hidden absolute bottom-3 right-2 z-[100] pointer-events-auto">
+      <div className="md:hidden absolute bottom-3 right-2 z-[1] pointer-events-auto">
         <button
           onClick={() => setIsLegendOpen(!isLegendOpen)}
           className={`flex items-center gap-1.5 px-3 py-2 rounded-xl shadow-lg border transition-all text-[10px] font-black uppercase tracking-wider ${
