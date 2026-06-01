@@ -9,31 +9,47 @@ import SessionProviderComp from "@/components/nextauth/SessionProvider";
 import { AuthDialogProvider } from "./context/AuthDialogContext";
 import { ReactNode } from "react";
 import NextTopLoader from 'nextjs-toploader';
+import type { Metadata } from "next";
+import PolyfillLoader from "@/components/PolyfillLoader";
 
 const dmsans = DM_Sans({ subsets: ["latin"] });
+
+export const metadata: Metadata = {
+  title: "OMG Dive",
+  description: "WebGIS Storymap OMG Dive",
+};
 
 export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={dmsans.className}>
-        <AuthDialogProvider>
-          <SessionProviderComp>
-            <ThemeProvider
-              attribute="class"
-              enableSystem={true}
-              defaultTheme="system"
-            >
-              <Aoscompo>
-                <Header />
-                <NextTopLoader />
-                {children}
-                <Footer />
-              </Aoscompo>
-              <ScrollToTop />
-            </ThemeProvider>
-          </SessionProviderComp>
-        </AuthDialogProvider>
-      </body>
+      <head>
+        <meta
+          name="viewport"
+          content="width=device-width, initial-scale=1.0, maximum-scale=5.0"
+        />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+      </head>
+        <body className={dmsans.className}>
+          <AuthDialogProvider>
+            <SessionProviderComp>
+              <ThemeProvider
+                attribute="class"
+                enableSystem={true}
+                defaultTheme="system"
+              >
+                <Aoscompo>
+                  <Header />
+                  <NextTopLoader />
+                  <PolyfillLoader /> 
+                  {children}
+                  <Footer />
+                </Aoscompo>
+                <ScrollToTop />
+              </ThemeProvider>
+            </SessionProviderComp>
+          </AuthDialogProvider>
+        </body>
     </html>
   );
 }

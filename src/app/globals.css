@@ -118,3 +118,65 @@ body {
 .blog-details h3 {
   @apply mb-6 text-2xl font-bold dark:text-white sm:text-28;
 }
+
+/* =============================================
+   iOS SAFARI COMPATIBILITY FIXES
+   Tambahkan di bagian paling bawah globals.css
+   ============================================= */
+
+/* Smooth scrolling iOS lama */
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+/* Scrollable container untuk iOS */
+.overflow-scroll,
+.overflow-y-scroll,
+.overflow-x-scroll {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Sticky positioning Safari */
+.sticky {
+  position: -webkit-sticky;
+  position: sticky;
+}
+
+/* Flexbox gap tidak support iOS 14- */
+/* Tailwind gap-* sudah aman, tapi custom flex harus pakai ini */
+.flex-gap-fix > * + * {
+  margin-left: var(--gap, 1rem);
+}
+
+/* Backdrop filter Safari */
+.backdrop-blur,
+[class*="backdrop-blur"] {
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+}
+
+/* Aspect ratio Safari iOS 14 */
+.aspect-video {
+  aspect-ratio: 16 / 9;
+}
+@supports not (aspect-ratio: 16 / 9) {
+  .aspect-video::before {
+    content: "";
+    display: block;
+    padding-top: 56.25%;
+  }
+}
+
+/* Leaflet map fix iOS — mencegah ghost tap */
+.leaflet-container {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+/* Fix AOS animations iOS 12 */
+[data-aos] {
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}

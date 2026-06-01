@@ -12,11 +12,11 @@
         "lint": "next lint"
     },
     "dependencies": {
+        "@dotlottie/react-player": "^1.6.19",
         "@iconify/icons-ion": "^1.2.10",
         "@iconify/react": "^5.0.1",
         "@loaders.gl/core": "^4.3.4",
         "@loaders.gl/las": "^4.3.4",
-        "@lottiefiles/dotlottie-react": "^0.17.15",
         "@react-three/drei": "^10.7.7",
         "@react-three/fiber": "^9.5.0",
         "@types/three": "^0.183.1",
@@ -29,6 +29,7 @@
         "georaster": "^1.6.0",
         "georaster-layer-for-leaflet": "^4.1.2",
         "gray-matter": "^4.0.3",
+        "intersection-observer": "^0.12.2",
         "leaflet": "^1.9.4",
         "lucide-react": "^0.564.0",
         "next": "^16.2.4",
@@ -45,6 +46,7 @@
         "remark": "^15.0.1",
         "remark-html": "^16.0.1",
         "resium": "^1.19.4",
+        "resize-observer-polyfill": "^1.5.1",
         "slick-carousel": "^1.8.1",
         "three": "^0.183.2"
     },

@@ -9,6 +9,7 @@ import {
   Box, ChevronRight, ChevronLeft, Eye, EyeOff, 
   List, Globe, Wind, Loader2, Sliders, Layers
 } from 'lucide-react';
+import WebGLCheck from "../WebGLCheck";
 
 // --- SUB-COMPONENT: REUSABLE POINT CLOUD RENDERER ---
 interface PointCloudProps {
@@ -239,40 +240,42 @@ const Mapping3D = () => {
 
       {/* 3D SCENE AREA */}
       <div className="absolute top-24 bottom-0 left-0 right-0 z-0 cursor-move">
-        <Canvas frameloop="demand" dpr={[1, 2]} gl={{ antialias: false, logarithmicDepthBuffer: true }}>
-          <color attach="background" args={["#050505"]} />
-          <PerspectiveCamera makeDefault position={[15, 15, 15]} near={0.1} far={1000} />
-          <OrbitControls makeDefault enableDamping dampingFactor={0.1} />
-          <ambientLight intensity={0.5} />
-          <pointLight position={[10, 10, 10]} intensity={1.5} />
-          
-          <Suspense fallback={null}>
-            <Center>
-              {activeLayers.grid && <gridHelper args={[30, 30, "#1e1e1e", "#121212"]} position={[0, -2, 0]} />}
-              
-              {/* RENDERER LAYER 1: TABULARASA */}
-              <PointCloudModel 
-                id="tabularasa"
-                url="/data/3D/Day5_Tabularasa.las"
-                active={activeLayers.tabularasa} 
-                density={pointDensity}
-                onDataLoaded={handleDataLoaded}
-                onLoadingChange={handleLoadingChange}
-              />
-              
-              {/* RENDERER LAYER 2: POSO RASYA */}
-              <PointCloudModel 
-                id="poso"
-                url="/data/3D/Poso_hanafi.las"
-                active={activeLayers.poso} 
-                density={pointDensity}
-                onDataLoaded={handleDataLoaded}
-                onLoadingChange={handleLoadingChange}
-              />
-            </Center>
-            <Stars radius={100} depth={50} count={3000} factor={4} fade speed={1} />
-          </Suspense>
-        </Canvas>
+        <WebGLCheck> 
+          <Canvas frameloop="demand" dpr={[1, 2]} gl={{ antialias: false, logarithmicDepthBuffer: true }}>
+            <color attach="background" args={["#050505"]} />
+            <PerspectiveCamera makeDefault position={[15, 15, 15]} near={0.1} far={1000} />
+            <OrbitControls makeDefault enableDamping dampingFactor={0.1} />
+            <ambientLight intensity={0.5} />
+            <pointLight position={[10, 10, 10]} intensity={1.5} />
+            
+            <Suspense fallback={null}>
+              <Center>
+                {activeLayers.grid && <gridHelper args={[30, 30, "#1e1e1e", "#121212"]} position={[0, -2, 0]} />}
+                
+                {/* RENDERER LAYER 1: TABULARASA */}
+                <PointCloudModel 
+                  id="tabularasa"
+                  url="/data/3D/Day5_Tabularasa.las"
+                  active={activeLayers.tabularasa} 
+                  density={pointDensity}
+                  onDataLoaded={handleDataLoaded}
+                  onLoadingChange={handleLoadingChange}
+                />
+                
+                {/* RENDERER LAYER 2: POSO RASYA */}
+                <PointCloudModel 
+                  id="poso"
+                  url="/data/3D/Poso_hanafi.las"
+                  active={activeLayers.poso} 
+                  density={pointDensity}
+                  onDataLoaded={handleDataLoaded}
+                  onLoadingChange={handleLoadingChange}
+                />
+              </Center>
+              <Stars radius={100} depth={50} count={3000} factor={4} fade speed={1} />
+            </Suspense>
+          </Canvas>
+        </WebGLCheck>  
       </div>
 
       {/* UI LEFT PANEL: MULTI-LAYER CONTROLS */}

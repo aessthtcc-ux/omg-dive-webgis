@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import React from 'react';
-import { DotLottieReact } from '@lottiefiles/dotlottie-react';
+import { DotLottiePlayer } from '@dotlottie/react-player';
+import '@dotlottie/react-player/dist/index.css';
 import { ArrowRight, Palmtree } from "lucide-react";
 
 const Hero = () => {
@@ -97,11 +98,11 @@ const Hero = () => {
                     >
                         <div className="w-full mt-32 flex justify-end">
                             <div className="w-full md:w-[120%] lg:w-[150%] xl:w-[180%] h-auto -mr-10 lg:-mr-32">
-                                <DotLottieReact
+                                <DotLottiePlayer
                                     src="https://lottie.host/5fc4c8fb-c464-4b3e-bca6-f2d6a9bd0731/x8q17jgJ56.lottie"
                                     loop
                                     autoplay
-                                    className="w-full h-full object-contain" 
+                                    style={{ width: '100%', height: '100%' }}
                                 />
                             </div>
                         </div>
