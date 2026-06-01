@@ -80,6 +80,14 @@ const GeoTIFFLayer = ({ url, isVisible }: { url: string; isVisible: boolean }) =
   return null;
 };
 
+// ---------------------------------------------------------------------------
+// LAYER GROUPS
+// ---------------------------------------------------------------------------
+// 🎨 Warna per-layer DEM — ganti sesuai kebutuhan
+// 📁 filePath  → sesuaikan nama file .tif di /data/dem/
+// 🏷️ title     → nama tampilan di panel & legend
+// 🔖 project   → label kecil di bawah judul layer
+// ---------------------------------------------------------------------------
 const layerGroups = [
   {
     groupId: "area", title: "Area Boundaries",
@@ -107,37 +115,48 @@ const layerGroups = [
     groupId: "dem", title: "Digital Elevation Model",
     icon: <ImageIcon size={18} className="text-purple-500" />,
     subLayers: [
-      { id: "dem_poso",  filePath: "/data/dem/DTM_Poso_1m.tif",         title: "DEM Poso",       project: "Poso",       color: "#8b5cf6", dash: "0", isDummy: false, isRaster: true },
-      { id: "dem_tabu",  filePath: "/data/dem/DEM_Tabularasa_1.5m.tif", title: "DEM Tabularasa", project: "Tabularasa", color: "#ec4899", dash: "0", isDummy: false, isRaster: true },
+      // ── Layer 1 ──────────────────────────────────────────────────────────
+      // TODO: ganti filePath, title, project, color sesuai data asli
+      { id: "dem_tabularasa", filePath: "/data/dem/DEM_Site1.tif",  title: "DEM Site 1",  project: "Site 1",  color: "#8b5cf6", dash: "0", isDummy: false, isRaster: true },
+
+      // ── Layer 2 ──────────────────────────────────────────────────────────
+      { id: "dem_poso", filePath: "/data/dem/DTM_PosoFix_0.5m.tif",  title: "DEM Poso Shipwreck",  project: "Site 2",  color: "#ec4899", dash: "0", isDummy: false, isRaster: true },
+
+      // ── Layer 3 ──────────────────────────────────────────────────────────
+      { id: "dem_perairandangkal", filePath: "/data/dem/DEM_PerairanDangkal_RGB_0.5m.tif",  title: "DEM Perairan Dangkal",  project: "Site 3",  color: "#06b6d4", dash: "0", isDummy: false, isRaster: true },
+
+      // ── Layer 4 ──────────────────────────────────────────────────────────
+      { id: "dem_pesisirpanggang", filePath: "/data/dem/DEM_PesisirPanggang_RGB_0.5m.tif",  title: "DEM Pesisir Panggang",  project: "Site 4",  color: "#f97316", dash: "0", isDummy: false, isRaster: true },
+
+      // ── Layer 5 ──────────────────────────────────────────────────────────
+      { id: "dem_site5", filePath: "/data/dem/DEM_Site5.tif",  title: "DEM Site 5",  project: "Site 5",  color: "#22c55e", dash: "0", isDummy: false, isRaster: true },
+
+      // ── Layer 6 ──────────────────────────────────────────────────────────
+      { id: "dem_site6", filePath: "/data/dem/DEM_Site6.tif",  title: "DEM Site 6",  project: "Site 6",  color: "#eab308", dash: "0", isDummy: false, isRaster: true },
+
+      // ── Layer 7 ──────────────────────────────────────────────────────────
+      { id: "dem_site7", filePath: "/data/dem/DEM_Site7.tif",  title: "DEM Site 7",  project: "Site 7",  color: "#ef4444", dash: "0", isDummy: false, isRaster: true },
+
+      // ── Layer 8 ──────────────────────────────────────────────────────────
+      { id: "dem_site8", filePath: "/data/dem/DEM_Site8.tif",  title: "DEM Site 8",  project: "Site 8",  color: "#14b8a6", dash: "0", isDummy: false, isRaster: true },
+
+      // ── Layer 9 ──────────────────────────────────────────────────────────
+      { id: "dem_site9", filePath: "/data/dem/DEM_Site9.tif",  title: "DEM Site 9",  project: "Site 9",  color: "#a78bfa", dash: "0", isDummy: false, isRaster: true },
     ]
   }
 ];
 
 const baseMaps = [
-  { id: 'osm',       name: 'Open Street Map', url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',                                                        thumbnail: 'https://a.tile.openstreetmap.org/0/0/0.png' },
-  { id: 'satellite', name: 'Satellite',       url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',             thumbnail: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/10/546/388' },
-  { id: 'dark',      name: 'Esri Dark',       url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',                                             thumbnail: 'https://a.basemaps.cartocdn.com/dark_all/0/0/0.png' },
+  { id: 'osm',       name: 'Open Street Map', url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',                                                    thumbnail: 'https://a.tile.openstreetmap.org/0/0/0.png' },
+  { id: 'satellite', name: 'Satellite',       url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',         thumbnail: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/10/546/388' },
+  { id: 'dark',      name: 'Esri Dark',       url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',                                         thumbnail: 'https://a.basemaps.cartocdn.com/dark_all/0/0/0.png' },
 ];
 
-// ✅ Panel width per breakpoint
 const PANEL_W = { mobile: 280, tablet: 300, desktop: 360 };
 
-// Helper: ambil lebar panel sesuai layar saat ini
-const getPanelWidth = () => {
-  if (typeof window === 'undefined') return PANEL_W.desktop;
-  if (window.innerWidth >= 1024) return PANEL_W.desktop;
-  if (window.innerWidth >= 768)  return PANEL_W.tablet;
-  return PANEL_W.mobile;
-};
-
-// Helper: hitung posisi left tombol toggle
-const getToggleLeft = (isOpen: boolean) => {
-  if (!isOpen) return '0.5rem';
-  const w = getPanelWidth();
-  const left = window.innerWidth >= 1024 ? '1.5rem' : window.innerWidth >= 768 ? '1rem' : '0.5rem';
-  return `calc(${left} + ${w}px + 0.5rem)`;
-};
-
+// ---------------------------------------------------------------------------
+// MAIN COMPONENT
+// ---------------------------------------------------------------------------
 const Mapping2D = () => {
   const [mounted,       setMounted]       = useState(false);
   const [isPanelOpen,   setIsPanelOpen]   = useState(false);
@@ -147,22 +166,29 @@ const Mapping2D = () => {
   const [activeBasemap, setActiveBasemap] = useState(baseMaps[1]);
   const [geoData,       setGeoData]       = useState<Record<string, any>>({});
 
-  // ✅ Track window width untuk toggle button position
   const [winWidth, setWinWidth] = useState(
     typeof window !== 'undefined' ? window.innerWidth : 1024
   );
-
   useEffect(() => {
     const onResize = () => setWinWidth(window.innerWidth);
     window.addEventListener('resize', onResize);
     return () => window.removeEventListener('resize', onResize);
   }, []);
 
+  // Hanya group "dem" yang aktif di awal
   const [activeGroups, setActiveGroups] = useState<Record<string, boolean>>(
-    layerGroups.reduce((acc, g) => ({ ...acc, [g.groupId]: true }), {})
+    layerGroups.reduce((acc, g) => ({
+      ...acc,
+      [g.groupId]: g.groupId === 'dem',
+    }), {})
   );
+
+  // Hanya subLayer isRaster (DEM) yang aktif di awal
   const [activeSubLayers, setActiveSubLayers] = useState<Record<string, boolean>>(
-    layerGroups.flatMap(g => g.subLayers).reduce((acc, sub) => ({ ...acc, [sub.id]: true }), {})
+    layerGroups.flatMap(g => g.subLayers).reduce((acc, sub) => ({
+      ...acc,
+      [sub.id]: (sub as any).isRaster === true,
+    }), {})
   );
 
   useEffect(() => {
@@ -196,10 +222,9 @@ const Mapping2D = () => {
 
   if (!mounted) return null;
 
-  // ✅ Panel width & slide offset berdasarkan window width saat render
-  const panelW      = winWidth >= 1024 ? PANEL_W.desktop : winWidth >= 768 ? PANEL_W.tablet : PANEL_W.mobile;
-  const panelLeft   = winWidth >= 1024 ? '1.5rem' : winWidth >= 768 ? '1rem' : '0.5rem';
-  const toggleLeft  = isPanelOpen ? `calc(${panelLeft} + ${panelW}px + 0.5rem)` : '0.5rem';
+  const panelW     = winWidth >= 1024 ? PANEL_W.desktop : winWidth >= 768 ? PANEL_W.tablet : PANEL_W.mobile;
+  const panelLeft  = winWidth >= 1024 ? '1.5rem' : winWidth >= 768 ? '1rem' : '0.5rem';
+  const toggleLeft = isPanelOpen ? `calc(${panelLeft} + ${panelW}px + 0.5rem)` : '0.5rem';
 
   return (
     <section className="relative h-screen w-full overflow-hidden bg-slate-950 pt-24">
@@ -223,6 +248,7 @@ const Mapping2D = () => {
           <TileLayer url={activeBasemap.url} maxZoom={24} maxNativeZoom={19} />
           <AutoFitBounds geoData={geoData} />
 
+          {/* GeoJSON vector layers */}
           {layerGroups.flatMap(g => g.subLayers).map(config => {
             // @ts-ignore
             if (config.isRaster) return null;
@@ -230,7 +256,9 @@ const Mapping2D = () => {
             // @ts-ignore
             if (!activeSubLayers[config.id] || !data?.type || config.isDummy) return null;
             return (
-              <GeoJSON key={`geojson-${config.id}-${data.features?.length||0}`} data={data}
+              <GeoJSON
+                key={`geojson-${config.id}-${data.features?.length||0}`}
+                data={data}
                 style={{
                   color: config.color,
                   // @ts-ignore
@@ -257,10 +285,17 @@ const Mapping2D = () => {
             );
           })}
 
+          {/* GeoTIFF raster layers — semua 9 DEM dirender di sini */}
           {layerGroups.flatMap(g => g.subLayers).map(config => {
             // @ts-ignore
-            if (!config.isRaster || !activeSubLayers[config.id]) return null;
-            return <GeoTIFFLayer key={`raster-${config.id}`} url={config.filePath} isVisible={activeSubLayers[config.id]} />;
+            if (!config.isRaster) return null;
+            return (
+              <GeoTIFFLayer
+                key={`raster-${config.id}`}
+                url={config.filePath}
+                isVisible={activeSubLayers[config.id]}
+              />
+            );
           })}
 
           <ZoomControl position="bottomright" />
@@ -269,8 +304,10 @@ const Mapping2D = () => {
 
       {/* BASEMAP CONTROLLER */}
       <div className="absolute top-[120px] right-2 md:right-6 z-[1] flex flex-col items-end">
-        <button onClick={() => setIsBaseMapOpen(!isBaseMapOpen)}
-          className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl border border-gray-200 dark:border-white/10 p-2.5 md:p-3 rounded-xl md:rounded-2xl shadow-xl flex items-center gap-2 md:gap-3 hover:scale-105 transition-all">
+        <button
+          onClick={() => setIsBaseMapOpen(!isBaseMapOpen)}
+          className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl border border-gray-200 dark:border-white/10 p-2.5 md:p-3 rounded-xl md:rounded-2xl shadow-xl flex items-center gap-2 md:gap-3 hover:scale-105 transition-all"
+        >
           <div className="flex flex-col items-end">
             <span className="text-[9px] md:text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none">Basemap</span>
             <span className="text-[10px] md:text-xs font-bold text-gray-900 dark:text-white uppercase italic">{activeBasemap.name}</span>
@@ -281,11 +318,16 @@ const Mapping2D = () => {
         </button>
         <AnimatePresence>
           {isBaseMapOpen && (
-            <motion.div initial={{ opacity:0,y:-10 }} animate={{ opacity:1,y:10 }} exit={{ opacity:0,y:-10 }}
-              className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl border border-gray-200 dark:border-white/10 p-3 md:p-4 rounded-[1.5rem] md:rounded-[2rem] shadow-2xl w-40 md:w-48 flex flex-col gap-2 md:gap-3 mt-2">
+            <motion.div
+              initial={{ opacity:0, y:-10 }} animate={{ opacity:1, y:10 }} exit={{ opacity:0, y:-10 }}
+              className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl border border-gray-200 dark:border-white/10 p-3 md:p-4 rounded-[1.5rem] md:rounded-[2rem] shadow-2xl w-40 md:w-48 flex flex-col gap-2 md:gap-3 mt-2"
+            >
               {baseMaps.map(map => (
-                <button key={map.id} onClick={() => { setActiveBasemap(map); setIsBaseMapOpen(false); }}
-                  className={`relative overflow-hidden rounded-xl md:rounded-2xl h-12 md:h-16 border-2 transition-all ${activeBasemap.id===map.id?'border-blue-500':'border-transparent'}`}>
+                <button
+                  key={map.id}
+                  onClick={() => { setActiveBasemap(map); setIsBaseMapOpen(false); }}
+                  className={`relative overflow-hidden rounded-xl md:rounded-2xl h-12 md:h-16 border-2 transition-all ${activeBasemap.id===map.id ? 'border-blue-500' : 'border-transparent'}`}
+                >
                   <img src={map.thumbnail} className="absolute inset-0 w-full h-full object-cover opacity-60" alt={map.name} />
                   <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
                     <span className="text-[9px] md:text-[10px] font-black text-white uppercase">{map.name}</span>
@@ -297,18 +339,21 @@ const Mapping2D = () => {
         </AnimatePresence>
       </div>
 
-      {/* ✅ TOMBOL TOGGLE — posisi dinamis berdasarkan winWidth */}
+      {/* TOGGLE BUTTON */}
       <div
         className="absolute top-[120px] z-[10] flex flex-col justify-center h-[calc(100vh-160px)] pointer-events-none transition-all duration-500"
         style={{ left: toggleLeft }}
       >
-        <button onClick={() => setIsPanelOpen(!isPanelOpen)}
-          className="w-10 h-20 md:h-24 bg-blue-600 hover:bg-blue-700 rounded-2xl flex items-center justify-center text-white shadow-xl transition-all active:scale-95 pointer-events-auto">
+        <button
+          onClick={() => setIsPanelOpen(!isPanelOpen)}
+          className="w-10 h-20 md:h-24 bg-blue-600 hover:bg-blue-700 rounded-2xl flex items-center justify-center text-white shadow-xl transition-all active:scale-95 pointer-events-auto"
+          aria-label={isPanelOpen ? "Close panel" : "Open panel"}
+        >
           {isPanelOpen ? <ChevronLeft size={22} /> : <ChevronRight size={22} />}
         </button>
       </div>
 
-      {/* ✅ SIDE PANEL — lebar responsif 3 breakpoint */}
+      {/* SIDE PANEL */}
       <motion.div
         animate={{ x: isPanelOpen ? 0 : -(panelW + 20) }}
         transition={{ type: "spring", stiffness: 260, damping: 25 }}
@@ -322,12 +367,15 @@ const Mapping2D = () => {
             </h2>
           </div>
 
-          <div className="flex-1 space-y-3 md:space-y-4 lg:space-y-6 overflow-y-auto pr-1 custom-scrollbar">
+          <div className="flex-1 space-y-3 md:space-y-4 lg:space-y-5 overflow-y-auto pr-1 custom-scrollbar">
             {layerGroups.map(group => (
               <div key={group.groupId} className="space-y-2">
+                {/* Group header */}
                 <div className="flex items-center gap-2 px-1">
-                  <button onClick={() => toggleGroup(group.groupId)}
-                    className={`p-1.5 rounded-lg transition-all ${activeGroups[group.groupId] ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600' : 'bg-gray-100 dark:bg-white/5 text-gray-400'}`}>
+                  <button
+                    onClick={() => toggleGroup(group.groupId)}
+                    className={`p-1.5 rounded-lg transition-all ${activeGroups[group.groupId] ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600' : 'bg-gray-100 dark:bg-white/5 text-gray-400'}`}
+                  >
                     {activeGroups[group.groupId] ? <Eye size={14} /> : <EyeOff size={14} />}
                   </button>
                   <h3 className="text-[10px] md:text-[11px] font-black uppercase tracking-widest text-gray-800 dark:text-gray-200 flex items-center gap-1.5">
@@ -335,35 +383,52 @@ const Mapping2D = () => {
                   </h3>
                 </div>
 
+                {/* Sub-layer list */}
                 <div className="pl-3 border-l-2 border-gray-100 dark:border-white/5 ml-3 space-y-1.5">
                   {group.subLayers.map(layer => (
                     <div key={layer.id} className="group bg-gray-50/50 dark:bg-white/5 rounded-xl border border-transparent hover:border-gray-200 dark:hover:border-white/10 transition-all overflow-hidden">
                       <div className="p-2.5 flex items-center justify-between">
                         <div className="flex items-center gap-2">
-                          <button onClick={() => toggleSubLayer(layer.id)}
-                            className={`p-1.5 rounded-lg transition-all ${activeSubLayers[layer.id] ? 'bg-gray-800 dark:bg-gray-100 text-white dark:text-gray-900 shadow-md' : 'bg-gray-200 dark:bg-white/10 text-gray-400'}`}>
+                          <button
+                            onClick={() => toggleSubLayer(layer.id)}
+                            className={`p-1.5 rounded-lg transition-all ${activeSubLayers[layer.id] ? 'bg-gray-800 dark:bg-gray-100 text-white dark:text-gray-900 shadow-md' : 'bg-gray-200 dark:bg-white/10 text-gray-400'}`}
+                          >
                             {activeSubLayers[layer.id] ? <Eye size={12} /> : <EyeOff size={12} />}
                           </button>
                           <div>
                             <h4 className="text-[9px] md:text-[10px] font-bold text-gray-700 dark:text-gray-300 uppercase tracking-tight flex items-center gap-1">
                               {layer.title}
-                              {(layer as any).isDummy && <span className="text-[7px] bg-purple-100 text-purple-600 px-1 rounded-sm">Soon</span>}
+                              {(layer as any).isDummy && (
+                                <span className="text-[7px] bg-purple-100 text-purple-600 px-1 rounded-sm">Soon</span>
+                              )}
                             </h4>
                             <div className="flex items-center gap-1.5 mt-0.5">
-                              <div className="w-4 h-0.5 rounded-full" style={{ backgroundColor: layer.color }} />
+                              {/* Untuk raster: kotak gradien; lainnya: garis warna */}
+                              {(layer as any).isRaster ? (
+                                <div className="w-4 h-2 rounded-sm" style={{ background: 'linear-gradient(to right, #1e3a5f, #3b82f6, #10b981, #fbbf24)' }} />
+                              ) : (
+                                <div className="w-4 h-0.5 rounded-full" style={{ backgroundColor: layer.color }} />
+                              )}
                               <span className="text-[7px] text-gray-400 font-bold uppercase">{layer.project}</span>
                             </div>
                           </div>
                         </div>
-                        <button onClick={() => setOpenDesc(openDesc===layer.id ? null : layer.id)} className="p-1 text-gray-400 hover:text-blue-500">
+                        <button
+                          onClick={() => setOpenDesc(openDesc === layer.id ? null : layer.id)}
+                          className="p-1 text-gray-400 hover:text-blue-500"
+                        >
                           <Info size={12} />
                         </button>
                       </div>
                       <AnimatePresence>
                         {openDesc === layer.id && (
-                          <motion.div initial={{ height:0,opacity:0 }} animate={{ height:"auto",opacity:1 }} exit={{ height:0,opacity:0 }}
-                            className="px-3 pb-3 text-[9px] text-gray-500 italic border-t border-gray-100 dark:border-white/5 pt-2 bg-white/50 dark:bg-black/20">
-                            {(layer as any).isRaster ? "Format: GeoTIFF. Represents seabed elevation model." : "Format: WGS84 GeoJSON. Right-click to focus."}
+                          <motion.div
+                            initial={{ height:0, opacity:0 }} animate={{ height:"auto", opacity:1 }} exit={{ height:0, opacity:0 }}
+                            className="px-3 pb-3 text-[9px] text-gray-500 italic border-t border-gray-100 dark:border-white/5 pt-2 bg-white/50 dark:bg-black/20"
+                          >
+                            {(layer as any).isRaster
+                              ? `Format: GeoTIFF. Represents seabed elevation model — ${layer.title}.`
+                              : "Format: WGS84 GeoJSON. Right-click to focus."}
                           </motion.div>
                         )}
                       </AnimatePresence>
@@ -376,14 +441,16 @@ const Mapping2D = () => {
         </div>
       </motion.div>
 
-      {/* LEGEND DESKTOP (md ke atas) */}
-      <motion.div initial={{ y:20,opacity:0 }} animate={{ y:0,opacity:1 }}
-        className="hidden md:block absolute bottom-10 right-6 z-[1] pointer-events-none">
+      {/* LEGEND DESKTOP */}
+      <motion.div
+        initial={{ y:20, opacity:0 }} animate={{ y:0, opacity:1 }}
+        className="hidden md:block absolute bottom-10 right-6 z-[1] pointer-events-none"
+      >
         <div className="bg-white/90 dark:bg-gray-900/95 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-[2rem] shadow-2xl p-5 lg:p-6 w-56 lg:w-64 pointer-events-auto">
           <h5 className="text-[10px] font-black text-gray-400 uppercase mb-4 tracking-[0.2em] flex items-center gap-2 border-b border-gray-200 dark:border-white/10 pb-3">
             <List size={13} className="text-blue-600" /> Map Legend
           </h5>
-          <div className="space-y-4 max-h-[260px] overflow-y-auto pr-1 custom-scrollbar">
+          <div className="space-y-4 max-h-[320px] overflow-y-auto pr-1 custom-scrollbar">
             <AnimatePresence mode="popLayout">
               {layerGroups.map(group => {
                 const subs = group.subLayers.filter(s => activeSubLayers[s.id]);
@@ -414,24 +481,31 @@ const Mapping2D = () => {
         </div>
       </motion.div>
 
-      {/* LEGEND MOBILE (hanya < md) */}
+      {/* LEGEND MOBILE */}
       <div className="md:hidden absolute bottom-3 right-2 z-[1] pointer-events-auto">
-        <button onClick={() => setIsLegendOpen(!isLegendOpen)}
+        <button
+          onClick={() => setIsLegendOpen(!isLegendOpen)}
           className={`flex items-center gap-1.5 px-3 py-2 rounded-xl shadow-lg border transition-all text-[10px] font-black uppercase tracking-wider ${
-            isLegendOpen ? 'bg-blue-600 text-white border-blue-700' : 'bg-white/95 dark:bg-gray-900/95 text-gray-700 dark:text-white border-gray-200 dark:border-white/10 backdrop-blur-xl'
-          }`}>
+            isLegendOpen
+              ? 'bg-blue-600 text-white border-blue-700'
+              : 'bg-white/95 dark:bg-gray-900/95 text-gray-700 dark:text-white border-gray-200 dark:border-white/10 backdrop-blur-xl'
+          }`}
+        >
           <List size={12} /> Legend
           <ChevronRight size={11} className={`transition-transform ${isLegendOpen ? 'rotate-90' : ''}`} />
         </button>
         <AnimatePresence>
           {isLegendOpen && (
-            <motion.div initial={{ opacity:0,y:8,scale:.95 }} animate={{ opacity:1,y:0,scale:1 }} exit={{ opacity:0,y:8,scale:.95 }} transition={{ duration:.2 }}
-              className="absolute bottom-full right-0 mb-2 w-52 bg-white/97 dark:bg-gray-900/97 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-2xl shadow-2xl overflow-hidden">
+            <motion.div
+              initial={{ opacity:0, y:8, scale:.95 }} animate={{ opacity:1, y:0, scale:1 }} exit={{ opacity:0, y:8, scale:.95 }}
+              transition={{ duration:.2 }}
+              className="absolute bottom-full right-0 mb-2 w-52 bg-white/97 dark:bg-gray-900/97 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-2xl shadow-2xl overflow-hidden"
+            >
               <div className="px-3 py-2 border-b border-gray-100 dark:border-white/10 flex items-center gap-2">
                 <div className="w-1.5 h-4 bg-blue-600 rounded-full" />
                 <span className="text-[10px] font-black uppercase tracking-widest text-gray-600 dark:text-gray-300">Map Legend</span>
               </div>
-              <div className="p-2.5 space-y-3 max-h-56 overflow-y-auto">
+              <div className="p-2.5 space-y-3 max-h-64 overflow-y-auto">
                 {layerGroups.map(group => {
                   const subs = group.subLayers.filter(s => activeSubLayers[s.id]);
                   if (!subs.length) return null;
