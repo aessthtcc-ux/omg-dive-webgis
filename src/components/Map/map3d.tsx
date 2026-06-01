@@ -273,13 +273,23 @@ const Mapping3D = () => {
         </WebGLCheck>  
       </div>
 
-      {/* ✅ MOBILE FIX: UI LEFT PANEL — responsive width & offset */}
+      {/* ✅ FIX: Tombol toggle TERPISAH dari motion.div, selalu kelihatan di tepi layar */}
+      <div className="absolute top-[120px] left-[calc(100vw-52px)] md:left-[calc(1.5rem+360px+0.5rem)] z-[101] flex flex-col justify-center h-[calc(100vh-160px)] pointer-events-none">
+        <button
+          onClick={() => setIsPanelOpen(!isPanelOpen)}
+          className="w-10 h-20 md:h-24 bg-primary rounded-2xl flex items-center justify-center text-white shadow-xl transition-all active:scale-95 pointer-events-auto"
+        >
+          {isPanelOpen ? <ChevronLeft size={22}/> : <ChevronRight size={22}/>}
+        </button>
+      </div>
+
+      {/* Panel yang slide — tanpa tombol toggle di dalamnya */}
       <motion.div 
         animate={{ x: isPanelOpen ? 0 : -(panelWidth + 20) }}
         transition={{ type: "spring", stiffness: 260, damping: 25 }}
-        className="absolute top-[120px] left-2 md:left-6 bottom-10 w-[calc(100vw-60px)] md:w-[360px] z-[100] flex pointer-events-none h-[calc(100vh-160px)]"
+        className="absolute top-[120px] left-2 md:left-6 bottom-10 w-[calc(100vw-60px)] md:w-[360px] z-[100] pointer-events-none h-[calc(100vh-160px)]"
       >
-        <div className="flex-1 bg-white/90 dark:bg-gray-900/95 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-[2rem] md:rounded-[2.5rem] shadow-2xl p-5 md:p-8 flex flex-col pointer-events-auto overflow-hidden">
+        <div className="bg-white/90 dark:bg-gray-900/95 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-[2rem] md:rounded-[2.5rem] shadow-2xl p-5 md:p-8 flex flex-col pointer-events-auto overflow-hidden h-full">
           <div className="mb-4 md:mb-6 shrink-0">
             <h2 className="text-xl md:text-2xl font-black text-gray-900 dark:text-white tracking-tighter uppercase flex items-center gap-3">
               <Box className="text-primary" /> 3D<span className="text-primary">Data</span>
@@ -355,16 +365,6 @@ const Mapping3D = () => {
                 </div>
              </div>
           </div>
-        </div>
-
-        {/* ✅ MOBILE FIX: tombol toggle panel selalu kelihatan */}
-        <div className="flex flex-col justify-center ml-2 pointer-events-auto">
-          <button 
-            onClick={() => setIsPanelOpen(!isPanelOpen)} 
-            className="w-10 h-20 md:h-24 bg-primary rounded-2xl flex items-center justify-center text-white shadow-xl transition-all active:scale-95"
-          >
-            {isPanelOpen ? <ChevronLeft size={22}/> : <ChevronRight size={22}/>}
-          </button>
         </div>
       </motion.div>
 
