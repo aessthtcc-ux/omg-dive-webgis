@@ -160,7 +160,7 @@ const layerGroups = [
     icon: <ImageIcon size={18} className="text-purple-500" />,
     subLayers: [
       { id: "dem_tabularasa",     filePath: "/data/dem/DEM_Tabularasa_RGB_1m_WGS84.tif",     title: "DEM Tabularasa Shipwreck",            project: "Site 1",  color: "#8b5cf6", dash: "0", isDummy: false, isRaster: true },
-      { id: "dem_poso",           filePath: "/data/dem/DTM_PosoFix_0.5m.tif",                title: "DEM Poso Shipwreck",    project: "Site 2",  color: "#ec4899", dash: "0", isDummy: false, isRaster: true },
+      { id: "dem_poso",           filePath: "/data/dem/DEM_Poso_RGB_1m_WGS84.tif",           title: "DEM Poso Shipwreck",    project: "Site 2",  color: "#ec4899", dash: "0", isDummy: false, isRaster: true },
       { id: "dem_perairandangkal",filePath: "/data/dem/DEM_PerairanDangkal_RGB_0.5m.tif",    title: "DEM Perairan Dangkal",  project: "Site 3",  color: "#06b6d4", dash: "0", isDummy: false, isRaster: true },
       { id: "dem_pesisirpanggang",filePath: "/data/dem/DEM_PesisirPanggang_RGB_0.5m.tif",    title: "DEM Pesisir Panggang",  project: "Site 4",  color: "#f97316", dash: "0", isDummy: false, isRaster: true },
       { id: "dem_site5",          filePath: "/data/dem/DEM_Site5.tif",                       title: "DEM Site 5",            project: "Site 5",  color: "#22c55e", dash: "0", isDummy: false, isRaster: true },
