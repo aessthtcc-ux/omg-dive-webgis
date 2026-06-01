@@ -274,7 +274,15 @@ const Mapping3D = () => {
       </div>
 
       {/* ✅ FIX: Tombol toggle TERPISAH dari motion.div, selalu kelihatan di tepi layar */}
-      <div className="absolute top-[120px] left-[calc(100vw-52px)] md:left-[calc(1.5rem+360px+0.5rem)] z-[101] flex flex-col justify-center h-[calc(100vh-160px)] pointer-events-none">
+      // SESUDAH — posisi tombol responsif dan tepat
+      <div
+        className="absolute top-[120px] z-[101] flex flex-col justify-center h-[calc(100vh-160px)] pointer-events-none transition-all duration-500"
+        style={{
+          left: isPanelOpen
+            ? 'calc(0.5rem + min(calc(100vw - 60px), 360px) + 0.5rem)'  // panel terbuka: tombol di sebelah kanan panel
+            : '0.5rem'  // panel tertutup: tombol di tepi kiri layar
+        }}
+      >
         <button
           onClick={() => setIsPanelOpen(!isPanelOpen)}
           className="w-10 h-20 md:h-24 bg-primary rounded-2xl flex items-center justify-center text-white shadow-xl transition-all active:scale-95 pointer-events-auto"
