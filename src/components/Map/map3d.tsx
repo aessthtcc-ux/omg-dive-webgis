@@ -379,7 +379,7 @@ const Mapping3D = () => {
       {/* DESKTOP LEGEND: pojok kanan bawah */}
       <motion.div
         initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
-        className="hidden md:block absolute bottom-10 right-6 z-[100] pointer-events-none"
+        className="hidden md:block absolute bottom-10 right-6 z-[1] pointer-events-none"
       >
         <div className="bg-white/90 dark:bg-gray-900/95 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-[2rem] shadow-2xl p-6 w-64 pointer-events-auto">
           <h5 className="text-[10px] font-black text-gray-400 uppercase mb-5 tracking-[0.2em] flex items-center gap-2">
