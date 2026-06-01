@@ -37,22 +37,22 @@ const ProjectTeam = () => {
     {
       name: "Rasya Intishar",
       role: "Hydrographic Data Acquisition & Processing",
-      ig: "#", ln: "#", img: "/images/team/member1.jpg"
+      ig: "#", ln: "#", img: "/images/team/RasyaInstishar.png"
     },
     {
       name: "Alena Cansery",
       role: "3D Visualization, GIS Integration & StoryMap Development",
-      ig: "#", ln: "#", img: "/images/team/member2.jpg"
+      ig: "#", ln: "#", img: "/images/team/AlenaCansery.jpg"
     },
     {
       name: "Raju Imam Syahanafi",
       role: "Marine Survey Operations & Field Coordination",
-      ig: "#", ln: "#", img: "/images/team/member3.jpg"
+      ig: "#", ln: "#", img: "/images/team/RajuImamSyahanafi.jpeg"
     },
     {
       name: "Hanif Ramadhan",
       role: "Data Analysis & Marine Spatial Modeling",
-      ig: "#", ln: "#", img: "/images/team/member4.jpg"
+      ig: "#", ln: "#", img: "/images/team/HanifRamadhan.jpeg"
     },
   ];
 
