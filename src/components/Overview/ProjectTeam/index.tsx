@@ -39,14 +39,14 @@ const ProjectTeam = () => {
       role: "Hydrographic Data Acquisition & Processing",
       ig: "https://instagram.com/rasyaintisharr",
       ln: "https://www.linkedin.com/in/rasya-intishar",
-      img: "/images/team/RasyaInstishar.png"
+      img: "/images/team/RasyaInstishar.jpeg"
     },
     {
       name: "Alena Cansery",
       role: "3D Visualization, GIS Integration & StoryMap Development",
       ig: "https://instagram.com/alenacsry",
       ln: "https://id.linkedin.com/in/alena-cansery-b02a34246",
-      img: "/images/team/AlenaCansery.jpg"
+      img: "/images/team/AlenaCansery.jpeg"
     },
     {
       name: "Raju Imam Syahanafi",
