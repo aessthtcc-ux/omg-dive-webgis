@@ -88,18 +88,6 @@ const Footer: FC = () => {
 
       <div className="relative z-10 container px-4 sm:px-6">
 
-        {/* ── STATS ROW ── */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={inView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.6 }}
-          className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 pt-10 sm:pt-14 pb-8 sm:pb-10 border-b border-white/5"
-        >
-          {stats.map((s) => (
-            <StatCard key={s.label} {...s} />
-          ))}
-        </motion.div>
-
         {/* ── MAIN CONTENT GRID ── */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-8 sm:gap-10 py-10 sm:py-14 border-b border-white/5">
 
