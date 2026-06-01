@@ -39,7 +39,7 @@ const ProjectTeam = () => {
       role: "Hydrographic Data Acquisition & Processing",
       ig: "https://instagram.com/rasyaintisharr",
       ln: "https://www.linkedin.com/in/rasya-intishar",
-      img: "/images/team/RasyaInstishar.jpeg"
+      img: "/images/team/RasyaIntishar.jpeg"
     },
     {
       name: "Alena Cansery",

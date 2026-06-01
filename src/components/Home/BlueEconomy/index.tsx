@@ -175,19 +175,7 @@ const BlueEconomy = () => {
                 </ResponsiveContainer>
               </div>
 
-              {/* Summary pills — quick stats below chart */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 mt-5 sm:mt-6 pt-4 sm:pt-6 border-t border-gray-100 dark:border-white/10">
-                {projectionData.map((d) => (
-                  <div key={d.year} className="text-center p-2 sm:p-3 rounded-xl bg-primary/5 dark:bg-primary/10">
-                    <p className="text-[9px] sm:text-[10px] text-SlateBlueText dark:text-gray-400 font-bold uppercase tracking-widest mb-0.5">
-                      {d.year}
-                    </p>
-                    <p className="text-[11px] sm:text-xs font-black text-primary">
-                      ${d.income.toLocaleString()}
-                    </p>
-                  </div>
-                ))}
-              </div>
+              
             </div>
           </motion.div>
 
