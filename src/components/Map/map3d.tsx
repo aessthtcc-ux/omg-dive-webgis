@@ -26,7 +26,6 @@ const PointCloudModel = ({ id, url, active, density, onDataLoaded, onLoadingChan
   const [zBounds, setZBounds] = useState({ min: 0, max: 0 });
   const [hasFetched, setHasFetched] = useState(false);
 
-  // 1. FETCH DATA (Hanya dijalankan jika layer diaktifkan pertama kali)
   useEffect(() => {
     if (!active && !hasFetched) return; 
     if (fullGeoData) return; 
@@ -100,7 +99,6 @@ const PointCloudModel = ({ id, url, active, density, onDataLoaded, onLoadingChan
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [active, hasFetched, id, url]);
 
-  // 2. DOWNSAMPLING (Pemotongan Kerapatan)
   const displayData = useMemo(() => {
     if (!fullGeoData) return null;
     const { positions, colors } = fullGeoData;
@@ -117,7 +115,6 @@ const PointCloudModel = ({ id, url, active, density, onDataLoaded, onLoadingChan
     return { positions: newPos, colors: newCol, count: reducedCount };
   }, [fullGeoData, density]);
 
-  // 3. KIRIM STATISTIK KE PARENT
   useEffect(() => {
     if (displayData && zBounds.min !== 0) {
       onDataLoaded(id, displayData.count, zBounds.min, zBounds.max);
@@ -142,27 +139,26 @@ const PointCloudModel = ({ id, url, active, density, onDataLoaded, onLoadingChan
 // --- MAIN COMPONENT ---
 const Mapping3D = () => {
   const [mounted, setMounted] = useState(false);
-  const [isPanelOpen, setIsPanelOpen] = useState(true);
+
+  // ✅ MOBILE FIX: default panel tertutup di semua device
+  const [isPanelOpen, setIsPanelOpen] = useState(false);
+
+  // ✅ MOBILE FIX: state untuk legend di mobile (collapsible)
+  const [isLegendOpen, setIsLegendOpen] = useState(false);
   
-  // STATE: Multi-Layer Control (TAMBAH HANAFI DI SINI)
   const [activeLayers, setActiveLayers] = useState({
-    tabularasa: true, // Default ON
-    poso: false,      // Default OFF 
-    hanafi: false,    // Default OFF 
+    tabularasa: true,
+    poso: false,      
+    hanafi: false,    
     grid: true,
   });
   
-  // STATE KUALITAS RENDER (10 = Low, 4 = Medium, 1 = High)
   const [pointDensity, setPointDensity] = useState<number>(4);
-
-  // STATE: Statistik & Loading Multi-Layer
   const [layerStats, setLayerStats] = useState<Record<string, { count: number, minZ: number, maxZ: number }>>({});
   const [loadingLayers, setLoadingLayers] = useState<Record<string, boolean>>({});
 
-  // Mengecek apakah ada layer yang sedang loading
   const isAnyLoading = Object.values(loadingLayers).some(status => status === true);
 
-  // Kalkulasi Total Statistik untuk Legenda (TAMBAH KALKULASI HANAFI DI SINI)
   const engineStats = useMemo(() => {
     if (isAnyLoading) return { points: "Loading...", status: "Parsing Data", statusColor: "text-primary bg-primary/10" };
     
@@ -171,21 +167,18 @@ const Mapping3D = () => {
     let absoluteMaxZ = -Infinity;
     let activeCloudCount = 0;
 
-    // Layer 1: Tabularasa
     if (activeLayers.tabularasa && layerStats['tabularasa']) {
       totalPoints += layerStats['tabularasa'].count;
       absoluteMinZ = Math.min(absoluteMinZ, layerStats['tabularasa'].minZ);
       absoluteMaxZ = Math.max(absoluteMaxZ, layerStats['tabularasa'].maxZ);
       activeCloudCount++;
     }
-    // Layer 2: Poso Rasya
     if (activeLayers.poso && layerStats['poso']) {
       totalPoints += layerStats['poso'].count;
       absoluteMinZ = Math.min(absoluteMinZ, layerStats['poso'].minZ);
       absoluteMaxZ = Math.max(absoluteMaxZ, layerStats['poso'].maxZ);
       activeCloudCount++;
     }
-    // Layer 3: Poso Hanafi
     if (activeLayers.hanafi && layerStats['hanafi']) {
       totalPoints += layerStats['hanafi'].count;
       absoluteMinZ = Math.min(absoluteMinZ, layerStats['hanafi'].minZ);
@@ -225,6 +218,10 @@ const Mapping3D = () => {
     </div>
   );
 
+  // ✅ MOBILE FIX: hitung offset panel berdasarkan lebar layar
+  // di mobile panel lebar hampir full screen, di desktop 360px
+  const panelWidth = typeof window !== 'undefined' && window.innerWidth < 768 ? window.innerWidth - 60 : 360;
+
   return (
     <section className="relative h-screen w-full overflow-hidden bg-white dark:bg-darklight pt-24">
       
@@ -241,7 +238,7 @@ const Mapping3D = () => {
       {/* 3D SCENE AREA */}
       <div className="absolute top-24 bottom-0 left-0 right-0 z-0 cursor-move">
         <WebGLCheck> 
-          <Canvas frameloop="demand" dpr={[1, 2]} gl={{ antialias: false, logarithmicDepthBuffer: true }}>
+          <Canvas frameloop="demand" dpr={[1, 1.5]} gl={{ antialias: false, logarithmicDepthBuffer: true }}>
             <color attach="background" args={["#050505"]} />
             <PerspectiveCamera makeDefault position={[15, 15, 15]} near={0.1} far={1000} />
             <OrbitControls makeDefault enableDamping dampingFactor={0.1} />
@@ -252,7 +249,6 @@ const Mapping3D = () => {
               <Center>
                 {activeLayers.grid && <gridHelper args={[30, 30, "#1e1e1e", "#121212"]} position={[0, -2, 0]} />}
                 
-                {/* RENDERER LAYER 1: TABULARASA */}
                 <PointCloudModel 
                   id="tabularasa"
                   url="/data/3D/Day5_Tabularasa.las"
@@ -262,7 +258,6 @@ const Mapping3D = () => {
                   onLoadingChange={handleLoadingChange}
                 />
                 
-                {/* RENDERER LAYER 2: POSO RASYA */}
                 <PointCloudModel 
                   id="poso"
                   url="/data/3D/Poso_hanafi.las"
@@ -278,14 +273,15 @@ const Mapping3D = () => {
         </WebGLCheck>  
       </div>
 
-      {/* UI LEFT PANEL: MULTI-LAYER CONTROLS */}
+      {/* ✅ MOBILE FIX: UI LEFT PANEL — responsive width & offset */}
       <motion.div 
-        animate={{ x: isPanelOpen ? 0 : -345 }}
-        className="absolute top-[120px] left-6 bottom-10 w-[360px] z-[1] flex pointer-events-none h-[calc(100vh-160px)]"
+        animate={{ x: isPanelOpen ? 0 : -(panelWidth + 20) }}
+        transition={{ type: "spring", stiffness: 260, damping: 25 }}
+        className="absolute top-[120px] left-2 md:left-6 bottom-10 w-[calc(100vw-60px)] md:w-[360px] z-[100] flex pointer-events-none h-[calc(100vh-160px)]"
       >
-        <div className="flex-1 bg-white/90 dark:bg-gray-900/95 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-[2.5rem] shadow-2xl p-8 flex flex-col pointer-events-auto overflow-hidden">
-          <div className="mb-6 shrink-0">
-            <h2 className="text-2xl font-black text-gray-900 dark:text-white tracking-tighter uppercase flex items-center gap-3">
+        <div className="flex-1 bg-white/90 dark:bg-gray-900/95 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-[2rem] md:rounded-[2.5rem] shadow-2xl p-5 md:p-8 flex flex-col pointer-events-auto overflow-hidden">
+          <div className="mb-4 md:mb-6 shrink-0">
+            <h2 className="text-xl md:text-2xl font-black text-gray-900 dark:text-white tracking-tighter uppercase flex items-center gap-3">
               <Box className="text-primary" /> 3D<span className="text-primary">Data</span>
             </h2>
             <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-2 flex items-center gap-2">
@@ -296,13 +292,13 @@ const Mapping3D = () => {
           <div className="flex-1 space-y-3 overflow-y-auto pr-2 custom-scrollbar">
              
              {/* TOGGLE LAYER 1: TABULARASA */}
-             <div className={`rounded-3xl border p-4 transition-all ${activeLayers.tabularasa ? 'bg-primary/5 border-primary/20' : 'bg-gray-50 dark:bg-white/5 border-gray-100 dark:border-white/5'}`}>
+             <div className={`rounded-2xl md:rounded-3xl border p-3 md:p-4 transition-all ${activeLayers.tabularasa ? 'bg-primary/5 border-primary/20' : 'bg-gray-50 dark:bg-white/5 border-gray-100 dark:border-white/5'}`}>
                <div className="flex items-center justify-between">
-                 <div className="flex items-center gap-4">
+                 <div className="flex items-center gap-3 md:gap-4">
                     <button 
                       onClick={() => toggleLayer('tabularasa')}
                       disabled={isAnyLoading}
-                      className={`p-2.5 rounded-2xl transition-all ${activeLayers.tabularasa ? 'bg-primary text-white shadow-lg shadow-primary/30' : 'bg-gray-200 dark:bg-white/10 text-gray-400'} ${isAnyLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                      className={`p-2 md:p-2.5 rounded-xl md:rounded-2xl transition-all ${activeLayers.tabularasa ? 'bg-primary text-white shadow-lg shadow-primary/30' : 'bg-gray-200 dark:bg-white/10 text-gray-400'} ${isAnyLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
                     >
                       {activeLayers.tabularasa ? <Eye size={16}/> : <EyeOff size={16}/>}
                     </button>
@@ -316,13 +312,13 @@ const Mapping3D = () => {
              </div>
 
              {/* TOGGLE LAYER 2: POSO RASYA */}
-             <div className={`rounded-3xl border p-4 transition-all ${activeLayers.poso ? 'bg-primary/5 border-primary/20' : 'bg-gray-50 dark:bg-white/5 border-gray-100 dark:border-white/5'}`}>
+             <div className={`rounded-2xl md:rounded-3xl border p-3 md:p-4 transition-all ${activeLayers.poso ? 'bg-primary/5 border-primary/20' : 'bg-gray-50 dark:bg-white/5 border-gray-100 dark:border-white/5'}`}>
                <div className="flex items-center justify-between">
-                 <div className="flex items-center gap-4">
+                 <div className="flex items-center gap-3 md:gap-4">
                     <button 
                       onClick={() => toggleLayer('poso')}
                       disabled={isAnyLoading}
-                      className={`p-2.5 rounded-2xl transition-all ${activeLayers.poso ? 'bg-primary text-white shadow-lg shadow-primary/30' : 'bg-gray-200 dark:bg-white/10 text-gray-400'} ${isAnyLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                      className={`p-2 md:p-2.5 rounded-xl md:rounded-2xl transition-all ${activeLayers.poso ? 'bg-primary text-white shadow-lg shadow-primary/30' : 'bg-gray-200 dark:bg-white/10 text-gray-400'} ${isAnyLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
                     >
                       {activeLayers.poso ? <Eye size={16}/> : <EyeOff size={16}/>}
                     </button>
@@ -336,7 +332,7 @@ const Mapping3D = () => {
              </div>
 
              {/* UI KONTROL KUALITAS RENDER */}
-             <div className="mt-6 border-t border-gray-200 dark:border-white/10 pt-4">
+             <div className="mt-4 border-t border-gray-200 dark:border-white/10 pt-4">
                 <div className="flex items-center gap-2 mb-3">
                   <Sliders size={14} className="text-gray-400" />
                   <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Render Quality</span>
@@ -358,23 +354,73 @@ const Mapping3D = () => {
                   ))}
                 </div>
              </div>
-
           </div>
         </div>
+
+        {/* ✅ MOBILE FIX: tombol toggle panel selalu kelihatan */}
         <div className="flex flex-col justify-center ml-2 pointer-events-auto">
           <button 
             onClick={() => setIsPanelOpen(!isPanelOpen)} 
-            className="w-10 h-24 bg-primary rounded-2xl flex items-center justify-center text-white shadow-xl transition-all active:scale-95"
+            className="w-10 h-20 md:h-24 bg-primary rounded-2xl flex items-center justify-center text-white shadow-xl transition-all active:scale-95"
           >
-            {isPanelOpen ? <ChevronLeft size={24}/> : <ChevronRight size={24}/>}
+            {isPanelOpen ? <ChevronLeft size={22}/> : <ChevronRight size={22}/>}
           </button>
         </div>
       </motion.div>
 
-      {/* BOTTOM RIGHT LEGEND & ELEVATION SCALE */}
+      {/* ✅ MOBILE FIX: LEGEND — di mobile jadi collapsible bar di bawah, di desktop tetap pojok kanan */}
+
+      {/* MOBILE LEGEND: bottom bar */}
+      <div className="md:hidden absolute bottom-4 left-2 right-2 z-[100] pointer-events-auto">
+        <button
+          onClick={() => setIsLegendOpen(!isLegendOpen)}
+          className="w-full bg-gray-900/95 backdrop-blur-xl border border-white/10 rounded-2xl px-4 py-3 flex items-center justify-between text-white"
+        >
+          <span className="flex items-center gap-2 text-[11px] font-black uppercase tracking-widest">
+            <List size={14} className="text-primary"/> Engine Diagnostics
+          </span>
+          <span className={`text-[10px] font-black px-2 py-1 rounded-lg ${engineStats.statusColor}`}>
+            {engineStats.status}
+          </span>
+        </button>
+
+        <AnimatePresence>
+          {isLegendOpen && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              className="overflow-hidden"
+            >
+              <div className="bg-gray-900/95 backdrop-blur-xl border border-white/10 border-t-0 rounded-b-2xl p-4 space-y-3">
+                <div className="flex justify-between items-center">
+                  <span className="text-[10px] text-gray-400 font-bold uppercase">Active Points</span>
+                  <span className="text-[10px] font-black text-blue-400">{engineStats.points}</span>
+                </div>
+
+                {engineStats.hasActiveCloud && !isAnyLoading && (
+                  <div>
+                    <span className="text-[9px] text-gray-400 font-bold uppercase tracking-widest mb-2 block">Depth Scale</span>
+                    <div className="flex items-center gap-3">
+                      <div className="w-4 h-20 rounded-full" style={{ background: 'linear-gradient(to top, #081d58, #1d91c0, #7fcdbb, #ffffd9)' }} />
+                      <div className="flex flex-col justify-between h-20 py-1">
+                        <span className="text-[10px] font-mono font-bold text-gray-300">{engineStats.maxZ.toFixed(2)} m</span>
+                        <span className="text-[10px] font-mono text-gray-500">{((engineStats.minZ + engineStats.maxZ) / 2).toFixed(2)} m</span>
+                        <span className="text-[10px] font-mono font-bold text-gray-300">{engineStats.minZ.toFixed(2)} m</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+
+      {/* DESKTOP LEGEND: pojok kanan bawah — hidden di mobile */}
       <motion.div 
         initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
-        className="absolute bottom-10 right-20 z-[1000] pointer-events-none"
+        className="hidden md:block absolute bottom-10 right-6 z-[100] pointer-events-none"
       >
         <div className="bg-white/90 dark:bg-gray-900/95 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-[2rem] shadow-2xl p-6 w-64 pointer-events-auto transition-all duration-500">
           <h5 className="text-[10px] font-black text-gray-400 uppercase mb-5 tracking-[0.2em] flex items-center gap-2">
@@ -414,7 +460,6 @@ const Mapping3D = () => {
             </div>
           </div>
 
-          {/* COLOR RAMP LEGEND (Skala Ketinggian) */}
           <AnimatePresence>
             {engineStats.hasActiveCloud && !isAnyLoading && (
               <motion.div 
@@ -422,28 +467,20 @@ const Mapping3D = () => {
                 className="mt-5 border-t border-gray-100 dark:border-white/10 pt-4 overflow-hidden"
               >
                 <span className="text-[9px] text-gray-400 font-bold uppercase tracking-widest mb-3 block text-center">Depth Scale (Z-Axis)</span>
-                
                 <div className="flex items-center justify-center gap-4">
                   <div 
                     className="w-4 h-32 rounded-full shadow-inner border border-white/10" 
                     style={{ background: 'linear-gradient(to top, #081d58, #1d91c0, #7fcdbb, #ffffd9)' }}
                   />
                   <div className="flex flex-col justify-between h-32 py-1">
-                    <span className="text-[11px] font-mono font-bold text-gray-700 dark:text-gray-300">
-                      {engineStats.maxZ.toFixed(2)} m <span className="text-[9px] text-gray-400 font-sans italic ml-1"></span>
-                    </span>
-                    <span className="text-[11px] font-mono font-bold text-gray-500">
-                      {((engineStats.minZ + engineStats.maxZ) / 2).toFixed(2)} m
-                    </span>
-                    <span className="text-[11px] font-mono font-bold text-gray-700 dark:text-gray-300">
-                      {engineStats.minZ.toFixed(2)} m <span className="text-[9px] text-gray-400 font-sans italic ml-1"></span>
-                    </span>
+                    <span className="text-[11px] font-mono font-bold text-gray-700 dark:text-gray-300">{engineStats.maxZ.toFixed(2)} m</span>
+                    <span className="text-[11px] font-mono font-bold text-gray-500">{((engineStats.minZ + engineStats.maxZ) / 2).toFixed(2)} m</span>
+                    <span className="text-[11px] font-mono font-bold text-gray-700 dark:text-gray-300">{engineStats.minZ.toFixed(2)} m</span>
                   </div>
                 </div>
               </motion.div>
             )}
           </AnimatePresence>
-
         </div>
       </motion.div>
     </section>

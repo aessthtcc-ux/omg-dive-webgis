@@ -201,7 +201,7 @@ const baseMaps = [
 
 const Mapping2D = () => {
   const [mounted, setMounted] = useState(false);
-  const [isPanelOpen, setIsPanelOpen] = useState(true);
+  const [isPanelOpen, setIsPanelOpen] = useState(false);
   const [isBaseMapOpen, setIsBaseMapOpen] = useState(false);
   const [openDesc, setOpenDesc] = useState<string | null>(null);
   const [activeBasemap, setActiveBasemap] = useState(baseMaps[1]);
@@ -381,7 +381,7 @@ const Mapping2D = () => {
       </div>
 
       {/* 2. BASEMAP CONTROLLER */}
-      <div className="absolute top-[120px] right-6 z-[1000] flex flex-col items-end">
+      <div className="absolute top-[120px] right-2 md:right-6 z-[1000] flex flex-col items-end">
         <button onClick={() => setIsBaseMapOpen(!isBaseMapOpen)} className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl border border-gray-200 dark:border-white/10 p-3 rounded-2xl shadow-xl flex items-center gap-3 hover:scale-105 transition-all pointer-events-auto">
           <div className="flex flex-col items-end">
             <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none">Basemap</span>
@@ -411,7 +411,7 @@ const Mapping2D = () => {
       {/* 3. SIDE PANEL */}
       <motion.div 
         animate={{ x: isPanelOpen ? 0 : -345 }} transition={{ type: "spring", stiffness: 260, damping: 25 }}
-        className="absolute top-[120px] left-6 bottom-10 w-[360px] z-[1] flex pointer-events-none h-[calc(100vh-160px)]"
+        className="absolute top-[120px] left-2 md:left-6 bottom-10 w-[calc(100vw-60px)] md:w-[360px] z-[1] flex pointer-events-none h-[calc(100vh-160px)]"
       >
         <div className="flex-1 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-[2.5rem] shadow-2xl p-6 flex flex-col pointer-events-auto overflow-hidden">
           <div className="mb-6 shrink-0 px-2">
@@ -482,8 +482,8 @@ const Mapping2D = () => {
       </motion.div>
 
       {/* 4. DYNAMIC LEGEND */}
-      <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="absolute bottom-10 right-20 z-[1] pointer-events-none">
-        <div className="bg-white/90 dark:bg-gray-900/95 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-[2rem] shadow-2xl p-6 w-64 pointer-events-auto">
+      <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="absolute bottom-10 right-2 md:right-20 z-[1] pointer-events-none hidden md:block">
+        <div className="bg-white/90 dark:bg-gray-900/95 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-[2rem] shadow-2xl p-3 md:p-6 w-44 md:w-64 pointer-events-auto">
           <h5 className="text-[10px] font-black text-gray-400 uppercase mb-4 tracking-[0.2em] flex items-center gap-2 border-b border-gray-200 dark:border-white/10 pb-3">
             <List size={14} className="text-blue-600"/> Map Legend
           </h5>
