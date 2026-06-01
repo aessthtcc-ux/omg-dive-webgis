@@ -11,6 +11,10 @@ import {
 } from 'lucide-react';
 import WebGLCheck from "../WebGLCheck";
 
+// ── Panel widths (identik dengan Mapping2D) ─────────────
+const PANEL_W = { mobile: 280, tablet: 300, desktop: 360 };
+
+// ── Interfaces ───────────────────────────────────────────
 interface PointCloudProps {
   id: string;
   url: string;
@@ -20,10 +24,11 @@ interface PointCloudProps {
   onLoadingChange: (id: string, isLoading: boolean) => void;
 }
 
+// ── PointCloudModel (tidak berubah) ──────────────────────
 const PointCloudModel = ({ id, url, active, density, onDataLoaded, onLoadingChange }: PointCloudProps) => {
-  const [fullGeoData, setFullGeoData] = useState<{ positions: Float32Array, colors: Float32Array } | null>(null);
-  const [zBounds, setZBounds] = useState({ min: 0, max: 0 });
-  const [hasFetched, setHasFetched] = useState(false);
+  const [fullGeoData, setFullGeoData] = useState<{ positions: Float32Array; colors: Float32Array } | null>(null);
+  const [zBounds,     setZBounds]     = useState({ min: 0, max: 0 });
+  const [hasFetched,  setHasFetched]  = useState(false);
 
   useEffect(() => {
     if (!active && !hasFetched) return;
@@ -33,35 +38,38 @@ const PointCloudModel = ({ id, url, active, density, onDataLoaded, onLoadingChan
       setHasFetched(true);
       onLoadingChange(id, true);
       try {
-        const { load } = await import('@loaders.gl/core');
+        const { load }      = await import('@loaders.gl/core');
         const { LASLoader } = await import('@loaders.gl/las');
-        const rawData = await load(url, LASLoader);
-        const positions = rawData.attributes.POSITION.value;
+        const rawData       = await load(url, LASLoader);
+        const positions     = rawData.attributes.POSITION.value;
 
-        let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity, minZ = Infinity, maxZ = -Infinity;
+        let minX = Infinity, maxX = -Infinity,
+            minY = Infinity, maxY = -Infinity,
+            minZ = Infinity, maxZ = -Infinity;
+
         for (let i = 0; i < positions.length; i += 3) {
-          if (positions[i] < minX) minX = positions[i];
-          if (positions[i] > maxX) maxX = positions[i];
-          if (positions[i + 1] < minY) minY = positions[i + 1];
-          if (positions[i + 1] > maxY) maxY = positions[i + 1];
-          if (positions[i + 2] < minZ) minZ = positions[i + 2];
-          if (positions[i + 2] > maxZ) maxZ = positions[i + 2];
+          if (positions[i]   < minX) minX = positions[i];
+          if (positions[i]   > maxX) maxX = positions[i];
+          if (positions[i+1] < minY) minY = positions[i+1];
+          if (positions[i+1] > maxY) maxY = positions[i+1];
+          if (positions[i+2] < minZ) minZ = positions[i+2];
+          if (positions[i+2] > maxZ) maxZ = positions[i+2];
         }
 
         const centerX = (minX + maxX) / 2;
         const centerY = (minY + maxY) / 2;
         const centerZ = (minZ + maxZ) / 2;
-        const range = Math.max(maxX - minX, maxY - minY, maxZ - minZ);
-        const scale = 20 / (range || 1);
+        const range   = Math.max(maxX - minX, maxY - minY, maxZ - minZ);
+        const scale   = 20 / (range || 1);
 
         const centeredPositions = new Float32Array(positions.length);
         let finalMinY = Infinity, finalMaxY = -Infinity;
 
         for (let i = 0; i < positions.length; i += 3) {
-          centeredPositions[i] = (positions[i] - centerX) * scale;
-          centeredPositions[i + 1] = (positions[i + 2] - centerZ) * scale;
-          centeredPositions[i + 2] = -(positions[i + 1] - centerY) * scale;
-          const h = centeredPositions[i + 1];
+          centeredPositions[i]   = (positions[i]   - centerX) * scale;
+          centeredPositions[i+1] = (positions[i+2] - centerZ) * scale;
+          centeredPositions[i+2] = -(positions[i+1] - centerY) * scale;
+          const h = centeredPositions[i+1];
           if (h < finalMinY) finalMinY = h;
           if (h > finalMaxY) finalMaxY = h;
         }
@@ -74,11 +82,13 @@ const PointCloudModel = ({ id, url, active, density, onDataLoaded, onLoadingChan
         const tmp = new THREE.Color();
 
         for (let i = 0; i < centeredPositions.length; i += 3) {
-          const t = finalMaxY === finalMinY ? 0 : Math.max(0, Math.min(1, (centeredPositions[i + 1] - finalMinY) / (finalMaxY - finalMinY)));
-          if (t < 0.33) tmp.lerpColors(c1, c2, t / 0.33);
+          const t = finalMaxY === finalMinY
+            ? 0
+            : Math.max(0, Math.min(1, (centeredPositions[i+1] - finalMinY) / (finalMaxY - finalMinY)));
+          if      (t < 0.33) tmp.lerpColors(c1, c2, t / 0.33);
           else if (t < 0.66) tmp.lerpColors(c2, c3, (t - 0.33) / 0.33);
-          else tmp.lerpColors(c3, c4, (t - 0.66) / 0.34);
-          colors[i] = tmp.r; colors[i + 1] = tmp.g; colors[i + 2] = tmp.b;
+          else               tmp.lerpColors(c3, c4, (t - 0.66) / 0.34);
+          colors[i] = tmp.r; colors[i+1] = tmp.g; colors[i+2] = tmp.b;
         }
 
         setFullGeoData({ positions: centeredPositions, colors });
@@ -101,8 +111,8 @@ const PointCloudModel = ({ id, url, active, density, onDataLoaded, onLoadingChan
     const newCol = new Float32Array(reducedCount * 3);
     let pIndex = 0;
     for (let i = 0; i < positions.length; i += 3 * density) {
-      newPos[pIndex] = positions[i]; newPos[pIndex + 1] = positions[i + 1]; newPos[pIndex + 2] = positions[i + 2];
-      newCol[pIndex] = colors[i]; newCol[pIndex + 1] = colors[i + 1]; newCol[pIndex + 2] = colors[i + 2];
+      newPos[pIndex]   = positions[i];   newPos[pIndex+1] = positions[i+1]; newPos[pIndex+2] = positions[i+2];
+      newCol[pIndex]   = colors[i];      newCol[pIndex+1] = colors[i+1];   newCol[pIndex+2] = colors[i+2];
       pIndex += 3;
     }
     return { positions: newPos, colors: newCol, count: reducedCount };
@@ -120,28 +130,38 @@ const PointCloudModel = ({ id, url, active, density, onDataLoaded, onLoadingChan
         {/* @ts-ignore */}
         <bufferAttribute attach="attributes-position" count={displayData.count} array={displayData.positions} itemSize={3} />
         {/* @ts-ignore */}
-        <bufferAttribute attach="attributes-color" count={displayData.count} array={displayData.colors} itemSize={3} />
+        <bufferAttribute attach="attributes-color"    count={displayData.count} array={displayData.colors}    itemSize={3} />
       </bufferGeometry>
       <pointsMaterial vertexColors size={2} sizeAttenuation={false} transparent={false} depthWrite />
     </points>
   );
 };
 
-// --- MAIN COMPONENT ---
+// ── MAIN COMPONENT ───────────────────────────────────────
 const Mapping3D = () => {
-  const [mounted, setMounted] = useState(false);
-  const [isPanelOpen, setIsPanelOpen] = useState(false);
-  const [isLegendOpen, setIsLegendOpen] = useState(false);
+  const [mounted,       setMounted]       = useState(false);
+  const [isPanelOpen,   setIsPanelOpen]   = useState(false);
+  const [isLegendOpen,  setIsLegendOpen]  = useState(false);
+
+  // ✅ Track window width — identik dengan Mapping2D
+  const [winWidth, setWinWidth] = useState(
+    typeof window !== 'undefined' ? window.innerWidth : 1024
+  );
+
+  useEffect(() => {
+    const onResize = () => setWinWidth(window.innerWidth);
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
 
   const [activeLayers, setActiveLayers] = useState({
     tabularasa: true,
-    poso: false,
-    hanafi: false,
-    grid: true,
+    poso:       false,
+    grid:       true,
   });
 
-  const [pointDensity, setPointDensity] = useState<number>(4);
-  const [layerStats, setLayerStats] = useState<Record<string, { count: number; minZ: number; maxZ: number }>>({});
+  const [pointDensity,  setPointDensity]  = useState<number>(4);
+  const [layerStats,    setLayerStats]    = useState<Record<string, { count: number; minZ: number; maxZ: number }>>({});
   const [loadingLayers, setLoadingLayers] = useState<Record<string, boolean>>({});
 
   const isAnyLoading = Object.values(loadingLayers).some(Boolean);
@@ -158,20 +178,20 @@ const Mapping3D = () => {
       }
     }
     return {
-      points: count > 0 ? `${totalPoints.toLocaleString()} pts` : "0 pts",
-      status: count > 0 ? "Optimal" : (activeLayers.grid ? "Standby" : "Idle"),
-      statusColor: count > 0 ? "text-green-500 bg-green-500/10" : "text-yellow-500 bg-yellow-500/10",
-      minZ: minZ === Infinity ? 0 : minZ,
-      maxZ: maxZ === -Infinity ? 0 : maxZ,
+      points:         count > 0 ? `${totalPoints.toLocaleString()} pts` : "0 pts",
+      status:         count > 0 ? "Optimal" : (activeLayers.grid ? "Standby" : "Idle"),
+      statusColor:    count > 0 ? "text-green-500 bg-green-500/10" : "text-yellow-500 bg-yellow-500/10",
+      minZ:           minZ === Infinity  ? 0 : minZ,
+      maxZ:           maxZ === -Infinity ? 0 : maxZ,
       hasActiveCloud: count > 0,
     };
   }, [activeLayers, layerStats, isAnyLoading]);
 
   useEffect(() => { setMounted(true); }, []);
 
-  const handleDataLoaded = useCallback((id: string, c: number, mn: number, mx: number) => setLayerStats(p => ({ ...p, [id]: { count: c, minZ: mn, maxZ: mx } })), []);
-  const handleLoadingChange = useCallback((id: string, loading: boolean) => setLoadingLayers(p => ({ ...p, [id]: loading })), []);
-  const toggleLayer = (k: keyof typeof activeLayers) => setActiveLayers(p => ({ ...p, [k]: !p[k] }));
+  const handleDataLoaded    = useCallback((id: string, c: number, mn: number, mx: number) => setLayerStats(p => ({ ...p, [id]: { count: c, minZ: mn, maxZ: mx } })), []);
+  const handleLoadingChange = useCallback((id: string, loading: boolean)                   => setLoadingLayers(p => ({ ...p, [id]: loading })), []);
+  const toggleLayer         = (k: keyof typeof activeLayers) => setActiveLayers(p => ({ ...p, [k]: !p[k] }));
 
   if (!mounted) return (
     <div className="h-screen w-full flex items-center justify-center bg-[#050505]">
@@ -181,9 +201,10 @@ const Mapping3D = () => {
     </div>
   );
 
-  // Panel widths per breakpoint (matches Tailwind w- classes below)
-  // mobile: 280px, md: 300px, lg: 360px
-  // We drive everything via CSS transforms; no window.innerWidth needed.
+  // ✅ Kalkulasi posisi — identik dengan Mapping2D
+  const panelW    = winWidth >= 1024 ? PANEL_W.desktop : winWidth >= 768 ? PANEL_W.tablet : PANEL_W.mobile;
+  const panelLeft = winWidth >= 1024 ? '1.5rem'        : winWidth >= 768 ? '1rem'         : '0.5rem';
+  const toggleLeft = isPanelOpen ? `calc(${panelLeft} + ${panelW}px + 0.5rem)` : '0.5rem';
 
   return (
     <section className="relative h-screen w-full overflow-hidden bg-white dark:bg-darklight pt-24">
@@ -211,7 +232,7 @@ const Mapping3D = () => {
               <Center>
                 {activeLayers.grid && <gridHelper args={[30, 30, "#1e1e1e", "#121212"]} position={[0, -2, 0]} />}
                 <PointCloudModel id="tabularasa" url="/data/3D/PointCloud_Tabularasa.las" active={activeLayers.tabularasa} density={pointDensity} onDataLoaded={handleDataLoaded} onLoadingChange={handleLoadingChange} />
-                <PointCloudModel id="poso" url="/data/3D/PointCloud_Poso.las" active={activeLayers.poso} density={pointDensity} onDataLoaded={handleDataLoaded} onLoadingChange={handleLoadingChange} />
+                <PointCloudModel id="poso"       url="/data/3D/PointCloud_Poso.las"       active={activeLayers.poso}       density={pointDensity} onDataLoaded={handleDataLoaded} onLoadingChange={handleLoadingChange} />
               </Center>
               <Stars radius={100} depth={50} count={3000} factor={4} fade speed={1} />
             </Suspense>
@@ -219,50 +240,33 @@ const Mapping3D = () => {
         </WebGLCheck>
       </div>
 
-      {/*
-        LAYOUT CONTAINER
-        ─────────────────────────────────────────────────────────
-        Semua elemen panel (panel + toggle button) dibungkus dalam
-        satu wrapper yang di-translate secara bersamaan.
-
-        Ukuran panel:
-          mobile : w-[280px]  → translate -300px saat tutup
-          md     : w-[300px]  → translate -320px saat tutup
-          lg     : w-[360px]  → translate -380px saat tutup
-
-        Tombol toggle selalu nempel di sisi kanan wrapper,
-        sehingga otomatis ikut gerak tanpa perlu hitung manual.
-        ─────────────────────────────────────────────────────────
-      */}
+      {/* ✅ TOGGLE BUTTON — posisi dinamis via inline style, identik Mapping2D */}
       <div
-        className={[
-          // Posisi & ukuran wrapper — cukup lebar untuk panel + tombol (40px)
-          "absolute top-[120px] bottom-10 z-30",
-          "left-2 md:left-4 lg:left-6",
-          // Lebar wrapper = lebar panel + lebar tombol + gap kecil
-          "w-[calc(280px+48px)] md:w-[calc(300px+48px)] lg:w-[calc(360px+48px)]",
-          // Slide in/out via CSS transition — tidak perlu JS window.innerWidth
-          "transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]",
-          isPanelOpen
-            ? "translate-x-0"
-            : "-translate-x-[280px] md:-translate-x-[300px] lg:-translate-x-[360px]",
-        ].join(" ")}
+        className="absolute top-[120px] z-[101] flex flex-col justify-center h-[calc(100vh-160px)] pointer-events-none transition-all duration-500"
+        style={{ left: toggleLeft }}
       >
-        {/* ── Side Panel ───────────────────────────────────────── */}
-        <div
-          className={[
-            "absolute top-0 bottom-0 left-0",
-            "w-[280px] md:w-[300px] lg:w-[360px]",
-            "bg-white/90 dark:bg-gray-900/95 backdrop-blur-xl",
-            "border border-gray-200 dark:border-white/10",
-            "rounded-[2rem] md:rounded-[2.5rem] shadow-2xl",
-            "p-5 md:p-8 flex flex-col overflow-hidden",
-          ].join(" ")}
+        <button
+          onClick={() => setIsPanelOpen(!isPanelOpen)}
+          className="w-10 h-20 md:h-24 bg-primary hover:bg-primary/90 rounded-2xl flex items-center justify-center text-white shadow-xl transition-all active:scale-95 pointer-events-auto"
+          aria-label={isPanelOpen ? "Close panel" : "Open panel"}
         >
+          {isPanelOpen ? <ChevronLeft size={22} /> : <ChevronRight size={22} />}
+        </button>
+      </div>
+
+      {/* ✅ SIDE PANEL — lebar & posisi via inline style, identik Mapping2D */}
+      <motion.div
+        animate={{ x: isPanelOpen ? 0 : -(panelW + 20) }}
+        transition={{ type: "spring", stiffness: 260, damping: 25 }}
+        style={{ width: panelW, left: panelLeft }}
+        className="absolute top-[120px] bottom-10 z-[1] pointer-events-none h-[calc(100vh-160px)]"
+      >
+        <div className="bg-white/90 dark:bg-gray-900/95 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-[2rem] md:rounded-[2.5rem] shadow-2xl p-4 md:p-5 lg:p-6 flex flex-col pointer-events-auto overflow-hidden h-full">
+
           {/* Header */}
           <div className="mb-4 md:mb-6 shrink-0">
-            <h2 className="text-xl md:text-2xl font-black text-gray-900 dark:text-white tracking-tighter uppercase flex items-center gap-3">
-              <Box className="text-primary" /> 3D<span className="text-primary">Data</span>
+            <h2 className="text-lg md:text-xl lg:text-2xl font-black text-gray-900 dark:text-white tracking-tighter uppercase flex items-center gap-2 md:gap-3">
+              <Box className="text-primary" size={20} /> 3D<span className="text-primary">Data</span>
             </h2>
             <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-2 flex items-center gap-2">
               <Layers size={12} /> Multiple Survey Data
@@ -271,47 +275,48 @@ const Mapping3D = () => {
 
           {/* Layer list */}
           <div className="flex-1 space-y-3 overflow-y-auto pr-2 custom-scrollbar">
+
             {/* Layer: Tabularasa */}
             <div className={`rounded-2xl md:rounded-3xl border p-3 md:p-4 transition-all ${activeLayers.tabularasa ? 'bg-primary/5 border-primary/20' : 'bg-gray-50 dark:bg-white/5 border-gray-100 dark:border-white/5'}`}>
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3 md:gap-4">
+                <div className="flex items-center gap-3">
                   <button
                     onClick={() => toggleLayer('tabularasa')}
                     disabled={isAnyLoading}
                     className={`p-2 md:p-2.5 rounded-xl md:rounded-2xl transition-all ${activeLayers.tabularasa ? 'bg-primary text-white shadow-lg shadow-primary/30' : 'bg-gray-200 dark:bg-white/10 text-gray-400'} ${isAnyLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
                   >
-                    {activeLayers.tabularasa ? <Eye size={16} /> : <EyeOff size={16} />}
+                    {activeLayers.tabularasa ? <Eye size={15} /> : <EyeOff size={15} />}
                   </button>
                   <div>
-                    <h4 className="text-[11px] font-black text-gray-900 dark:text-white uppercase tracking-tight">Tabularasa Shipwreck</h4>
+                    <h4 className="text-[10px] md:text-[11px] font-black text-gray-900 dark:text-white uppercase tracking-tight">Tabularasa Shipwreck</h4>
                     <span className="text-[9px] text-gray-500 font-bold">Wreck Site 1</span>
                   </div>
                 </div>
-                <Wind size={16} className={`${activeLayers.tabularasa ? 'text-primary' : 'text-gray-400'} opacity-50`} />
+                <Wind size={15} className={`${activeLayers.tabularasa ? 'text-primary' : 'text-gray-400'} opacity-50`} />
               </div>
             </div>
 
             {/* Layer: Poso */}
             <div className={`rounded-2xl md:rounded-3xl border p-3 md:p-4 transition-all ${activeLayers.poso ? 'bg-primary/5 border-primary/20' : 'bg-gray-50 dark:bg-white/5 border-gray-100 dark:border-white/5'}`}>
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3 md:gap-4">
+                <div className="flex items-center gap-3">
                   <button
                     onClick={() => toggleLayer('poso')}
                     disabled={isAnyLoading}
                     className={`p-2 md:p-2.5 rounded-xl md:rounded-2xl transition-all ${activeLayers.poso ? 'bg-primary text-white shadow-lg shadow-primary/30' : 'bg-gray-200 dark:bg-white/10 text-gray-400'} ${isAnyLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
                   >
-                    {activeLayers.poso ? <Eye size={16} /> : <EyeOff size={16} />}
+                    {activeLayers.poso ? <Eye size={15} /> : <EyeOff size={15} />}
                   </button>
                   <div>
-                    <h4 className="text-[11px] font-black text-gray-900 dark:text-white uppercase tracking-tight">Poso Shipwreck</h4>
+                    <h4 className="text-[10px] md:text-[11px] font-black text-gray-900 dark:text-white uppercase tracking-tight">Poso Shipwreck</h4>
                     <span className="text-[9px] text-gray-500 font-bold">Wreck Site 2</span>
                   </div>
                 </div>
-                <Wind size={16} className={`${activeLayers.poso ? 'text-primary' : 'text-gray-400'} opacity-50`} />
+                <Wind size={15} className={`${activeLayers.poso ? 'text-primary' : 'text-gray-400'} opacity-50`} />
               </div>
             </div>
 
-            {/* Render quality */}
+            {/* Render Quality */}
             <div className="mt-4 border-t border-gray-200 dark:border-white/10 pt-4">
               <div className="flex items-center gap-2 mb-3">
                 <Sliders size={14} className="text-gray-400" />
@@ -332,30 +337,17 @@ const Mapping3D = () => {
             </div>
           </div>
         </div>
+      </motion.div>
 
-        {/* ── Toggle Button ─────────────────────────────────────
-            Diposisikan absolut di sisi kanan wrapper.
-            Karena wrapper-nya yang gerak, tombol ini otomatis
-            selalu berada tepat di tepi kanan panel tanpa perlu
-            hitung window.innerWidth sama sekali.
-        ──────────────────────────────────────────────────────── */}
-        <button
-          onClick={() => setIsPanelOpen(!isPanelOpen)}
-          className="absolute top-1/2 -translate-y-1/2 right-0 w-10 h-20 md:h-24 bg-primary rounded-2xl flex items-center justify-center text-white shadow-xl transition-all active:scale-95"
-          aria-label={isPanelOpen ? "Close panel" : "Open panel"}
-        >
-          {isPanelOpen ? <ChevronLeft size={22} /> : <ChevronRight size={22} />}
-        </button>
-      </div>
-
-      {/* ── MOBILE LEGEND: floating card pojok kanan bawah ─── */}
-      <div className="md:hidden absolute bottom-3 right-2 z-30">
+      {/* ── MOBILE LEGEND ──────────────────────────────── */}
+      <div className="md:hidden absolute bottom-3 right-2 z-[1] pointer-events-auto">
         <button
           onClick={() => setIsLegendOpen(!isLegendOpen)}
-          className={`flex items-center gap-1.5 px-3 py-2 rounded-xl shadow-lg border transition-all text-[10px] font-black uppercase tracking-wider ${isLegendOpen
-            ? 'bg-primary text-white border-primary/80'
-            : 'bg-gray-900/95 text-white border-white/10 backdrop-blur-xl'
-            }`}
+          className={`flex items-center gap-1.5 px-3 py-2 rounded-xl shadow-lg border transition-all text-[10px] font-black uppercase tracking-wider ${
+            isLegendOpen
+              ? 'bg-primary text-white border-primary/80'
+              : 'bg-gray-900/95 text-white border-white/10 backdrop-blur-xl'
+          }`}
         >
           <List size={12} className={isLegendOpen ? 'text-white' : 'text-primary'} />
           Diagnostics
@@ -412,13 +404,13 @@ const Mapping3D = () => {
         </AnimatePresence>
       </div>
 
-      {/* ── DESKTOP LEGEND: pojok kanan bawah ──────────────── */}
+      {/* ── DESKTOP LEGEND ─────────────────────────────── */}
       <motion.div
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="hidden md:block absolute bottom-10 right-6 z-30"
+        className="hidden md:block absolute bottom-10 right-6 z-[1] pointer-events-none"
       >
-        <div className="bg-white/90 dark:bg-gray-900/95 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-[2rem] shadow-2xl p-6 w-64">
+        <div className="bg-white/90 dark:bg-gray-900/95 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-[2rem] shadow-2xl p-6 w-64 pointer-events-auto">
           <h5 className="text-[10px] font-black text-gray-400 uppercase mb-5 tracking-[0.2em] flex items-center gap-2">
             <List size={14} className="text-primary" /> Engine Diagnostics
           </h5>
