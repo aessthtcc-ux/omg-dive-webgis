@@ -74,24 +74,6 @@ const steps: StepItem[] = [
     }),
     link: "#processing",
     image: "/images/world-class-speakers/dataprocess.webp",
-  },
-  {
-    id: 4,
-    title: "Instrument Installation Guideline",
-    description: "A technical guideline is developed to standardize multibeam instrument installation for future surveys. This includes sensor alignment procedures, offset measurement documentation, calibration steps (patch test), and mounting configuration recommendations. The guideline ensures repeatability, accuracy, and compliance with hydrographic survey standards in shallow coastal environments.",
-    fullDesc: JSON.stringify({
-      intro: "A structured installation guideline is developed to ensure consistent system performance, minimize systematic errors, and maintain compliance with IHO S-44 hydrographic survey standards.",
-      points: [
-        { icon: "🛠️", title: "Sensor Mounting Configuration", details: "The multibeam transducer, GNSS antenna, and IMU must be securely mounted on a rigid structure to minimize vibration and mechanical movement. Alignment between sensors must be verified to ensure that the reference frames of positioning, motion, and depth measurement systems remain geometrically consistent.", tags: ["Mechanical Stability", "Sensor Alignment", "Mounting Structure"] },
-        { icon: "📏", title: "Offset Measurement & Documentation", details: "Precise offset measurements between the GNSS antenna, IMU, and multibeam transducer are recorded in three dimensions (X, Y, Z). All measurements must reference a clearly defined vessel coordinate system. Accurate offset documentation is critical to control THU and TVU under IHO S-44 standards.", tags: ["Offset Survey", "THU Control", "TVU Control", "Vessel Reference System"] },
-        { icon: "⚙️", title: "Patch Test Calibration Requirement", details: "Following installation, a patch test must be conducted to resolve systematic biases in roll, pitch, yaw, and latency. Calibration lines are designed to quantify angular misalignment and timing delays between sensors. The resulting correction parameters are applied during data processing to eliminate systematic depth and positional errors.", tags: ["Patch Test", "System Calibration", "IHO S-44 Compliance"] },
-        { icon: "📋", title: "Operational Verification & Quality Control", details: "Before full acquisition, system performance checks are performed, including GNSS accuracy validation, motion sensor diagnostics, and sound velocity sensor verification. Swath angle configuration and ping rate settings are adjusted according to survey depth and feature requirements.", tags: ["System Check", "GNSS Validation", "Swath Optimization", "Operational QC"] },
-        { icon: "📚", title: "Standardization & Repeatability", details: "All installation configurations, calibration results, and verification procedures are documented as part of a standardized hydrographic workflow. This guideline ensures that future surveys maintain consistency in positioning accuracy, uncertainty control, and feature resolution.", tags: ["Documentation", "Repeatability", "Hydrographic Standardization"] }
-      ],
-      conclusion: "By formalizing installation procedures, calibration protocols, and quality control checks, this guideline minimizes systematic uncertainty and ensures reliable multibeam performance for accurate shipwreck mapping."
-    }),
-    link: "#guideline",
-    image: "/images/world-class-speakers/guideline.webp",
   }
 ];
 

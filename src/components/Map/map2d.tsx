@@ -268,7 +268,7 @@ const Mapping2D = () => {
       </div>
 
       {/* BASEMAP CONTROLLER */}
-      <div className="absolute top-[120px] right-2 md:right-6 z-[1000] flex flex-col items-end">
+      <div className="absolute top-[120px] right-2 md:right-6 z-[1] flex flex-col items-end">
         <button onClick={() => setIsBaseMapOpen(!isBaseMapOpen)}
           className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl border border-gray-200 dark:border-white/10 p-2.5 md:p-3 rounded-xl md:rounded-2xl shadow-xl flex items-center gap-2 md:gap-3 hover:scale-105 transition-all">
           <div className="flex flex-col items-end">
@@ -313,7 +313,7 @@ const Mapping2D = () => {
         animate={{ x: isPanelOpen ? 0 : -(panelW + 20) }}
         transition={{ type: "spring", stiffness: 260, damping: 25 }}
         style={{ width: panelW, left: panelLeft }}
-        className="absolute top-[120px] bottom-10 z-[100] pointer-events-none h-[calc(100vh-160px)]"
+        className="absolute top-[120px] bottom-10 z-[1] pointer-events-none h-[calc(100vh-160px)]"
       >
         <div className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-[2rem] md:rounded-[2.5rem] shadow-2xl p-4 md:p-5 lg:p-6 flex flex-col pointer-events-auto overflow-hidden h-full">
           <div className="mb-4 shrink-0">
@@ -415,7 +415,7 @@ const Mapping2D = () => {
       </motion.div>
 
       {/* LEGEND MOBILE (hanya < md) */}
-      <div className="md:hidden absolute bottom-3 right-2 z-[100] pointer-events-auto">
+      <div className="md:hidden absolute bottom-3 right-2 z-[1] pointer-events-auto">
         <button onClick={() => setIsLegendOpen(!isLegendOpen)}
           className={`flex items-center gap-1.5 px-3 py-2 rounded-xl shadow-lg border transition-all text-[10px] font-black uppercase tracking-wider ${
             isLegendOpen ? 'bg-blue-600 text-white border-blue-700' : 'bg-white/95 dark:bg-gray-900/95 text-gray-700 dark:text-white border-gray-200 dark:border-white/10 backdrop-blur-xl'
