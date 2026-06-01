@@ -207,8 +207,8 @@ const Mapping3D = () => {
             <Suspense fallback={null}>
               <Center>
                 {activeLayers.grid && <gridHelper args={[30, 30, "#1e1e1e", "#121212"]} position={[0, -2, 0]} />}
-                <PointCloudModel id="tabularasa" url="/data/3D/Day5_Tabularasa.las" active={activeLayers.tabularasa} density={pointDensity} onDataLoaded={handleDataLoaded} onLoadingChange={handleLoadingChange} />
-                <PointCloudModel id="poso"       url="/data/3D/Poso_hanafi.las"      active={activeLayers.poso}       density={pointDensity} onDataLoaded={handleDataLoaded} onLoadingChange={handleLoadingChange} />
+                <PointCloudModel id="tabularasa" url="/data/3D/PointCloud_Tabularasa.las" active={activeLayers.tabularasa} density={pointDensity} onDataLoaded={handleDataLoaded} onLoadingChange={handleLoadingChange} />
+                <PointCloudModel id="poso"       url="/data/3D/PointCloud_Poso.las"      active={activeLayers.poso}       density={pointDensity} onDataLoaded={handleDataLoaded} onLoadingChange={handleLoadingChange} />
               </Center>
               <Stars radius={100} depth={50} count={3000} factor={4} fade speed={1} />
             </Suspense>
