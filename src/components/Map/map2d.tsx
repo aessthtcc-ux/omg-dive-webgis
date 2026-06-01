@@ -257,7 +257,7 @@ const Mapping2D = () => {
       </div>
 
       {/* BASEMAP CONTROLLER */}
-      <div className="absolute top-[120px] right-2 md:right-6 z-[1000] flex flex-col items-end">
+      <div className="absolute top-[120px] right-2 md:right-6 z-[1] flex flex-col items-end">
         <button
           onClick={() => setIsBaseMapOpen(!isBaseMapOpen)}
           className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl border border-gray-200 dark:border-white/10 p-2.5 md:p-3 rounded-xl md:rounded-2xl shadow-xl flex items-center gap-2 md:gap-3 hover:scale-105 transition-all pointer-events-auto"
@@ -315,7 +315,7 @@ const Mapping2D = () => {
       <motion.div
         animate={{ x: isPanelOpen ? 0 : -(panelSlideWidth + 20) }}
         transition={{ type: "spring", stiffness: 260, damping: 25 }}
-        className="absolute top-[120px] left-2 md:left-6 bottom-10 w-[calc(100vw-60px)] md:w-[360px] z-[100] pointer-events-none h-[calc(100vh-160px)]"
+        className="absolute top-[120px] left-2 md:left-6 bottom-10 w-[calc(100vw-60px)] md:w-[360px] z-[1] pointer-events-none h-[calc(100vh-160px)]"
       >
         <div className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-[2rem] md:rounded-[2.5rem] shadow-2xl p-5 md:p-6 flex flex-col pointer-events-auto overflow-hidden h-full">
           <div className="mb-4 md:mb-6 shrink-0 px-1 md:px-2">
@@ -424,7 +424,7 @@ const Mapping2D = () => {
       </motion.div>
 
       {/* LEGEND MOBILE — compact floating card pojok kanan bawah */}
-      <div className="md:hidden absolute bottom-3 right-2 z-[100] pointer-events-auto">
+      <div className="md:hidden absolute bottom-3 right-2 z-[1] pointer-events-auto">
         {/* Tombol toggle kecil */}
         <button
           onClick={() => setIsLegendOpen(!isLegendOpen)}
