@@ -16,7 +16,7 @@ const navLinks = [
   { label: "2D Map",     href: "/map2d" },
   { label: "3D Map",     href: "/pointcloud" },
   { label: "Overview",   href: "/overview" },
-  { label: "Document",   href: "/document" },
+  { label: "DiveDepeer",   href: "/divedepeer" },
 ];
 
 const references = [

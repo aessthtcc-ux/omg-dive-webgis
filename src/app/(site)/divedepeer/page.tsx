@@ -3,7 +3,7 @@
 import MarineQuiz from "@/components/Documentation/InteractiveQuiz"; 
 
 export const metadata = {
-    title: "Documentation | OMG-DIVE",
+    title: "DiveDepeer | OMG-DIVE",
     description: "Official documentation for the OMG-DIVE WebGIS project",
 };
 

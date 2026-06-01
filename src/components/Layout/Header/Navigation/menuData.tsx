@@ -13,5 +13,5 @@ export const headerData: HeaderItem[] = [
     ],
   },
   { label: "Overview", href: "/overview" },
-  { label: "DiveDeeper", href: "/document" },
+  { label: "DiveDeeper", href: "/divedepeer" },
 ];  
