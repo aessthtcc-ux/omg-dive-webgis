@@ -120,7 +120,7 @@ const layerGroups = [
       { id: "dem_tabularasa", filePath: "/data/dem/DEM_Site1.tif",  title: "DEM Site 1",  project: "Site 1",  color: "#8b5cf6", dash: "0", isDummy: false, isRaster: true },
 
       // ── Layer 2 ──────────────────────────────────────────────────────────
-      { id: "dem_poso", filePath: "/data/dem/DTM_PosoFix_0.5m.tif",  title: "DEM Poso Shipwreck",  project: "Site 2",  color: "#ec4899", dash: "0", isDummy: false, isRaster: true },
+      { id: "dem_poso", filePath: "/data/dem/DTM_PosoShipwreck_0.5m_WGS84.tif",  title: "DEM Poso Shipwreck",  project: "Site 2",  color: "#ec4899", dash: "0", isDummy: false, isRaster: true },
 
       // ── Layer 3 ──────────────────────────────────────────────────────────
       { id: "dem_perairandangkal", filePath: "/data/dem/DEM_PerairanDangkal_RGB_0.5m.tif",  title: "DEM Perairan Dangkal",  project: "Site 3",  color: "#06b6d4", dash: "0", isDummy: false, isRaster: true },
