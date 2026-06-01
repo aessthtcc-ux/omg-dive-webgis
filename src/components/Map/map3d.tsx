@@ -181,7 +181,8 @@ const Mapping3D = () => {
     </div>
   );
 
-  const panelWidth = typeof window !== 'undefined' && window.innerWidth < 768 ? window.innerWidth - 60 : 360;
+  const w = typeof window !== 'undefined' ? window.innerWidth : 1024;
+  const panelWidth = w >= 1024 ? 360 : w >= 768 ? 300 : 280;
 
   return (
     <section className="relative h-screen w-full overflow-hidden bg-white dark:bg-darklight pt-24">
@@ -218,10 +219,14 @@ const Mapping3D = () => {
 
       {/* ✅ FIX: Tombol toggle TERPISAH dari motion.div */}
       <div
-        className="absolute top-[120px] z-[101] flex flex-col justify-center h-[calc(100vh-160px)] pointer-events-none transition-all duration-500"
+        className="absolute top-[120px] left-2 md:left-4 lg:left-6 bottom-10 w-[280px] md:w-[300px] lg:w-[360px] z-[100] pointer-events-none h-[calc(100vh-160px)]"
         style={{
           left: isPanelOpen
-            ? 'calc(0.5rem + min(calc(100vw - 60px), 360px) + 0.5rem)'
+            ? typeof window !== 'undefined' && window.innerWidth >= 1024
+              ? 'calc(1.5rem + 360px + 0.5rem)'   // lg: desktop
+              : typeof window !== 'undefined' && window.innerWidth >= 768
+                ? 'calc(1rem + 300px + 0.5rem)'    // md: tablet  
+                : 'calc(0.5rem + 280px + 0.5rem)'  // mobile
             : '0.5rem',
         }}
       >
