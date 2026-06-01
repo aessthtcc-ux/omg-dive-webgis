@@ -11,6 +11,11 @@ import {
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
+// ✅ FIX 2: georaster-layer-for-leaflet butuh L tersedia di window global
+if (typeof window !== 'undefined') {
+  (window as any).L = L;
+}
+
 const MapContainer = dynamic(() => import("react-leaflet").then((mod) => mod.MapContainer), { ssr: false });
 const TileLayer    = dynamic(() => import("react-leaflet").then((mod) => mod.TileLayer),    { ssr: false });
 const GeoJSON      = dynamic(() => import("react-leaflet").then((mod) => mod.GeoJSON),      { ssr: false });
@@ -38,56 +43,95 @@ const GeoTIFFLayer = ({ url, isVisible }: { url: string; isVisible: boolean }) =
   const { useMap: useMapLeaflet } = require("react-leaflet");
   const map = useMapLeaflet();
   const layerRef = useRef<any>(null);
+
   useEffect(() => {
-    if (!map || !isVisible) {
-      if (layerRef.current) { map.removeLayer(layerRef.current); layerRef.current = null; }
+    // ✅ FIX 1: null-safe — jangan panggil map.removeLayer kalau map belum ada
+    if (!isVisible) {
+      if (layerRef.current && map) {
+        map.removeLayer(layerRef.current);
+        layerRef.current = null;
+      }
       return;
     }
+
+    if (!map) return;
     if (layerRef.current) return;
+
     let isMounted = true;
+
     const load = async () => {
       try {
         // @ts-ignore
-        const parseGeoraster  = (await import('georaster')).default;
+        const parseGeoraster = (await import('georaster')).default;
         // @ts-ignore
-        const GeoRasterLayer  = (await import('georaster-layer-for-leaflet')).default;
+        const GeoRasterLayer = (await import('georaster-layer-for-leaflet')).default;
+
         const res = await fetch(url);
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        if (!res.ok) throw new Error(`HTTP ${res.status} — ${url}`);
+
         const buf = await res.arrayBuffer();
         if (!isMounted) return;
+
         const gr = await parseGeoraster(buf);
-        const [mn, mx] = [gr.mins[0], gr.maxs[0]];
+        const mn = gr.mins[0];
+        const mx = gr.maxs[0];
+        // ✅ FIX 3: guard division by zero ketika mn === mx
+        const range = (mx - mn) || 1;
+
         const layer = new GeoRasterLayer({
-          georaster: gr, opacity: 0.9, resolution: 256,
+          georaster: gr,
+          opacity: 0.9,
+          resolution: 256,
           pixelValuesToColorFn: (v: any) => {
-            if (v[0] === gr.noDataValue || v[0] === undefined || isNaN(v[0]) || v[0] === 0) return null;
-            if (v.length >= 3) return `rgb(${Math.round(v[0])},${Math.round(v[1])},${Math.round(v[2])})`;
-            const p = (v[0] - mn) / (mx - mn);
-            let r=0,g=0,b=0;
-            if (p<.25){r=0;g=Math.round(4*p*255);b=255;}
-            else if(p<.5){r=0;g=255;b=Math.round(255-4*(p-.25)*255);}
-            else if(p<.75){r=Math.round(4*(p-.5)*255);g=255;b=0;}
-            else{r=255;g=Math.round(255-4*(p-.75)*255);b=0;}
+            if (
+              v[0] === gr.noDataValue ||
+              v[0] === undefined ||
+              isNaN(v[0]) ||
+              v[0] === 0
+            ) return null;
+
+            // File RGB (3 band)
+            if (v.length >= 3)
+              return `rgb(${Math.round(v[0])},${Math.round(v[1])},${Math.round(v[2])})`;
+
+            // File single-band — colormap biru→hijau→kuning→merah
+            const p = Math.max(0, Math.min(1, (v[0] - mn) / range));
+            let r = 0, g = 0, b = 0;
+            if      (p < .25) { r = 0;                        g = Math.round(4*p*255);           b = 255; }
+            else if (p < .5)  { r = 0;                        g = 255;                           b = Math.round(255-4*(p-.25)*255); }
+            else if (p < .75) { r = Math.round(4*(p-.5)*255); g = 255;                           b = 0; }
+            else               { r = 255;                      g = Math.round(255-4*(p-.75)*255); b = 0; }
             return `rgba(${r},${g},${b},0.9)`;
-          }
+          },
         });
-        if (isMounted) { layer.addTo(map); layerRef.current = layer; map.fitBounds(layer.getBounds(), { padding: [50,50], maxZoom: 20 }); }
-      } catch (e) { console.error("GeoTIFF error:", e); }
+
+        if (isMounted) {
+          layer.addTo(map);
+          layerRef.current = layer;
+          const bounds = layer.getBounds();
+          if (bounds && bounds.isValid()) {
+            map.fitBounds(bounds, { padding: [50, 50], maxZoom: 20 });
+          }
+        }
+      } catch (e) {
+        console.error("GeoTIFF error:", e);
+      }
     };
+
     load();
-    return () => { isMounted = false; if (layerRef.current) map.removeLayer(layerRef.current); };
+
+    return () => {
+      isMounted = false;
+      if (layerRef.current && map) {
+        map.removeLayer(layerRef.current);
+        layerRef.current = null;
+      }
+    };
   }, [url, map, isVisible]);
+
   return null;
 };
 
-// ---------------------------------------------------------------------------
-// LAYER GROUPS
-// ---------------------------------------------------------------------------
-// 🎨 Warna per-layer DEM — ganti sesuai kebutuhan
-// 📁 filePath  → sesuaikan nama file .tif di /data/dem/
-// 🏷️ title     → nama tampilan di panel & legend
-// 🔖 project   → label kecil di bawah judul layer
-// ---------------------------------------------------------------------------
 const layerGroups = [
   {
     groupId: "area", title: "Area Boundaries",
@@ -115,33 +159,15 @@ const layerGroups = [
     groupId: "dem", title: "Digital Elevation Model",
     icon: <ImageIcon size={18} className="text-purple-500" />,
     subLayers: [
-      // ── Layer 1 ──────────────────────────────────────────────────────────
-      // TODO: ganti filePath, title, project, color sesuai data asli
-      { id: "dem_tabularasa", filePath: "/data/dem/DEM_Site1.tif",  title: "DEM Site 1",  project: "Site 1",  color: "#8b5cf6", dash: "0", isDummy: false, isRaster: true },
-
-      // ── Layer 2 ──────────────────────────────────────────────────────────
-      { id: "dem_poso", filePath: "/data/dem/DTM_PosoFix_0.5m.tif",  title: "DEM Poso Shipwreck",  project: "Site 2",  color: "#ec4899", dash: "0", isDummy: false, isRaster: true },
-
-      // ── Layer 3 ──────────────────────────────────────────────────────────
-      { id: "dem_perairandangkal", filePath: "/data/dem/DEM_PerairanDangkal_RGB_0.5m.tif",  title: "DEM Perairan Dangkal",  project: "Site 3",  color: "#06b6d4", dash: "0", isDummy: false, isRaster: true },
-
-      // ── Layer 4 ──────────────────────────────────────────────────────────
-      { id: "dem_pesisirpanggang", filePath: "/data/dem/DEM_PesisirPanggang_RGB_0.5m.tif",  title: "DEM Pesisir Panggang",  project: "Site 4",  color: "#f97316", dash: "0", isDummy: false, isRaster: true },
-
-      // ── Layer 5 ──────────────────────────────────────────────────────────
-      { id: "dem_site5", filePath: "/data/dem/DEM_Site5.tif",  title: "DEM Site 5",  project: "Site 5",  color: "#22c55e", dash: "0", isDummy: false, isRaster: true },
-
-      // ── Layer 6 ──────────────────────────────────────────────────────────
-      { id: "dem_site6", filePath: "/data/dem/DEM_Site6.tif",  title: "DEM Site 6",  project: "Site 6",  color: "#eab308", dash: "0", isDummy: false, isRaster: true },
-
-      // ── Layer 7 ──────────────────────────────────────────────────────────
-      { id: "dem_site7", filePath: "/data/dem/DEM_Site7.tif",  title: "DEM Site 7",  project: "Site 7",  color: "#ef4444", dash: "0", isDummy: false, isRaster: true },
-
-      // ── Layer 8 ──────────────────────────────────────────────────────────
-      { id: "dem_site8", filePath: "/data/dem/DEM_Site8.tif",  title: "DEM Site 8",  project: "Site 8",  color: "#14b8a6", dash: "0", isDummy: false, isRaster: true },
-
-      // ── Layer 9 ──────────────────────────────────────────────────────────
-      { id: "dem_site9", filePath: "/data/dem/DEM_Site9.tif",  title: "DEM Site 9",  project: "Site 9",  color: "#a78bfa", dash: "0", isDummy: false, isRaster: true },
+      { id: "dem_tabularasa",     filePath: "/data/dem/DEM_Tabularasa_RGB_1m_WGS84.tif",     title: "DEM Tabularasa Shipwreck",            project: "Site 1",  color: "#8b5cf6", dash: "0", isDummy: false, isRaster: true },
+      { id: "dem_poso",           filePath: "/data/dem/DTM_PosoFix_0.5m.tif",                title: "DEM Poso Shipwreck",    project: "Site 2",  color: "#ec4899", dash: "0", isDummy: false, isRaster: true },
+      { id: "dem_perairandangkal",filePath: "/data/dem/DEM_PerairanDangkal_RGB_0.5m.tif",    title: "DEM Perairan Dangkal",  project: "Site 3",  color: "#06b6d4", dash: "0", isDummy: false, isRaster: true },
+      { id: "dem_pesisirpanggang",filePath: "/data/dem/DEM_PesisirPanggang_RGB_0.5m.tif",    title: "DEM Pesisir Panggang",  project: "Site 4",  color: "#f97316", dash: "0", isDummy: false, isRaster: true },
+      { id: "dem_site5",          filePath: "/data/dem/DEM_Site5.tif",                       title: "DEM Site 5",            project: "Site 5",  color: "#22c55e", dash: "0", isDummy: false, isRaster: true },
+      { id: "dem_site6",          filePath: "/data/dem/DEM_Site6.tif",                       title: "DEM Site 6",            project: "Site 6",  color: "#eab308", dash: "0", isDummy: false, isRaster: true },
+      { id: "dem_site7",          filePath: "/data/dem/DEM_Site7.tif",                       title: "DEM Site 7",            project: "Site 7",  color: "#ef4444", dash: "0", isDummy: false, isRaster: true },
+      { id: "dem_site8",          filePath: "/data/dem/DEM_Site8.tif",                       title: "DEM Site 8",            project: "Site 8",  color: "#14b8a6", dash: "0", isDummy: false, isRaster: true },
+      { id: "dem_site9",          filePath: "/data/dem/DEM_Site9.tif",                       title: "DEM Site 9",            project: "Site 9",  color: "#a78bfa", dash: "0", isDummy: false, isRaster: true },
     ]
   }
 ];
@@ -154,9 +180,6 @@ const baseMaps = [
 
 const PANEL_W = { mobile: 280, tablet: 300, desktop: 360 };
 
-// ---------------------------------------------------------------------------
-// MAIN COMPONENT
-// ---------------------------------------------------------------------------
 const Mapping2D = () => {
   const [mounted,       setMounted]       = useState(false);
   const [isPanelOpen,   setIsPanelOpen]   = useState(false);
@@ -175,15 +198,10 @@ const Mapping2D = () => {
     return () => window.removeEventListener('resize', onResize);
   }, []);
 
-  // Hanya group "dem" yang aktif di awal
   const [activeGroups, setActiveGroups] = useState<Record<string, boolean>>(
-    layerGroups.reduce((acc, g) => ({
-      ...acc,
-      [g.groupId]: g.groupId === 'dem',
-    }), {})
+    layerGroups.reduce((acc, g) => ({ ...acc, [g.groupId]: g.groupId === 'dem' }), {})
   );
 
-  // Hanya subLayer isRaster (DEM) yang aktif di awal
   const [activeSubLayers, setActiveSubLayers] = useState<Record<string, boolean>>(
     layerGroups.flatMap(g => g.subLayers).reduce((acc, sub) => ({
       ...acc,
@@ -248,7 +266,6 @@ const Mapping2D = () => {
           <TileLayer url={activeBasemap.url} maxZoom={24} maxNativeZoom={19} />
           <AutoFitBounds geoData={geoData} />
 
-          {/* GeoJSON vector layers */}
           {layerGroups.flatMap(g => g.subLayers).map(config => {
             // @ts-ignore
             if (config.isRaster) return null;
@@ -285,7 +302,6 @@ const Mapping2D = () => {
             );
           })}
 
-          {/* GeoTIFF raster layers — semua 9 DEM dirender di sini */}
           {layerGroups.flatMap(g => g.subLayers).map(config => {
             // @ts-ignore
             if (!config.isRaster) return null;
@@ -370,7 +386,6 @@ const Mapping2D = () => {
           <div className="flex-1 space-y-3 md:space-y-4 lg:space-y-5 overflow-y-auto pr-1 custom-scrollbar">
             {layerGroups.map(group => (
               <div key={group.groupId} className="space-y-2">
-                {/* Group header */}
                 <div className="flex items-center gap-2 px-1">
                   <button
                     onClick={() => toggleGroup(group.groupId)}
@@ -383,7 +398,6 @@ const Mapping2D = () => {
                   </h3>
                 </div>
 
-                {/* Sub-layer list */}
                 <div className="pl-3 border-l-2 border-gray-100 dark:border-white/5 ml-3 space-y-1.5">
                   {group.subLayers.map(layer => (
                     <div key={layer.id} className="group bg-gray-50/50 dark:bg-white/5 rounded-xl border border-transparent hover:border-gray-200 dark:hover:border-white/10 transition-all overflow-hidden">
@@ -403,7 +417,6 @@ const Mapping2D = () => {
                               )}
                             </h4>
                             <div className="flex items-center gap-1.5 mt-0.5">
-                              {/* Untuk raster: kotak gradien; lainnya: garis warna */}
                               {(layer as any).isRaster ? (
                                 <div className="w-4 h-2 rounded-sm" style={{ background: 'linear-gradient(to right, #1e3a5f, #3b82f6, #10b981, #fbbf24)' }} />
                               ) : (
