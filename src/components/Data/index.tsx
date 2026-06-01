@@ -273,10 +273,10 @@ const DataAnalytics = () => {
                 </div>
               </div>
 
-              {/* ✅ MOBILE FIX: tinggi grafik lebih kecil di mobile */}
+              {/* ✅ FIX: tinggi grafik + sumbu X responsive */}
               <div className="h-[260px] md:h-[380px] w-full relative z-10">
                 <ResponsiveContainer width="100%" height="110%">
-                  <AreaChart data={tideData} margin={{ top: 20, right: 10, left: 10, bottom: 40 }}>
+                  <AreaChart data={tideData} margin={{ top: 20, right: 10, left: 10, bottom: 20 }}>
                     <defs>
                       <linearGradient id="colorTide" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.4}/>
@@ -284,44 +284,61 @@ const DataAnalytics = () => {
                       </linearGradient>
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} strokeOpacity={0.05} />
-                    <XAxis 
-                      dataKey="displayTime" 
-                      ticks={tideTicks} 
-                      padding={{ left: 20, right: 10 }} 
-                      stroke="#666" 
-                      fontSize={8} 
-                      fontWeight="bold" 
-                      axisLine={false} 
+
+                    {/* ✅ FIX: hanya 1 tick per hari jam 00:00, format "19/9" bukan datetime penuh */}
+                    <XAxis
+                      dataKey="displayTime"
+                      ticks={tideTicks.filter(t => t.includes('00:00'))}
+                      padding={{ left: 15, right: 10 }}
+                      stroke="#555"
+                      fontSize={8}
+                      fontWeight="bold"
+                      axisLine={false}
+                      tickLine={{ stroke: '#444', strokeWidth: 1 }}
+                      interval={0}
+                      tick={{ fill: '#777' }}
+                      tickFormatter={(val: string) => {
+                        const parts = val.split(' ')[0].split('-');
+                        return `${parseInt(parts[0])}/${parseInt(parts[1])}`;
+                      }}
+                      height={28}
+                    />
+
+                    <YAxis
+                      domain={[1.6, 2.6]}
+                      ticks={[1.6, 1.8, 2.0, 2.2, 2.4, 2.6]}
+                      tickFormatter={(val) => val.toFixed(1)}
+                      stroke="#444"
+                      fontSize={9}
+                      fontWeight="bold"
+                      axisLine={false}
                       tickLine={false}
-                      interval={0} 
-                      tick={{ fill: '#666' }}
-                    />
-                    <YAxis 
-                      domain={[1.6, 2.6]} 
-                      ticks={[1.6, 1.8, 2.0, 2.2, 2.4, 2.6]} 
-                      tickFormatter={(val) => val.toFixed(1)} 
-                      stroke="#444" 
-                      fontSize={9} 
-                      fontWeight="bold" 
-                      axisLine={false} 
-                      tickLine={false} 
                       unit="m"
-                      width={40}
+                      width={38}
                     />
-                    <Tooltip 
-                      contentStyle={{ 
+
+                    <Tooltip
+                      contentStyle={{
                         backgroundColor: '#111', border: 'none', borderRadius: '12px',
-                        fontSize: '11px', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.5)'
+                        fontSize: '11px', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.5)'
                       }}
                       labelStyle={{ color: '#3b82f6', fontWeight: 'bold', marginBottom: '4px' }}
                       itemStyle={{ color: '#fff' }}
                     />
-                    <Area 
-                      type="monotone" dataKey="depth" stroke="#3b82f6" strokeWidth={3} 
+
+                    <Area
+                      type="monotone" dataKey="depth" stroke="#3b82f6" strokeWidth={3}
                       fill="url(#colorTide)" animationDuration={2000}
                     />
                   </AreaChart>
                 </ResponsiveContainer>
+              </div>
+
+              {/* ✅ FIX: date range label di bawah chart sebagai pengganti X axis */}
+              <div className="flex justify-between items-center mt-1 px-2 relative z-10">
+                <span className="text-[9px] text-gray-500 font-mono">19 Sep</span>
+                <span className="text-[9px] text-gray-400 font-mono italic">Survey Period</span>
+                <span className="text-[9px] text-gray-500 font-mono">27 Sep 2025</span>
               </div>
 
               {/* ✅ MOBILE FIX: info box lebih compact */}
