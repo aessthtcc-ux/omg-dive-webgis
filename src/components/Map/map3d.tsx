@@ -274,15 +274,7 @@ const Mapping3D = () => {
       </div>
 
       {/* ✅ FIX: Tombol toggle TERPISAH dari motion.div, selalu kelihatan di tepi layar */}
-      // SESUDAH — posisi tombol responsif dan tepat
-      <div
-        className="absolute top-[120px] z-[101] flex flex-col justify-center h-[calc(100vh-160px)] pointer-events-none transition-all duration-500"
-        style={{
-          left: isPanelOpen
-            ? 'calc(0.5rem + min(calc(100vw - 60px), 360px) + 0.5rem)'  // panel terbuka: tombol di sebelah kanan panel
-            : '0.5rem'  // panel tertutup: tombol di tepi kiri layar
-        }}
-      >
+      <div className="absolute top-[120px] left-[calc(100vw-52px)] md:left-[calc(1.5rem+360px+0.5rem)] z-[101] flex flex-col justify-center h-[calc(100vh-160px)] pointer-events-none">
         <button
           onClick={() => setIsPanelOpen(!isPanelOpen)}
           className="w-10 h-20 md:h-24 bg-primary rounded-2xl flex items-center justify-center text-white shadow-xl transition-all active:scale-95 pointer-events-auto"
@@ -378,48 +370,73 @@ const Mapping3D = () => {
 
       {/* ✅ MOBILE FIX: LEGEND — di mobile jadi collapsible bar di bawah, di desktop tetap pojok kanan */}
 
-      {/* MOBILE LEGEND: bottom bar */}
-      <div className="md:hidden absolute bottom-4 left-2 right-2 z-[100] pointer-events-auto">
+      {/* LEGEND MOBILE: compact floating card pojok kanan bawah */}
+      <div className="md:hidden absolute bottom-3 right-2 z-[100] pointer-events-auto">
         <button
           onClick={() => setIsLegendOpen(!isLegendOpen)}
-          className="w-full bg-gray-900/95 backdrop-blur-xl border border-white/10 rounded-2xl px-4 py-3 flex items-center justify-between text-white"
+          className={`flex items-center gap-1.5 px-3 py-2 rounded-xl shadow-lg border transition-all text-[10px] font-black uppercase tracking-wider ${
+            isLegendOpen
+              ? 'bg-primary text-white border-primary/80'
+              : 'bg-gray-900/95 text-white border-white/10 backdrop-blur-xl'
+          }`}
         >
-          <span className="flex items-center gap-2 text-[11px] font-black uppercase tracking-widest">
-            <List size={14} className="text-primary"/> Engine Diagnostics
-          </span>
-          <span className={`text-[10px] font-black px-2 py-1 rounded-lg ${engineStats.statusColor}`}>
-            {engineStats.status}
-          </span>
+          <List size={12} className={isLegendOpen ? 'text-white' : 'text-primary'} />
+          Diagnostics
+          <ChevronRight size={11} className={`transition-transform ${isLegendOpen ? 'rotate-90' : ''}`} />
         </button>
 
         <AnimatePresence>
           {isLegendOpen && (
             <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: 'auto', opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              className="overflow-hidden"
+              initial={{ opacity: 0, y: 8, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 8, scale: 0.95 }}
+              transition={{ duration: 0.2 }}
+              className="absolute bottom-full right-0 mb-2 w-52 bg-gray-900/97 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl overflow-hidden"
             >
-              <div className="bg-gray-900/95 backdrop-blur-xl border border-white/10 border-t-0 rounded-b-2xl p-4 space-y-3">
-                <div className="flex justify-between items-center">
-                  <span className="text-[10px] text-gray-400 font-bold uppercase">Active Points</span>
-                  <span className="text-[10px] font-black text-blue-400">{engineStats.points}</span>
-                </div>
+              {/* Header */}
+              <div className="px-3 py-2 border-b border-white/10 flex items-center gap-2">
+                <div className="w-1.5 h-4 bg-primary rounded-full" />
+                <span className="text-[10px] font-black uppercase tracking-widest text-gray-300">Engine Diagnostics</span>
+              </div>
 
-                {engineStats.hasActiveCloud && !isAnyLoading && (
-                  <div>
-                    <span className="text-[9px] text-gray-400 font-bold uppercase tracking-widest mb-2 block">Depth Scale</span>
-                    <div className="flex items-center gap-3">
-                      <div className="w-4 h-20 rounded-full" style={{ background: 'linear-gradient(to top, #081d58, #1d91c0, #7fcdbb, #ffffd9)' }} />
-                      <div className="flex flex-col justify-between h-20 py-1">
-                        <span className="text-[10px] font-mono font-bold text-gray-300">{engineStats.maxZ.toFixed(2)} m</span>
-                        <span className="text-[10px] font-mono text-gray-500">{((engineStats.minZ + engineStats.maxZ) / 2).toFixed(2)} m</span>
-                        <span className="text-[10px] font-mono font-bold text-gray-300">{engineStats.minZ.toFixed(2)} m</span>
-                      </div>
+              {/* Stats */}
+              <div className="p-3 space-y-2 border-b border-white/10">
+                <div className="flex justify-between items-center">
+                  <span className="text-[9px] text-gray-400 font-bold uppercase tracking-tight">System Status</span>
+                  <span className={`text-[9px] font-black px-2 py-0.5 rounded-md ${engineStats.statusColor}`}>
+                    {engineStats.status}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-[9px] text-gray-400 font-bold uppercase tracking-tight">Active Points</span>
+                  <span className="text-[9px] font-black text-blue-400">{engineStats.points}</span>
+                </div>
+                <div className="w-full h-1 bg-white/10 rounded-full overflow-hidden">
+                  <motion.div
+                    animate={{
+                      width: engineStats.hasActiveCloud && !isAnyLoading ? "100%" : (isAnyLoading ? "60%" : "30%"),
+                      backgroundColor: isAnyLoading ? "#3b82f6" : (engineStats.hasActiveCloud ? "#10b981" : "#eab308")
+                    }}
+                    className="h-full rounded-full"
+                  />
+                </div>
+              </div>
+
+              {/* Depth scale */}
+              {engineStats.hasActiveCloud && !isAnyLoading && (
+                <div className="p-3">
+                  <p className="text-[8px] text-gray-500 font-bold uppercase tracking-widest mb-2 text-center">Depth Scale (Z)</p>
+                  <div className="flex items-center gap-3">
+                    <div className="w-3 h-16 rounded-full flex-shrink-0" style={{ background: 'linear-gradient(to top, #081d58, #1d91c0, #7fcdbb, #ffffd9)' }} />
+                    <div className="flex flex-col justify-between h-16 py-0.5">
+                      <span className="text-[9px] font-mono font-bold text-gray-300">{engineStats.maxZ.toFixed(1)} m</span>
+                      <span className="text-[9px] font-mono text-gray-500">{((engineStats.minZ + engineStats.maxZ) / 2).toFixed(1)} m</span>
+                      <span className="text-[9px] font-mono font-bold text-gray-300">{engineStats.minZ.toFixed(1)} m</span>
                     </div>
                   </div>
-                )}
-              </div>
+                </div>
+              )}
             </motion.div>
           )}
         </AnimatePresence>

@@ -423,42 +423,66 @@ const Mapping2D = () => {
         </div>
       </motion.div>
 
-      {/* LEGEND MOBILE — collapsible bottom bar */}
-      <div className="md:hidden absolute bottom-3 left-2 right-2 z-[100] pointer-events-auto">
+      {/* LEGEND MOBILE — compact floating card pojok kanan bawah */}
+      <div className="md:hidden absolute bottom-3 right-2 z-[100] pointer-events-auto">
+        {/* Tombol toggle kecil */}
         <button
           onClick={() => setIsLegendOpen(!isLegendOpen)}
-          className="w-full bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-2xl px-4 py-2.5 flex items-center justify-between"
+          className={`flex items-center gap-1.5 px-3 py-2 rounded-xl shadow-lg border transition-all text-[10px] font-black uppercase tracking-wider ${
+            isLegendOpen
+              ? 'bg-blue-600 text-white border-blue-700'
+              : 'bg-white/95 dark:bg-gray-900/95 text-gray-700 dark:text-white border-gray-200 dark:border-white/10 backdrop-blur-xl'
+          }`}
         >
-          <span className="flex items-center gap-2 text-[11px] font-black uppercase tracking-widest text-gray-800 dark:text-white">
-            <List size={13} className="text-blue-600" /> Map Legend
-          </span>
-          <ChevronRight size={14} className={`text-gray-400 transition-transform ${isLegendOpen ? 'rotate-90' : ''}`} />
+          <List size={12} />
+          Legend
+          <ChevronRight size={11} className={`transition-transform ${isLegendOpen ? 'rotate-90' : ''}`} />
         </button>
 
+        {/* Panel legend muncul ke atas */}
         <AnimatePresence>
           {isLegendOpen && (
             <motion.div
-              initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }}
-              className="overflow-hidden"
+              initial={{ opacity: 0, y: 8, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 8, scale: 0.95 }}
+              transition={{ duration: 0.2 }}
+              className="absolute bottom-full right-0 mb-2 w-52 bg-white/97 dark:bg-gray-900/97 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-2xl shadow-2xl overflow-hidden"
             >
-              <div className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border border-gray-200 dark:border-white/10 border-t-0 rounded-b-2xl p-3 max-h-48 overflow-y-auto">
+              {/* Header */}
+              <div className="px-3 py-2 border-b border-gray-100 dark:border-white/10 flex items-center gap-2">
+                <div className="w-1.5 h-4 bg-blue-600 rounded-full" />
+                <span className="text-[10px] font-black uppercase tracking-widest text-gray-600 dark:text-gray-300">Map Legend</span>
+              </div>
+
+              {/* Legend items */}
+              <div className="p-2.5 space-y-3 max-h-56 overflow-y-auto">
                 {layerGroups.map((group) => {
                   const activeSubs = group.subLayers.filter(sub => activeSubLayers[sub.id]);
                   if (activeSubs.length === 0) return null;
                   return (
-                    <div key={group.groupId} className="mb-3 last:mb-0">
-                      <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">{group.title}</p>
-                      <div className="space-y-1.5 pl-2">
+                    <div key={group.groupId}>
+                      {/* Group label */}
+                      <div className="flex items-center gap-1.5 mb-1.5 px-1">
+                        <div className="h-px flex-1 bg-gray-100 dark:bg-white/10" />
+                        <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest whitespace-nowrap">{group.title}</span>
+                        <div className="h-px flex-1 bg-gray-100 dark:bg-white/10" />
+                      </div>
+                      {/* Items */}
+                      <div className="space-y-1">
                         {activeSubs.map((config) => (
-                          <div key={config.id} className="flex items-center gap-2">
-                            {(config as any).isPolygon ? (
-                              <div className="w-3 h-3 rounded-sm border-2 flex-shrink-0" style={{ borderColor: config.color, backgroundColor: `${config.color}30` }} />
-                            ) : (config as any).isRaster ? (
-                              <div className="w-3 h-3 rounded-sm bg-gradient-to-br from-blue-900 to-yellow-200 flex-shrink-0" />
-                            ) : (
-                              <div className="w-5 h-0.5 rounded-full flex-shrink-0" style={{ backgroundColor: config.color }} />
-                            )}
-                            <span className="text-[10px] text-gray-700 dark:text-gray-300 font-bold uppercase tracking-tight">{config.title}</span>
+                          <div key={config.id} className="flex items-center gap-2 px-1 py-0.5 rounded-lg hover:bg-gray-50 dark:hover:bg-white/5 transition-colors">
+                            {/* Color indicator */}
+                            <div className="flex-shrink-0 w-8 flex items-center justify-center">
+                              {(config as any).isPolygon ? (
+                                <div className="w-4 h-4 rounded border-2" style={{ borderColor: config.color, backgroundColor: `${config.color}25` }} />
+                              ) : (config as any).isRaster ? (
+                                <div className="w-4 h-4 rounded" style={{ background: 'linear-gradient(135deg, #1e3a5f, #3b82f6, #10b981, #fbbf24)' }} />
+                              ) : (
+                                <div className="w-5 h-[3px] rounded-full" style={{ backgroundColor: config.color, boxShadow: `0 0 6px ${config.color}` }} />
+                              )}
+                            </div>
+                            <span className="text-[9px] text-gray-700 dark:text-gray-300 font-bold uppercase tracking-tight leading-tight">{config.title}</span>
                           </div>
                         ))}
                       </div>
