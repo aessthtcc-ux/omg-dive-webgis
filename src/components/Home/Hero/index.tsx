@@ -8,7 +8,7 @@ import { ArrowRight, Palmtree } from "lucide-react";
 
 const Hero = () => {
     return (
-        <section className="relative overflow-hidden transition-colors duration-300 bg-white dark:bg-darkmode py-16 md:py-24 lg:py-32"> 
+        <section className="relative overflow-hidden transition-colors duration-300 bg-white dark:bg-darkmode pt-28 pb-16 md:pt-32 md:pb-24 lg:pt-40 lg:pb-32"> 
             
             <div className="absolute inset-0 -z-0 pointer-events-none overflow-hidden">
                 <div className="absolute bottom-[-50px] left-[10%] w-8 h-8 md:w-12 md:h-12 rounded-full border border-white/30 bg-white/10 backdrop-blur-[2px] animate-water-bubble" />

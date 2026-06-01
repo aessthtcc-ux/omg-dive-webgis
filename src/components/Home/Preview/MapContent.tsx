@@ -70,7 +70,7 @@ const MapContent = () => {
   return (
     <div
       style={{ borderRadius: '1.25rem', overflow: 'hidden' }}
-      className="w-full h-[65vw] min-h-[280px] max-h-[480px] md:h-[460px] lg:h-[540px] border border-white/10 shadow-2xl relative bg-slate-900"
+      className="w-full h-[55vw] min-h-[240px] max-h-[340px] md:max-h-none md:h-[440px] lg:h-[520px] border border-white/10 shadow-2xl relative bg-slate-900"
     >
       <style>{`
         /* ✅ FIX: Leaflet container harus 100% width & height tanpa gap */
