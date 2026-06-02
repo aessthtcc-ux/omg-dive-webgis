@@ -2,12 +2,14 @@
 const basePath = "";
 
 const nextConfig = {
-  output: "export",
-  trailingSlash: true,
+  // ✅ Hapus output: "export" — tidak dibutuhkan di Vercel
+  // ✅ Hapus trailingSlash — tidak relevan tanpa static export
+  
   basePath: basePath || undefined,
   assetPrefix: basePath || undefined,
 
   images: {
+    // ✅ Bisa set unoptimized: false sekarang, tapi biarkan true dulu agar aman
     unoptimized: true,
   },
 
@@ -15,10 +17,8 @@ const nextConfig = {
     NEXT_PUBLIC_BASE_PATH: basePath,
   },
 
-  // Turbopack config (Next.js 16+)
   turbopack: {},
 
-  // iOS compatibility
   transpilePackages: [
     "framer-motion",
     "three",
@@ -26,14 +26,11 @@ const nextConfig = {
     "@react-three/drei",
     "georaster-layer-for-leaflet",
   ],
-  // Compress output
+
   compress: true,
-  
-  // Kurangi beban Three.js dan loaders
+
   webpack: (config) => {
     config.resolve.fallback = { fs: false, net: false, tls: false };
-    
-    // Tree-shake Three.js agar tidak load semua
     config.module.unknownContextCritical = false;
     return config;
   },
