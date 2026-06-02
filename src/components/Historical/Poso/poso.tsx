@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import WildlifeSightings from "@/components/Historical/Poso";
 import {
@@ -25,24 +26,21 @@ const posoImages = [
 // SITE POTENTIAL DATA
 // ---------------------------------------------------------------------------
 interface CriterionItem {
-  label: string;
-  score: number;
-  max: number;
-  category: "archaeological" | "ecological";
-  description: string;
+  label: string; score: number; max: number;
+  category: "archaeological" | "ecological"; description: string;
 }
 
 const posoCriteriaData: CriterionItem[] = [
-  { label: "Period / Historical",    score: 2, max: 3, category: "archaeological", description: "After Independence & under 50 years old (sunk 1970)" },
-  { label: "Educational Value",      score: 3, max: 3, category: "archaeological", description: "Cargo ship carrying construction equipment for Thousand Islands" },
-  { label: "Site Depth",            score: 1, max: 3, category: "archaeological", description: "Depth 25 – 30 meters" },
-  { label: "Data Quantity",         score: 3, max: 3, category: "archaeological", description: "Structure in complete & intact condition" },
-  { label: "Distribution Pattern",  score: 3, max: 3, category: "archaeological", description: "Above 50% of wreck structure visible" },
-  { label: "Seabed Morphology",     score: 3, max: 3, category: "ecological",     description: "Relatively flat and stable seabed" },
-  { label: "Sediment Substrate",    score: 3, max: 3, category: "ecological",     description: "Sandy substrate, less affected by currents" },
-  { label: "Coral Cover",           score: 2, max: 3, category: "ecological",     description: "80.18% cover; 28 species of living coral" },
-  { label: "Water Quality",         score: 2, max: 3, category: "ecological",     description: "Temp 30.1–31.6°C; pH 7.82–8.11; Salinity 33.4‰" },
-  { label: "Marine Regional Issue", score: 3, max: 3, category: "ecological",     description: "Restricted use zone within Seribu Islands conservation area" },
+  { label: "Period / Historical",   score: 2, max: 3, category: "archaeological", description: "After Independence & under 50 years old (sunk 1970)" },
+  { label: "Educational Value",     score: 3, max: 3, category: "archaeological", description: "Cargo ship carrying construction equipment for Thousand Islands" },
+  { label: "Site Depth",           score: 1, max: 3, category: "archaeological", description: "Depth 25 – 30 meters" },
+  { label: "Data Quantity",        score: 3, max: 3, category: "archaeological", description: "Structure in complete & intact condition" },
+  { label: "Distribution Pattern", score: 3, max: 3, category: "archaeological", description: "Above 50% of wreck structure visible" },
+  { label: "Seabed Morphology",    score: 3, max: 3, category: "ecological",     description: "Relatively flat and stable seabed" },
+  { label: "Sediment Substrate",   score: 3, max: 3, category: "ecological",     description: "Sandy substrate, less affected by currents" },
+  { label: "Coral Cover",          score: 2, max: 3, category: "ecological",     description: "80.18% cover; 28 species of living coral" },
+  { label: "Water Quality",        score: 2, max: 3, category: "ecological",     description: "Temp 30.1–31.6°C; pH 7.82–8.11; Salinity 33.4‰" },
+  { label: "Marine Regional Issue",score: 3, max: 3, category: "ecological",     description: "Restricted use zone within Seribu Islands conservation area" },
 ];
 
 // ---------------------------------------------------------------------------
@@ -134,18 +132,135 @@ const StarRating = ({ rating, max = 5 }: { rating: number; max?: number }) => (
 );
 
 // ---------------------------------------------------------------------------
-// SITE POTENTIAL COMPONENT
+// ✅ LIGHTBOX PORTAL — selalu center di viewport
+// ---------------------------------------------------------------------------
+const LightboxPortal = ({
+  images,
+  currentSlide,
+  setCurrentSlide,
+  onClose,
+}: {
+  images: string[];
+  currentSlide: number;
+  setCurrentSlide: React.Dispatch<React.SetStateAction<number>>;
+  onClose: () => void;
+}) => {
+  // Lock body scroll
+  useEffect(() => {
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = prev; };
+  }, []);
+
+  // Keyboard nav
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "Escape")      onClose();
+      if (e.key === "ArrowRight")  setCurrentSlide(p => (p + 1) % images.length);
+      if (e.key === "ArrowLeft")   setCurrentSlide(p => (p - 1 + images.length) % images.length);
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [images.length, onClose, setCurrentSlide]);
+
+  return createPortal(
+    <motion.div
+      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+      className="fixed inset-0 z-[9999] bg-black/90 flex items-center justify-center p-4 sm:p-8"
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ scale: 0.94, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.94, opacity: 0 }}
+        className="relative w-full max-w-3xl flex flex-col bg-[#0d0d0d] rounded-2xl overflow-hidden shadow-2xl border border-white/10"
+        style={{ maxHeight: "calc(100dvh - 2rem)" }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header bar */}
+        <div className="flex items-center justify-between px-4 py-2.5 border-b border-white/10 shrink-0">
+          <div className="flex items-center gap-2">
+            <div className="w-1.5 h-1.5 bg-primary rounded-full" />
+            <span className="text-[10px] font-bold text-white/60 uppercase tracking-widest">
+              Poso Wreck Documentation
+            </span>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-1.5 bg-white/10 hover:bg-red-500 text-white rounded-lg transition-colors border border-white/10"
+          >
+            <X size={15} />
+          </button>
+        </div>
+
+        {/* Main image */}
+        <div className="relative flex-1 min-h-0 flex items-center justify-center bg-[#0a0a0a] overflow-hidden">
+          <AnimatePresence mode="wait">
+            <motion.img
+              key={currentSlide}
+              src={images[currentSlide]}
+              initial={{ opacity: 0, scale: 0.98 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.98 }}
+              transition={{ duration: 0.2 }}
+              className="w-full h-full object-contain"
+              style={{ maxHeight: "calc(100dvh - 12rem)" }}
+              alt={`Poso Wreck ${currentSlide + 1}`}
+            />
+          </AnimatePresence>
+          <button
+            onClick={(e) => { e.stopPropagation(); setCurrentSlide(p => (p - 1 + images.length) % images.length); }}
+            className="absolute left-3 p-2 bg-black/60 hover:bg-primary text-white rounded-full border border-white/20 transition-colors"
+          >
+            <ChevronLeft size={16} />
+          </button>
+          <button
+            onClick={(e) => { e.stopPropagation(); setCurrentSlide(p => (p + 1) % images.length); }}
+            className="absolute right-3 p-2 bg-black/60 hover:bg-primary text-white rounded-full border border-white/20 transition-colors"
+          >
+            <ChevronRight size={16} />
+          </button>
+        </div>
+
+        {/* Thumbnail strip */}
+        <div className="shrink-0 px-4 py-3 border-t border-white/10 flex items-center justify-between gap-4 bg-black/60">
+          <div className="flex items-center gap-2 overflow-x-auto">
+            {images.map((src, i) => (
+              <button
+                key={i}
+                onClick={(e) => { e.stopPropagation(); setCurrentSlide(i); }}
+                className={`shrink-0 w-12 h-8 sm:w-16 sm:h-10 rounded-lg overflow-hidden border-2 transition-all ${
+                  currentSlide === i ? "border-primary opacity-100" : "border-white/10 opacity-40 hover:opacity-70"
+                }`}
+              >
+                <img src={src} className="w-full h-full object-cover" alt={`thumb-${i}`} />
+              </button>
+            ))}
+          </div>
+          <div className="flex flex-col items-end shrink-0">
+            <span className="text-[11px] font-black text-white/70 tabular-nums">
+              {currentSlide + 1} / {images.length}
+            </span>
+            <p className="text-[9px] text-white/30 font-medium hidden sm:block">© INSTRUMENT DIVE ADVENTURE</p>
+          </div>
+        </div>
+      </motion.div>
+    </motion.div>,
+    document.body
+  );
+};
+
+// ---------------------------------------------------------------------------
+// SITE POTENTIAL
 // ---------------------------------------------------------------------------
 const PosoPotential = () => {
   const [activeCategory, setActiveCategory] = useState<"all" | "archaeological" | "ecological">("all");
-  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+  const [hoveredIndex,   setHoveredIndex]   = useState<number | null>(null);
 
   const totalScore = posoCriteriaData.reduce((s, c) => s + c.score, 0);
-  const totalMax   = posoCriteriaData.reduce((s, c) => s + c.max, 0);
+  const totalMax   = posoCriteriaData.reduce((s, c) => s + c.max,   0);
   const archScore  = posoCriteriaData.filter(c => c.category === "archaeological").reduce((s, c) => s + c.score, 0);
-  const ecoScore   = posoCriteriaData.filter(c => c.category === "ecological").reduce((s, c) => s + c.score, 0);
+  const ecoScore   = posoCriteriaData.filter(c => c.category === "ecological").reduce((s, c)   => s + c.score, 0);
   const archMax = 15; const ecoMax = 15;
-  const pct = Math.round((totalScore / totalMax) * 100);
+  const pct      = Math.round((totalScore / totalMax) * 100);
   const filtered = posoCriteriaData.filter(c => activeCategory === "all" || c.category === activeCategory);
 
   return (
@@ -193,7 +308,6 @@ const PosoPotential = () => {
           </div>
         </div>
       </div>
-
       <div className="p-5 md:p-8 lg:p-10">
         <div className="flex items-center gap-2 mb-5 flex-wrap">
           {(["all", "archaeological", "ecological"] as const).map((cat) => (
@@ -208,7 +322,6 @@ const PosoPotential = () => {
           <AnimatePresence mode="popLayout">
             {filtered.map((item, i) => {
               const c = scoreColor(item.score, item.max);
-              const isHovered = hoveredIndex === i;
               return (
                 <motion.div key={item.label} layout initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
                   transition={{ duration: 0.2, delay: i * 0.03 }}
@@ -217,7 +330,7 @@ const PosoPotential = () => {
                   <div className={`w-2 h-2 rounded-full flex-shrink-0 ${item.category === "archaeological" ? "bg-blue-400" : "bg-emerald-400"}`} />
                   <div className="flex-1 min-w-0">
                     <p className="text-xs md:text-sm font-bold text-dark dark:text-white">{item.label}</p>
-                    {isHovered && <p className="text-[10px] text-gray-400 leading-relaxed mt-0.5">{item.description}</p>}
+                    {hoveredIndex === i && <p className="text-[10px] text-gray-400 leading-relaxed mt-0.5">{item.description}</p>}
                   </div>
                   <div className="flex gap-1 items-center flex-shrink-0">
                     {Array.from({ length: item.max }).map((_, idx) => (
@@ -293,7 +406,6 @@ const PosoDiveEnvironment = () => {
           </div>
         </div>
       </div>
-
       <AnimatePresence mode="wait">
         <motion.div key={activeSeason} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.3 }}
           className="p-5 md:p-8 lg:p-10">
@@ -334,7 +446,6 @@ const PosoDiveEnvironment = () => {
                 </div>
               ))}
             </div>
-
             <div className="flex flex-col gap-4">
               <div>
                 <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">Recommended Diver Level</p>
@@ -380,7 +491,7 @@ const PosoDiveEnvironment = () => {
 };
 
 // ---------------------------------------------------------------------------
-// MAIN CONTENT COMPONENT
+// MAIN CONTENT
 // ---------------------------------------------------------------------------
 const PosoContent = () => {
   const [isGalleryOpen, setIsGalleryOpen] = useState(false);
@@ -392,30 +503,17 @@ const PosoContent = () => {
     loading: true, error: null,
   });
 
-  // ✅ FIX: fetch via Next.js API route proxy — hindari CORS di Chrome/semua browser
-  // API route: /api/marine?lat=-5.70&lon=106.60
   useEffect(() => {
     const controller = new AbortController();
     let cancelled = false;
-
     const fetchMarineData = async () => {
       try {
-        const res = await fetch(
-          "/api/marine?lat=-5.70&lon=106.60",
-          { signal: controller.signal }
-        );
-
+        const res = await fetch("/api/marine?lat=-5.70&lon=106.60", { signal: controller.signal });
         if (cancelled) return;
-
-        if (!res.ok) {
-          throw new Error(`API route error: ${res.status}`);
-        }
-
+        if (!res.ok) throw new Error(`API route error: ${res.status}`);
         const data = await res.json();
         if (cancelled) return;
-
         if (data.error) throw new Error(data.error);
-
         setMarineWeather({
           waveHeight:    data.waveHeight    ?? 0,
           wavePeriod:    data.wavePeriod    ?? 0,
@@ -430,7 +528,6 @@ const PosoContent = () => {
         setMarineWeather(prev => ({ ...prev, loading: false, error: "Weather data unavailable" }));
       }
     };
-
     fetchMarineData();
     return () => { cancelled = true; controller.abort(); };
   }, []);
@@ -446,12 +543,12 @@ const PosoContent = () => {
   };
 
   const weatherCards = [
-    { label: "Wave Height",   icon: <Waves size={17} />,       value: marineWeather.waveHeight,    unit: "m",    bg: "bg-blue-50/50 dark:bg-blue-900/10",    border: "border-blue-100 dark:border-blue-800/30",    iconBg: "bg-blue-100 dark:bg-blue-800/50 text-blue-600 dark:text-blue-400" },
-    { label: "Wave Period",   icon: <Activity size={17} />,    value: marineWeather.wavePeriod,    unit: "s",    bg: "bg-indigo-50/50 dark:bg-indigo-900/10", border: "border-indigo-100 dark:border-indigo-800/30", iconBg: "bg-indigo-100 dark:bg-indigo-800/50 text-indigo-600 dark:text-indigo-400" },
-    { label: "Current Vel.", icon: <Wind size={17} />,        value: marineWeather.oceanCurrent,  unit: "km/h", bg: "bg-teal-50/50 dark:bg-teal-900/10",     border: "border-teal-100 dark:border-teal-800/30",    iconBg: "bg-teal-100 dark:bg-teal-800/50 text-teal-600 dark:text-teal-400" },
-    { label: "Surface Temp", icon: <Thermometer size={17} />, value: marineWeather.waterTemp,     unit: "°C",   bg: "bg-orange-50/50 dark:bg-orange-900/10", border: "border-orange-100 dark:border-orange-800/30", iconBg: "bg-orange-100 dark:bg-orange-800/50 text-orange-600 dark:text-orange-400" },
-    { label: "Wind Speed",   icon: <Wind size={17} />,        value: marineWeather.windSpeed,     unit: "km/h", bg: "bg-purple-50/50 dark:bg-purple-900/10", border: "border-purple-100 dark:border-purple-800/30", iconBg: "bg-purple-100 dark:bg-purple-800/50 text-purple-600 dark:text-purple-400" },
-    { label: "Precipitation",icon: <CloudRain size={17} />,   value: marineWeather.precipitation, unit: "mm",   bg: "bg-cyan-50/50 dark:bg-cyan-900/10",     border: "border-cyan-100 dark:border-cyan-800/30",    iconBg: "bg-cyan-100 dark:bg-cyan-800/50 text-cyan-600 dark:text-cyan-400" },
+    { label: "Wave Height",  icon: <Waves size={17} />,       value: marineWeather.waveHeight,    unit: "m",    bg: "bg-blue-50/50 dark:bg-blue-900/10",    border: "border-blue-100 dark:border-blue-800/30",    iconBg: "bg-blue-100 dark:bg-blue-800/50 text-blue-600 dark:text-blue-400" },
+    { label: "Wave Period",  icon: <Activity size={17} />,    value: marineWeather.wavePeriod,    unit: "s",    bg: "bg-indigo-50/50 dark:bg-indigo-900/10", border: "border-indigo-100 dark:border-indigo-800/30", iconBg: "bg-indigo-100 dark:bg-indigo-800/50 text-indigo-600 dark:text-indigo-400" },
+    { label: "Current Vel.",icon: <Wind size={17} />,        value: marineWeather.oceanCurrent,  unit: "km/h", bg: "bg-teal-50/50 dark:bg-teal-900/10",     border: "border-teal-100 dark:border-teal-800/30",    iconBg: "bg-teal-100 dark:bg-teal-800/50 text-teal-600 dark:text-teal-400" },
+    { label: "Surface Temp",icon: <Thermometer size={17} />, value: marineWeather.waterTemp,     unit: "°C",   bg: "bg-orange-50/50 dark:bg-orange-900/10", border: "border-orange-100 dark:border-orange-800/30", iconBg: "bg-orange-100 dark:bg-orange-800/50 text-orange-600 dark:text-orange-400" },
+    { label: "Wind Speed",  icon: <Wind size={17} />,        value: marineWeather.windSpeed,     unit: "km/h", bg: "bg-purple-50/50 dark:bg-purple-900/10", border: "border-purple-100 dark:border-purple-800/30", iconBg: "bg-purple-100 dark:bg-purple-800/50 text-purple-600 dark:text-purple-400" },
+    { label: "Precipitation",icon:<CloudRain size={17} />,   value: marineWeather.precipitation, unit: "mm",   bg: "bg-cyan-50/50 dark:bg-cyan-900/10",     border: "border-cyan-100 dark:border-cyan-800/30",    iconBg: "bg-cyan-100 dark:bg-cyan-800/50 text-cyan-600 dark:text-cyan-400" },
   ];
 
   return (
@@ -479,15 +576,18 @@ const PosoContent = () => {
 
         <motion.div initial={{ opacity: 0, y: 40 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: false }} transition={{ duration: 0.7, delay: 0.15 }}
           className="lg:col-span-5 grid grid-cols-2 grid-rows-2 gap-3 h-[260px] md:h-[420px]">
-          <div className="col-span-2 row-span-1 relative rounded-[1.5rem] md:rounded-[2.5rem] overflow-hidden cursor-pointer group" onClick={() => setIsGalleryOpen(true)}>
+          <div className="col-span-2 row-span-1 relative rounded-[1.5rem] md:rounded-[2.5rem] overflow-hidden cursor-pointer group"
+            onClick={() => { setCurrentSlide(0); setIsGalleryOpen(true); }}>
             <img src={posoImages[0]} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" alt="Poso Wreck Main" loading="lazy" />
             <div className="absolute inset-0 bg-black/20" />
             <div className="absolute top-3 right-3 bg-black/40 p-1.5 rounded-full text-white border border-white/20"><Camera size={15} /></div>
           </div>
-          <div className="rounded-[1.5rem] md:rounded-[2rem] overflow-hidden cursor-pointer" onClick={() => setIsGalleryOpen(true)}>
+          <div className="rounded-[1.5rem] md:rounded-[2rem] overflow-hidden cursor-pointer"
+            onClick={() => { setCurrentSlide(1); setIsGalleryOpen(true); }}>
             <img src={posoImages[1]} className="w-full h-full object-cover" alt="Poso Wreck 2" loading="lazy" />
           </div>
-          <div className="relative rounded-[1.5rem] md:rounded-[2rem] overflow-hidden cursor-pointer group" onClick={() => setIsGalleryOpen(true)}>
+          <div className="relative rounded-[1.5rem] md:rounded-[2rem] overflow-hidden cursor-pointer group"
+            onClick={() => { setCurrentSlide(2); setIsGalleryOpen(true); }}>
             <img src={posoImages[2]} className="w-full h-full object-cover" alt="Poso Wreck 3" loading="lazy" />
             <div className="absolute inset-0 bg-primary/65 flex flex-col items-center justify-center text-white">
               <Images size={19} className="mb-1" />
@@ -545,7 +645,7 @@ const PosoContent = () => {
         {[
           { icon: <MapPin className="text-primary mb-2.5" size={18} />, label: "Location", value: "Karang Congkak, NW Pramuka Island" },
           { icon: <Waves className="text-primary mb-2.5" size={18} />,  label: "Depth",    value: "25 – 30 Meters" },
-          { icon: <History className="text-primary mb-2.5" size={18} />, label: "Sunk",    value: "1970 · Collision with KM Berdikari" },
+          { icon: <History className="text-primary mb-2.5" size={18} />,label: "Sunk",     value: "1970 · Collision with KM Berdikari" },
         ].map(({ icon, label, value }, i) => (
           <motion.div key={label} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: false }} transition={{ duration: 0.5, delay: i * 0.08 }}
             className="p-5 md:p-7 rounded-[1.5rem] bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 flex flex-col">
@@ -562,7 +662,6 @@ const PosoContent = () => {
       {/* WILDLIFE */}
       <motion.div initial={{ opacity: 0, y: 40 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: false }} transition={{ duration: 0.7 }}
         className="rounded-[2rem] md:rounded-[3rem] bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 shadow-2xl overflow-hidden">
-        {/* Header */}
         <div className="bg-gradient-to-br from-amber-500 to-orange-700 p-5 md:p-8 lg:p-10 relative overflow-hidden">
           <div className="absolute inset-0 opacity-10" style={{ backgroundImage: "radial-gradient(circle at 70% 50%, white 1px, transparent 1px)", backgroundSize: "24px 24px" }} />
           <div className="relative z-10 flex items-center justify-between gap-3">
@@ -571,9 +670,7 @@ const PosoContent = () => {
                 <Fish size={14} className="text-white/80 flex-shrink-0" />
                 <span className="text-[10px] font-black uppercase tracking-widest text-white/80">Marine Biodiversity</span>
               </div>
-              <h3 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-black text-white tracking-tight mb-0.5 leading-tight">
-                Potential Wildlife
-              </h3>
+              <h3 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-black text-white tracking-tight mb-0.5 leading-tight">Potential Wildlife</h3>
               <p className="text-white/70 font-medium text-xs md:text-sm">Species recorded at Poso Wreck Site</p>
             </div>
             <div className="w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 rounded-xl bg-white/15 border border-white/20 flex items-center justify-center flex-shrink-0">
@@ -581,89 +678,20 @@ const PosoContent = () => {
             </div>
           </div>
         </div>
-        {/* Content — padding responsif, overflow aman */}
         <div className="p-4 sm:p-6 md:p-8 lg:p-10 overflow-x-auto">
           <WildlifeSightings />
         </div>
       </motion.div>
 
-      {/* LIGHTBOX — responsive: max-h viewport, thumbnail strip, proper sizing */}
+      {/* ✅ LIGHTBOX via Portal — selalu center di viewport */}
       <AnimatePresence>
         {isGalleryOpen && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[999] bg-black/90 flex items-center justify-center p-4 sm:p-8 md:p-12 lg:p-16"
-            onClick={() => setIsGalleryOpen(false)}>
-            <motion.div initial={{ scale: 0.94, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.94, opacity: 0 }}
-              className="relative w-full max-w-3xl flex flex-col bg-[#0d0d0d] rounded-2xl overflow-hidden shadow-2xl border border-white/10"
-              style={{ maxHeight: 'calc(100vh - 4rem)' }}
-              onClick={(e) => e.stopPropagation()}>
-
-              {/* Header bar */}
-              <div className="flex items-center justify-between px-4 py-2.5 border-b border-white/10 shrink-0">
-                <div className="flex items-center gap-2">
-                  <div className="w-1.5 h-1.5 bg-primary rounded-full" />
-                  <span className="text-[10px] font-bold text-white/60 uppercase tracking-widest">
-                    Poso Wreck Documentation
-                  </span>
-                </div>
-                <button onClick={() => setIsGalleryOpen(false)}
-                  className="p-1.5 bg-white/10 hover:bg-red-500 text-white rounded-lg transition-colors border border-white/10">
-                  <X size={15} />
-                </button>
-              </div>
-
-              {/* Main image area — flex-1 agar mengisi ruang, tidak overflow */}
-              <div className="relative flex-1 min-h-0 flex items-center justify-center bg-[#0a0a0a]">
-                <AnimatePresence mode="wait">
-                  <motion.img
-                    key={currentSlide}
-                    src={posoImages[currentSlide]}
-                    initial={{ opacity: 0, scale: 0.98 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.98 }}
-                    transition={{ duration: 0.2 }}
-                    className="w-full h-full object-contain"
-                    style={{ maxHeight: 'calc(100vh - 12rem)', maxWidth: '100%' }}
-                    alt={`Poso Wreck ${currentSlide + 1}`}
-                  />
-                </AnimatePresence>
-
-                {/* Nav arrows — selalu di dalam area gambar */}
-                <button
-                  onClick={() => setCurrentSlide(p => p === 0 ? posoImages.length - 1 : p - 1)}
-                  className="absolute left-3 p-2 bg-black/60 hover:bg-primary text-white rounded-full border border-white/20 transition-colors z-10">
-                  <ChevronLeft size={16} />
-                </button>
-                <button
-                  onClick={() => setCurrentSlide(p => p === posoImages.length - 1 ? 0 : p + 1)}
-                  className="absolute right-3 p-2 bg-black/60 hover:bg-primary text-white rounded-full border border-white/20 transition-colors z-10">
-                  <ChevronRight size={16} />
-                </button>
-              </div>
-
-              {/* Thumbnail strip + counter footer */}
-              <div className="shrink-0 px-4 py-3 border-t border-white/10 flex items-center justify-between gap-4 bg-black/60">
-                {/* Thumbnails */}
-                <div className="flex items-center gap-2 overflow-x-auto">
-                  {posoImages.map((src, i) => (
-                    <button key={i} onClick={() => setCurrentSlide(i)}
-                      className={`shrink-0 w-12 h-8 sm:w-16 sm:h-10 rounded-lg overflow-hidden border-2 transition-all ${
-                        currentSlide === i ? 'border-primary opacity-100' : 'border-white/10 opacity-40 hover:opacity-70'
-                      }`}>
-                      <img src={src} className="w-full h-full object-cover" alt={`thumb-${i}`} />
-                    </button>
-                  ))}
-                </div>
-                {/* Counter & credit */}
-                <div className="flex flex-col items-end shrink-0">
-                  <span className="text-[11px] font-black text-white/70 tabular-nums">
-                    {currentSlide + 1} / {posoImages.length}
-                  </span>
-                  <p className="text-[9px] text-white/30 font-medium hidden sm:block">© INSTRUMENT DIVE ADVENTURE</p>
-                </div>
-              </div>
-            </motion.div>
-          </motion.div>
+          <LightboxPortal
+            images={posoImages}
+            currentSlide={currentSlide}
+            setCurrentSlide={setCurrentSlide}
+            onClose={() => setIsGalleryOpen(false)}
+          />
         )}
       </AnimatePresence>
     </motion.div>
