@@ -32,14 +32,15 @@ interface MeshModelProps {
   id: string;
 }
 
-// ── OBJ MESH COMPONENT ───────────────────────────────────
-const OBJMeshModel = ({ url, active, onLoadingChange, id }: MeshModelProps) => {
-  const [obj, setObj] = useState<THREE.Group | null>(null);
+// ── PLY MESH COMPONENT ───────────────────────────────────
+// PLY lebih stabil dari OBJ: binary format, tidak geter, support vertex color
+const PLYMeshModel = ({ url, active, onLoadingChange, id }: MeshModelProps) => {
+  const [mesh, setMesh] = useState<THREE.Mesh | null>(null);
   const [hasFetched, setHasFetched] = useState(false);
 
   useEffect(() => {
     if (!active && !hasFetched) return;
-    if (obj) return;
+    if (mesh) return;
 
     let cancelled = false;
     setHasFetched(true);
@@ -47,107 +48,112 @@ const OBJMeshModel = ({ url, active, onLoadingChange, id }: MeshModelProps) => {
 
     const load = async () => {
       try {
-        const { OBJLoader } = await import("three/examples/jsm/loaders/OBJLoader.js");
+        // ✅ PLYLoader dari three-stdlib — stabil, sudah include di @react-three/drei
+        const { PLYLoader } = await import("three-stdlib");
         if (cancelled) return;
 
-        const loader = new OBJLoader();
+        const loader = new PLYLoader();
         loader.load(
           url,
-          (loadedObj) => {
+          (geometry) => {
             if (cancelled) return;
 
-            // ✅ FIX ALIGNMENT: OBJ pakai koordinat geo (X=East, Y=North, Z=Up)
-            // LAS juga pakai sistem yang sama tapi di-swap saat processing:
-            //   LAS: centeredPositions[i+1] = (Z - centerZ) * scale   ← jadi Y di Three.js
-            //   LAS: centeredPositions[i+2] = -(Y - centerY) * scale  ← jadi Z di Three.js
-            // Jadi OBJ harus pakai rotasi yang sama agar sejajar:
-            //   rotateX(-90°) → swap Y↔Z dan flip sign Z → cocok dengan cara LAS di-process
+            // PLY load sebagai BufferGeometry langsung (bukan Group seperti OBJ)
+            geometry.computeVertexNormals();
 
-            // Step 1: Hitung bounding box SEBELUM transformasi
-            const box    = new THREE.Box3().setFromObject(loadedObj);
-            const center = box.getCenter(new THREE.Vector3());
-            const size   = box.getSize(new THREE.Vector3());
-            // Pakai range terbesar di XY plane (horizontal) agar scale sesuai LAS
+            // Step 1: Hitung bounding box & scale agar sesuai dengan scene LAS
+            geometry.computeBoundingBox();
+            const box    = geometry.boundingBox!;
+            const center = new THREE.Vector3();
+            box.getCenter(center);
+            const size   = new THREE.Vector3();
+            box.getSize(size);
             const maxDim = Math.max(size.x, size.y, size.z);
             const scale  = 20 / (maxDim || 1);
 
-            // Step 2: Terapkan transformasi identik dengan LAS processing
-            // - Translate ke origin dulu
-            // - Rotate X -90° (swap Y↔Z, Y=up → Z=depth)
-            // - Scale seragam
-            loadedObj.position.set(
-              -center.x * scale,
-              -center.z * scale,   // ← Z geo menjadi Y Three.js (height)
-               center.y * scale    // ← Y geo menjadi Z Three.js (depth), flip sign
-            );
-            loadedObj.scale.setScalar(scale);
-            // Rotasi -90° di X axis agar orientasi sesuai LAS axis swap
-            loadedObj.rotation.set(-Math.PI / 2, 0, 0);
+            // Step 2: Center geometry ke origin (translate vertices langsung)
+            // Ini lebih stabil dari manipulasi position mesh
+            geometry.translate(-center.x, -center.y, -center.z);
+            geometry.scale(scale, scale, scale);
 
-            // Step 3: Material dengan depth-based vertex color menggunakan ShaderMaterial
-            // agar warna mirip dengan point cloud (biru dalam → kuning dangkal)
-            const depthColorVert = `
-              varying float vHeight;
-              void main() {
-                vec4 worldPos = modelMatrix * vec4(position, 1.0);
-                vHeight = worldPos.y;
-                gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-              }
-            `;
-            const depthColorFrag = `
-              uniform float uMinY;
-              uniform float uMaxY;
-              varying float vHeight;
-              void main() {
-                float t = clamp((vHeight - uMinY) / max(uMaxY - uMinY, 0.001), 0.0, 1.0);
-                // Gradient: deep blue → cyan → teal → pale yellow (sama dengan LAS)
-                vec3 c0 = vec3(0.031, 0.114, 0.345); // #081d58
-                vec3 c1 = vec3(0.114, 0.569, 0.753); // #1d91c0
-                vec3 c2 = vec3(0.498, 0.804, 0.733); // #7fcdbb
-                vec3 c3 = vec3(1.0,   1.0,   0.851); // #ffffd9
-                vec3 col;
-                if      (t < 0.33) col = mix(c0, c1, t / 0.33);
-                else if (t < 0.66) col = mix(c1, c2, (t - 0.33) / 0.33);
-                else               col = mix(c2, c3, (t - 0.66) / 0.34);
-                gl_FragColor = vec4(col, 0.88);
-              }
-            `;
+            // Step 3: Cek apakah PLY punya vertex color (dari CloudCompare SF to RGB)
+            const hasVertexColor = geometry.hasAttribute('color');
 
-            // Hitung Y range setelah transformasi untuk uniform shader
-            const transformedBox = new THREE.Box3().setFromObject(loadedObj);
-            const minY = transformedBox.min.y;
-            const maxY = transformedBox.max.y;
+            let material: THREE.Material;
 
-            loadedObj.traverse((child) => {
-              if ((child as THREE.Mesh).isMesh) {
-                (child as THREE.Mesh).material = new THREE.ShaderMaterial({
-                  vertexShader:   depthColorVert,
-                  fragmentShader: depthColorFrag,
-                  uniforms: {
-                    uMinY: { value: minY },
-                    uMaxY: { value: maxY },
-                  },
-                  transparent: true,
-                  side: THREE.DoubleSide,
-                  depthWrite: true,
-                });
-              }
-            });
+            if (hasVertexColor) {
+              // ✅ Jika ada vertex color dari CloudCompare → pakai langsung
+              material = new THREE.MeshPhongMaterial({
+                vertexColors: true,
+                shininess:    30,
+                transparent:  true,
+                opacity:      0.92,
+                side:         THREE.DoubleSide,
+              });
+            } else {
+              // ✅ Fallback: depth-based ShaderMaterial jika tidak ada vertex color
+              const depthColorVert = `
+                varying float vHeight;
+                void main() {
+                  vec4 worldPos = modelMatrix * vec4(position, 1.0);
+                  vHeight = worldPos.y;
+                  gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+                }
+              `;
+              const depthColorFrag = `
+                uniform float uMinY;
+                uniform float uMaxY;
+                varying float vHeight;
+                void main() {
+                  float t = clamp((vHeight - uMinY) / max(uMaxY - uMinY, 0.001), 0.0, 1.0);
+                  vec3 c0 = vec3(0.031, 0.114, 0.345); // #081d58 deep blue
+                  vec3 c1 = vec3(0.114, 0.569, 0.753); // #1d91c0 cyan
+                  vec3 c2 = vec3(0.498, 0.804, 0.733); // #7fcdbb teal
+                  vec3 c3 = vec3(1.0,   1.0,   0.851); // #ffffd9 pale yellow
+                  vec3 col;
+                  if      (t < 0.33) col = mix(c0, c1, t / 0.33);
+                  else if (t < 0.66) col = mix(c1, c2, (t - 0.33) / 0.33);
+                  else               col = mix(c2, c3, (t - 0.66) / 0.34);
+                  gl_FragColor = vec4(col, 0.90);
+                }
+              `;
+              // Hitung Y range geometry setelah translate+scale
+              geometry.computeBoundingBox();
+              const minY = geometry.boundingBox!.min.y;
+              const maxY = geometry.boundingBox!.max.y;
 
-            setObj(loadedObj);
+              material = new THREE.ShaderMaterial({
+                vertexShader:   depthColorVert,
+                fragmentShader: depthColorFrag,
+                uniforms: {
+                  uMinY: { value: minY },
+                  uMaxY: { value: maxY },
+                },
+                transparent: true,
+                side:        THREE.DoubleSide,
+                depthWrite:  true,
+              });
+            }
+
+            // Step 4: Buat mesh dan terapkan rotasi axis swap
+            // identik dengan cara LAS memproses koordinat geo → Three.js
+            const loadedMesh = new THREE.Mesh(geometry, material);
+            loadedMesh.rotation.set(-Math.PI / 2, 0, 0);
+
+            setMesh(loadedMesh);
             onLoadingChange(id, false);
           },
           undefined,
           (error) => {
             if (!cancelled) {
-              console.error(`Gagal memuat OBJ (${id}):`, error);
+              console.error(`Gagal memuat PLY (${id}):`, error);
               onLoadingChange(id, false);
             }
           }
         );
       } catch (err) {
         if (!cancelled) {
-          console.error(`OBJLoader import error (${id}):`, err);
+          console.error(`PLYLoader import error (${id}):`, err);
           onLoadingChange(id, false);
         }
       }
@@ -157,9 +163,9 @@ const OBJMeshModel = ({ url, active, onLoadingChange, id }: MeshModelProps) => {
     return () => { cancelled = true; };
   }, [active, hasFetched, id, url]);
 
-  if (!active || !obj) return null;
+  if (!active || !mesh) return null;
 
-  return <primitive object={obj} />;
+  return <primitive object={mesh} />;
 };
 
 // ── POINT CLOUD COMPONENT ────────────────────────────────
@@ -300,9 +306,9 @@ const LAYERS: LayerConfig[] = [
   {
     id: 'mesh_tabularasa',
     label: 'Tabularasa 3D Mesh',
-    subtitle: 'Wreck Site 1 · OBJ',
+    subtitle: 'Wreck Site 1 · PLY',
     type: 'mesh',
-    url: '/data/3D/OBJ_Mesh_Tabularasa.obj',
+    url: '/data/3D/PLY_Mesh_Tabularasa.ply',
     group: 'tabularasa',
   },
   {
@@ -316,9 +322,9 @@ const LAYERS: LayerConfig[] = [
   {
     id: 'mesh_poso',
     label: 'Poso 3D Mesh',
-    subtitle: 'Wreck Site 2 · OBJ',
+    subtitle: 'Wreck Site 2 · PLY',
     type: 'mesh',
-    url: '/data/3D/OBJ_Mesh_Poso.obj',
+    url: '/data/3D/PLY_Mesh_Poso.ply',
     group: 'poso',
   },
 ];
@@ -446,14 +452,14 @@ const Mapping3D = () => {
                   onDataLoaded={handleDataLoaded} onLoadingChange={handleLoadingChange}
                 />
 
-                {/* OBJ Mesh Layers */}
-                <OBJMeshModel
-                  id="mesh_tabularasa" url="/data/3D/OBJ_Mesh_Tabularasa.obj"
+                {/* PLY Mesh Layers */}
+                <PLYMeshModel
+                  id="mesh_tabularasa" url="/data/3D/PLY_Mesh_Tabularasa.ply"
                   active={activeLayers.has('mesh_tabularasa')}
                   onLoadingChange={handleLoadingChange}
                 />
-                <OBJMeshModel
-                  id="mesh_poso" url="/data/3D/OBJ_Mesh_Poso.obj"
+                <PLYMeshModel
+                  id="mesh_poso" url="/data/3D/PLY_Mesh_Poso.ply"
                   active={activeLayers.has('mesh_poso')}
                   onLoadingChange={handleLoadingChange}
                 />

@@ -562,57 +562,105 @@ const PosoContent = () => {
       {/* WILDLIFE */}
       <motion.div initial={{ opacity: 0, y: 40 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: false }} transition={{ duration: 0.7 }}
         className="rounded-[2rem] md:rounded-[3rem] bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 shadow-2xl overflow-hidden">
-        <div className="bg-gradient-to-br from-amber-500 to-orange-700 p-6 md:p-8 lg:p-10 relative overflow-hidden">
+        {/* Header */}
+        <div className="bg-gradient-to-br from-amber-500 to-orange-700 p-5 md:p-8 lg:p-10 relative overflow-hidden">
           <div className="absolute inset-0 opacity-10" style={{ backgroundImage: "radial-gradient(circle at 70% 50%, white 1px, transparent 1px)", backgroundSize: "24px 24px" }} />
-          <div className="relative z-10 flex items-center justify-between gap-4">
-            <div>
-              <div className="flex items-center gap-2 mb-2">
-                <Fish size={15} className="text-white/80" />
+          <div className="relative z-10 flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 mb-1.5">
+                <Fish size={14} className="text-white/80 flex-shrink-0" />
                 <span className="text-[10px] font-black uppercase tracking-widest text-white/80">Marine Biodiversity</span>
               </div>
-              <h3 className="text-2xl md:text-3xl lg:text-4xl font-black text-white tracking-tight mb-0.5">Potential Wildlife</h3>
+              <h3 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-black text-white tracking-tight mb-0.5 leading-tight">
+                Potential Wildlife
+              </h3>
               <p className="text-white/70 font-medium text-xs md:text-sm">Species recorded at Poso Wreck Site</p>
             </div>
-            <div className="w-11 h-11 md:w-14 md:h-14 rounded-xl bg-white/15 border border-white/20 flex items-center justify-center flex-shrink-0">
-              <Fish size={22} className="text-white" />
+            <div className="w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 rounded-xl bg-white/15 border border-white/20 flex items-center justify-center flex-shrink-0">
+              <Fish size={20} className="text-white" />
             </div>
           </div>
         </div>
-        <div className="p-5 md:p-8 lg:p-10"><WildlifeSightings /></div>
+        {/* Content — padding responsif, overflow aman */}
+        <div className="p-4 sm:p-6 md:p-8 lg:p-10 overflow-x-auto">
+          <WildlifeSightings />
+        </div>
       </motion.div>
 
-      {/* LIGHTBOX */}
+      {/* LIGHTBOX — responsive: max-h viewport, thumbnail strip, proper sizing */}
       <AnimatePresence>
         {isGalleryOpen && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[999] bg-black/92 flex items-center justify-center p-3 md:p-10"
+            className="fixed inset-0 z-[999] bg-black/95 flex flex-col items-center justify-center p-3 sm:p-6 md:p-10"
             onClick={() => setIsGalleryOpen(false)}>
-            <motion.div initial={{ scale: 0.92, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.92, opacity: 0 }}
-              className="relative max-w-5xl w-full bg-black rounded-2xl md:rounded-3xl overflow-hidden shadow-2xl"
+            <motion.div initial={{ scale: 0.94, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.94, opacity: 0 }}
+              className="relative w-full max-w-5xl flex flex-col bg-[#0d0d0d] rounded-2xl md:rounded-3xl overflow-hidden shadow-2xl border border-white/10"
+              style={{ maxHeight: 'calc(100vh - 2rem)' }}
               onClick={(e) => e.stopPropagation()}>
-              <button onClick={() => setIsGalleryOpen(false)}
-                className="absolute top-3 right-3 z-[1010] p-2 bg-black/60 hover:bg-red-500 text-white rounded-full transition-colors border border-white/10">
-                <X size={17} />
-              </button>
-              <div className="relative aspect-video flex items-center justify-center bg-[#0a0a0a]">
-                <AnimatePresence mode="wait">
-                  <motion.img key={currentSlide} src={posoImages[currentSlide]}
-                    initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.25 }}
-                    className="w-full h-full object-contain" alt="Poso Wreck Documentation" />
-                </AnimatePresence>
-                <div className="absolute inset-0 flex items-center justify-between px-3 pointer-events-none">
-                  <button onClick={() => setCurrentSlide((p) => (p === 0 ? posoImages.length - 1 : p - 1))}
-                    className="p-2 md:p-3 bg-white/15 hover:bg-white/25 text-white rounded-full border border-white/20 transition-colors pointer-events-auto"><ChevronLeft size={19} /></button>
-                  <button onClick={() => setCurrentSlide((p) => (p === posoImages.length - 1 ? 0 : p + 1))}
-                    className="p-2 md:p-3 bg-white/15 hover:bg-white/25 text-white rounded-full border border-white/20 transition-colors pointer-events-auto"><ChevronRight size={19} /></button>
-                </div>
-              </div>
-              <div className="bg-black/80 p-3 px-4 flex justify-between items-center border-t border-white/10">
+
+              {/* Header bar */}
+              <div className="flex items-center justify-between px-4 py-2.5 border-b border-white/10 shrink-0">
                 <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 bg-primary rounded-full" />
-                  <span className="text-[10px] font-bold text-white/70 uppercase tracking-widest">Frame {currentSlide + 1} of {posoImages.length}</span>
+                  <div className="w-1.5 h-1.5 bg-primary rounded-full" />
+                  <span className="text-[10px] font-bold text-white/60 uppercase tracking-widest">
+                    Poso Wreck Documentation
+                  </span>
                 </div>
-                <p className="text-[10px] text-white/40 font-medium hidden sm:block">© INSTRUMENT DIVE ADVENTURE</p>
+                <button onClick={() => setIsGalleryOpen(false)}
+                  className="p-1.5 bg-white/10 hover:bg-red-500 text-white rounded-lg transition-colors border border-white/10">
+                  <X size={15} />
+                </button>
+              </div>
+
+              {/* Main image area — flex-1 agar mengisi ruang, tidak overflow */}
+              <div className="relative flex-1 min-h-0 flex items-center justify-center bg-[#0a0a0a]">
+                <AnimatePresence mode="wait">
+                  <motion.img
+                    key={currentSlide}
+                    src={posoImages[currentSlide]}
+                    initial={{ opacity: 0, scale: 0.98 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.98 }}
+                    transition={{ duration: 0.2 }}
+                    className="w-full h-full object-contain"
+                    style={{ maxHeight: 'calc(100vh - 10rem)' }}
+                    alt={`Poso Wreck ${currentSlide + 1}`}
+                  />
+                </AnimatePresence>
+
+                {/* Nav arrows — kiri & kanan */}
+                <button
+                  onClick={() => setCurrentSlide(p => p === 0 ? posoImages.length - 1 : p - 1)}
+                  className="absolute left-2 sm:left-4 p-2 sm:p-3 bg-black/50 hover:bg-black/80 text-white rounded-full border border-white/15 transition-colors">
+                  <ChevronLeft size={18} />
+                </button>
+                <button
+                  onClick={() => setCurrentSlide(p => p === posoImages.length - 1 ? 0 : p + 1)}
+                  className="absolute right-2 sm:right-4 p-2 sm:p-3 bg-black/50 hover:bg-black/80 text-white rounded-full border border-white/15 transition-colors">
+                  <ChevronRight size={18} />
+                </button>
+              </div>
+
+              {/* Thumbnail strip + counter footer */}
+              <div className="shrink-0 px-4 py-3 border-t border-white/10 flex items-center justify-between gap-4 bg-black/60">
+                {/* Thumbnails */}
+                <div className="flex items-center gap-2 overflow-x-auto">
+                  {posoImages.map((src, i) => (
+                    <button key={i} onClick={() => setCurrentSlide(i)}
+                      className={`shrink-0 w-12 h-8 sm:w-16 sm:h-10 rounded-lg overflow-hidden border-2 transition-all ${
+                        currentSlide === i ? 'border-primary opacity-100' : 'border-white/10 opacity-40 hover:opacity-70'
+                      }`}>
+                      <img src={src} className="w-full h-full object-cover" alt={`thumb-${i}`} />
+                    </button>
+                  ))}
+                </div>
+                {/* Counter & credit */}
+                <div className="flex flex-col items-end shrink-0">
+                  <span className="text-[11px] font-black text-white/70 tabular-nums">
+                    {currentSlide + 1} / {posoImages.length}
+                  </span>
+                  <p className="text-[9px] text-white/30 font-medium hidden sm:block">© INSTRUMENT DIVE ADVENTURE</p>
+                </div>
               </div>
             </motion.div>
           </motion.div>
