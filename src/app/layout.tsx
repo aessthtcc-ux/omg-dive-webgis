@@ -29,6 +29,12 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
         />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+        {/* ✅ Paksa hardware acceleration yang benar di Android */}
+        <meta name="mobile-web-app-capable" content="yes" />
+        <meta name="theme-color" content="#0f172a" />
+        
+        {/* ✅ Hint ke browser agar tidak render semua sekaligus */}
+        <meta http-equiv="x-dns-prefetch-control" content="on" />
       </head>
         <body className={dmsans.className}>
           <AuthDialogProvider>

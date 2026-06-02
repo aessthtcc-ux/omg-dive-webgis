@@ -26,6 +26,17 @@ const nextConfig = {
     "@react-three/drei",
     "georaster-layer-for-leaflet",
   ],
+  // Compress output
+  compress: true,
+  
+  // Kurangi beban Three.js dan loaders
+  webpack: (config) => {
+    config.resolve.fallback = { fs: false, net: false, tls: false };
+    
+    // Tree-shake Three.js agar tidak load semua
+    config.module.unknownContextCritical = false;
+    return config;
+  },
 };
 
 export default nextConfig;

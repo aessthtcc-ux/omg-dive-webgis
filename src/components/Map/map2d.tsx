@@ -165,9 +165,6 @@ const layerGroups = [
       { id: "dem_pesisirpanggang",filePath: "/data/dem/DEM_PesisirPanggang_RGB_0.5m.tif",    title: "DEM Pesisir Panggang",  project: "Site 4",  color: "#f97316", dash: "0", isDummy: false, isRaster: true },
       { id: "dem_site5",          filePath: "/data/dem/DEM_Site5.tif",                       title: "DEM Site 5",            project: "Site 5",  color: "#22c55e", dash: "0", isDummy: false, isRaster: true },
       { id: "dem_site6",          filePath: "/data/dem/DEM_Site6.tif",                       title: "DEM Site 6",            project: "Site 6",  color: "#eab308", dash: "0", isDummy: false, isRaster: true },
-      { id: "dem_site7",          filePath: "/data/dem/DEM_Site7.tif",                       title: "DEM Site 7",            project: "Site 7",  color: "#ef4444", dash: "0", isDummy: false, isRaster: true },
-      { id: "dem_site8",          filePath: "/data/dem/DEM_Site8.tif",                       title: "DEM Site 8",            project: "Site 8",  color: "#14b8a6", dash: "0", isDummy: false, isRaster: true },
-      { id: "dem_site9",          filePath: "/data/dem/DEM_Site9.tif",                       title: "DEM Site 9",            project: "Site 9",  color: "#a78bfa", dash: "0", isDummy: false, isRaster: true },
     ]
   }
 ];

@@ -180,3 +180,27 @@ html {
   -webkit-backface-visibility: hidden;
   backface-visibility: hidden;
 }
+
+/* Android Chrome sering corrupt saat backdrop-filter aktif */
+@supports not (backdrop-filter: blur(1px)) {
+  [class*="backdrop-blur"] {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    background-color: rgba(15, 23, 42, 0.95) !important;
+  }
+}
+
+/* Matikan semua animasi di low-end device */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Render hanya section yang terlihat di viewport */
+section {
+  content-visibility: auto;
+  contain-intrinsic-size: 0 500px;
+}

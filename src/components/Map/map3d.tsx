@@ -191,7 +191,21 @@ const Mapping3D = () => {
 
   const handleDataLoaded    = useCallback((id: string, c: number, mn: number, mx: number) => setLayerStats(p => ({ ...p, [id]: { count: c, minZ: mn, maxZ: mx } })), []);
   const handleLoadingChange = useCallback((id: string, loading: boolean)                   => setLoadingLayers(p => ({ ...p, [id]: loading })), []);
-  const toggleLayer         = (k: keyof typeof activeLayers) => setActiveLayers(p => ({ ...p, [k]: !p[k] }));
+  const toggleLayer = (k: keyof typeof activeLayers) => {
+    if (k === 'grid') {
+      // grid tetap independent
+      setActiveLayers(p => ({ ...p, grid: !p.grid }));
+      return;
+    }
+    setActiveLayers(p => ({
+      ...p,
+      // matikan semua layer point cloud
+      tabularasa: false,
+      poso: false,
+      // aktifkan hanya yang diklik — kalau sudah aktif, matikan (deselect)
+      [k]: !p[k as keyof typeof p],
+    }));
+  };
 
   if (!mounted) return (
     <div className="h-screen w-full flex items-center justify-center bg-[#050505]">
@@ -269,7 +283,7 @@ const Mapping3D = () => {
               <Box className="text-primary" size={20} /> 3D<span className="text-primary">Data</span>
             </h2>
             <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-2 flex items-center gap-2">
-              <Layers size={12} /> Multiple Survey Data
+              <Layers size={12} /> Select One Layer
             </p>
           </div>
 
