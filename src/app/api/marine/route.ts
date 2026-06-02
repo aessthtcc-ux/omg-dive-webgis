@@ -7,6 +7,9 @@ import { NextRequest, NextResponse } from "next/server";
 const MARINE_BASE  = "https://marine-api.open-meteo.com/v1/marine";
 const WEATHER_BASE = "https://api.open-meteo.com/v1/forecast";
 
+// ✅ FIX: wajib di-set agar API route bekerja meski next.config pakai output: export
+export const dynamic = "force-dynamic";
+
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const lat = searchParams.get("lat") ?? "-5.70";
