@@ -168,41 +168,37 @@ const TabularasaContent = () => {
     loading: true, error: null,
   });
 
-  // ✅ FIX: sequential fetch + AbortController — bukan Promise.all
+  // ✅ FIX: fetch via Next.js API route proxy — hindari CORS di Chrome/semua browser
+  // API route: /api/marine?lat=-5.74&lon=106.62
   useEffect(() => {
     const controller = new AbortController();
     let cancelled = false;
 
     const fetchMarineData = async () => {
       try {
-        const marineRes = await fetch(
-          "https://marine-api.open-meteo.com/v1/marine?latitude=-5.74&longitude=106.62&current=wave_height,wave_period,ocean_current_velocity&timezone=Asia%2FJakarta",
+        const res = await fetch(
+          "/api/marine?lat=-5.74&lon=106.62",
           { signal: controller.signal }
         );
-        if (cancelled || !marineRes.ok) throw new Error("Marine API error");
-        const marineJson = await marineRes.json();
-
-        const weatherRes = await fetch(
-          "https://api.open-meteo.com/v1/forecast?latitude=-5.74&longitude=106.62&current=temperature_2m,wind_speed_10m,precipitation&timezone=Asia%2FJakarta",
-          { signal: controller.signal }
-        );
-        if (cancelled || !weatherRes.ok) throw new Error("Weather API error");
-        const weatherJson = await weatherRes.json();
 
         if (cancelled) return;
+        if (!res.ok) throw new Error(`API route error: ${res.status}`);
 
-        // ✅ FIX: optional chaining agar tidak crash jika response shape berbeda
+        const data = await res.json();
+        if (cancelled) return;
+        if (data.error) throw new Error(data.error);
+
         setMarineWeather({
-          waveHeight:    marineJson?.current?.wave_height            ?? 0,
-          wavePeriod:    marineJson?.current?.wave_period            ?? 0,
-          oceanCurrent:  marineJson?.current?.ocean_current_velocity ?? 0,
-          waterTemp:     weatherJson?.current?.temperature_2m        ?? 0,
-          windSpeed:     weatherJson?.current?.wind_speed_10m        ?? 0,
-          precipitation: weatherJson?.current?.precipitation         ?? 0,
+          waveHeight:    data.waveHeight    ?? 0,
+          wavePeriod:    data.wavePeriod    ?? 0,
+          oceanCurrent:  data.oceanCurrent  ?? 0,
+          waterTemp:     data.waterTemp     ?? 0,
+          windSpeed:     data.windSpeed     ?? 0,
+          precipitation: data.precipitation ?? 0,
           loading: false, error: null,
         });
       } catch (err: any) {
-        if (cancelled || err?.name === 'AbortError') return;
+        if (cancelled || err?.name === "AbortError") return;
         setMarineWeather(prev => ({ ...prev, loading: false, error: "Weather data unavailable" }));
       }
     };

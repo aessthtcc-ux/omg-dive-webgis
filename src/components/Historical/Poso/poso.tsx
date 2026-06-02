@@ -51,24 +51,15 @@ const posoCriteriaData: CriterionItem[] = [
 type Season = "west" | "transition" | "east";
 
 interface SeasonData {
-  key: Season;
-  label: string;
-  period: string;
-  gradientFrom: string;
-  gradientTo: string;
-  bgCard: string;
-  borderCard: string;
-  accentColor: string;
-  icon: React.ReactNode;
-  overallRating: number;
-  badge: string;
+  key: Season; label: string; period: string;
+  gradientFrom: string; gradientTo: string;
+  bgCard: string; borderCard: string; accentColor: string;
+  icon: React.ReactNode; overallRating: number; badge: string;
   temp: { min: number; max: number };
   visibility: { min: number; max: number };
   current: { label: string; level: number };
   wave: { label: string; level: number };
-  diverLevel: string;
-  diverLevelColor: string;
-  highlights: string[];
+  diverLevel: string; diverLevelColor: string; highlights: string[];
 }
 
 const posoSeasonData: SeasonData[] = [
@@ -111,14 +102,9 @@ const posoSeasonData: SeasonData[] = [
 // MARINE DATA INTERFACE
 // ---------------------------------------------------------------------------
 interface MarineData {
-  waveHeight: number;
-  wavePeriod: number;
-  oceanCurrent: number;
-  waterTemp: number;
-  windSpeed: number;
-  precipitation: number;
-  loading: boolean;
-  error: string | null;
+  waveHeight: number; wavePeriod: number; oceanCurrent: number;
+  waterTemp: number; windSpeed: number; precipitation: number;
+  loading: boolean; error: string | null;
 }
 
 // ---------------------------------------------------------------------------
@@ -227,8 +213,7 @@ const PosoPotential = () => {
                 <motion.div key={item.label} layout initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
                   transition={{ duration: 0.2, delay: i * 0.03 }}
                   onMouseEnter={() => setHoveredIndex(i)} onMouseLeave={() => setHoveredIndex(null)}
-                  className="group relative flex items-center gap-3 p-3 md:p-4 rounded-xl md:rounded-2xl border border-gray-100 dark:border-white/10 bg-gray-50/50 dark:bg-white/[0.03] hover:border-primary/30 transition-colors cursor-default overflow-hidden"
-                >
+                  className="group relative flex items-center gap-3 p-3 md:p-4 rounded-xl md:rounded-2xl border border-gray-100 dark:border-white/10 bg-gray-50/50 dark:bg-white/[0.03] hover:border-primary/30 transition-colors cursor-default overflow-hidden">
                   <div className={`w-2 h-2 rounded-full flex-shrink-0 ${item.category === "archaeological" ? "bg-blue-400" : "bg-emerald-400"}`} />
                   <div className="flex-1 min-w-0">
                     <p className="text-xs md:text-sm font-bold text-dark dark:text-white">{item.label}</p>
@@ -316,8 +301,8 @@ const PosoDiveEnvironment = () => {
             <div className="space-y-3">
               <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-3">Environmental Conditions</p>
               {[
-                { label: "Water Temperature", icon: <Thermometer size={17} className={season.accentColor} />, value: `${season.temp.min}°C – ${season.temp.max}°C` },
-                { label: "Underwater Visibility*", icon: <Eye size={17} className={season.accentColor} />, value: `${season.visibility.min} – ${season.visibility.max} m`, progress: season.visibility.max / 15 },
+                { label: "Water Temperature",     icon: <Thermometer size={17} className={season.accentColor} />, value: `${season.temp.min}°C – ${season.temp.max}°C` },
+                { label: "Underwater Visibility*",icon: <Eye size={17} className={season.accentColor} />,         value: `${season.visibility.min} – ${season.visibility.max} m`, progress: season.visibility.max / 15 },
               ].map(({ label, icon, value, progress }) => (
                 <div key={label} className={`p-4 rounded-xl md:rounded-2xl border ${season.bgCard} ${season.borderCard} flex items-center gap-3`}>
                   <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${season.bgCard} border ${season.borderCard}`}>{icon}</div>
@@ -335,7 +320,7 @@ const PosoDiveEnvironment = () => {
               ))}
               {[
                 { label: "Current Speed", icon: <Gauge size={17} className={season.accentColor} />, value: season.current.label, level: season.current.level },
-                { label: "Wave Condition", icon: <Waves size={17} className={season.accentColor} />, value: season.wave.label, level: season.wave.level },
+                { label: "Wave Condition",icon: <Waves size={17} className={season.accentColor} />, value: season.wave.label,    level: season.wave.level },
               ].map(({ label, icon, value, level }) => (
                 <div key={label} className={`p-4 rounded-xl md:rounded-2xl border ${season.bgCard} ${season.borderCard}`}>
                   <div className="flex items-center gap-3 mb-2">
@@ -407,43 +392,41 @@ const PosoContent = () => {
     loading: true, error: null,
   });
 
-  // ✅ FIX: AbortController + sequential fetch (bukan Promise.all)
-  // Promise.all di Android sering crash jika salah satu request gagal
+  // ✅ FIX: fetch via Next.js API route proxy — hindari CORS di Chrome/semua browser
+  // API route: /api/marine?lat=-5.70&lon=106.60
   useEffect(() => {
     const controller = new AbortController();
     let cancelled = false;
 
     const fetchMarineData = async () => {
       try {
-        // ✅ FIX: fetch sequential dengan timeout manual via AbortController
-        const marineRes = await fetch(
-          "https://marine-api.open-meteo.com/v1/marine?latitude=-5.70&longitude=106.60&current=wave_height,wave_period,ocean_current_velocity&timezone=Asia%2FJakarta",
+        const res = await fetch(
+          "/api/marine?lat=-5.70&lon=106.60",
           { signal: controller.signal }
         );
-        if (cancelled || !marineRes.ok) throw new Error("Marine API error");
-        const marineJson = await marineRes.json();
-
-        const weatherRes = await fetch(
-          "https://api.open-meteo.com/v1/forecast?latitude=-5.70&longitude=106.60&current=temperature_2m,wind_speed_10m,precipitation&timezone=Asia%2FJakarta",
-          { signal: controller.signal }
-        );
-        if (cancelled || !weatherRes.ok) throw new Error("Weather API error");
-        const weatherJson = await weatherRes.json();
 
         if (cancelled) return;
 
-        // ✅ FIX: safe access dengan optional chaining agar tidak crash jika response shape berbeda
+        if (!res.ok) {
+          throw new Error(`API route error: ${res.status}`);
+        }
+
+        const data = await res.json();
+        if (cancelled) return;
+
+        if (data.error) throw new Error(data.error);
+
         setMarineWeather({
-          waveHeight:    marineJson?.current?.wave_height            ?? 0,
-          wavePeriod:    marineJson?.current?.wave_period            ?? 0,
-          oceanCurrent:  marineJson?.current?.ocean_current_velocity ?? 0,
-          waterTemp:     weatherJson?.current?.temperature_2m        ?? 0,
-          windSpeed:     weatherJson?.current?.wind_speed_10m        ?? 0,
-          precipitation: weatherJson?.current?.precipitation         ?? 0,
+          waveHeight:    data.waveHeight    ?? 0,
+          wavePeriod:    data.wavePeriod    ?? 0,
+          oceanCurrent:  data.oceanCurrent  ?? 0,
+          waterTemp:     data.waterTemp     ?? 0,
+          windSpeed:     data.windSpeed     ?? 0,
+          precipitation: data.precipitation ?? 0,
           loading: false, error: null,
         });
       } catch (err: any) {
-        if (cancelled || err?.name === 'AbortError') return;
+        if (cancelled || err?.name === "AbortError") return;
         setMarineWeather(prev => ({ ...prev, loading: false, error: "Weather data unavailable" }));
       }
     };
@@ -452,13 +435,8 @@ const PosoContent = () => {
     return () => { cancelled = true; controller.abort(); };
   }, []);
 
-  // ✅ FIX: skeleton loading tanpa backdrop-filter
-  const LoadingSkeleton = () => (
-    <div className="h-6 w-12 bg-gray-200 dark:bg-gray-700 rounded-lg mx-auto" style={{ opacity: 0.7 }} />
-  );
-
   const Val = ({ loading, error, value, unit }: { loading: boolean; error: string | null; value: number; unit: string }) => {
-    if (loading) return <LoadingSkeleton />;
+    if (loading) return <div className="h-6 w-12 bg-gray-200 dark:bg-gray-700 rounded-lg mx-auto" style={{ opacity: 0.6 }} />;
     return (
       <span className="text-lg md:text-2xl font-black dark:text-white tabular-nums">
         {error ? "--" : value.toFixed(1)}
@@ -485,7 +463,6 @@ const PosoContent = () => {
         <motion.div initial={{ opacity: 0, y: 40 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: false }} transition={{ duration: 0.7 }}
           className="lg:col-span-7 p-6 md:p-10 rounded-[2rem] md:rounded-[3rem] bg-primary text-white relative overflow-hidden group flex flex-col justify-center min-h-[260px] md:min-h-[420px]">
           <div className="absolute top-5 md:top-10 left-5 md:left-10 z-20">
-            {/* ✅ FIX: hapus backdrop-blur dari tag badge — penyebab Android crash */}
             <div className="flex items-center gap-2 bg-white/25 w-fit px-3 md:px-4 py-1 rounded-full border border-white/10">
               <Anchor size={13} />
               <span className="text-[10px] font-bold uppercase tracking-widest">Dutch Maritime Heritage</span>
@@ -505,7 +482,6 @@ const PosoContent = () => {
           <div className="col-span-2 row-span-1 relative rounded-[1.5rem] md:rounded-[2.5rem] overflow-hidden cursor-pointer group" onClick={() => setIsGalleryOpen(true)}>
             <img src={posoImages[0]} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" alt="Poso Wreck Main" loading="lazy" />
             <div className="absolute inset-0 bg-black/20" />
-            {/* ✅ FIX: hapus backdrop-blur dari camera icon */}
             <div className="absolute top-3 right-3 bg-black/40 p-1.5 rounded-full text-white border border-white/20"><Camera size={15} /></div>
           </div>
           <div className="rounded-[1.5rem] md:rounded-[2rem] overflow-hidden cursor-pointer" onClick={() => setIsGalleryOpen(true)}>
@@ -513,7 +489,6 @@ const PosoContent = () => {
           </div>
           <div className="relative rounded-[1.5rem] md:rounded-[2rem] overflow-hidden cursor-pointer group" onClick={() => setIsGalleryOpen(true)}>
             <img src={posoImages[2]} className="w-full h-full object-cover" alt="Poso Wreck 3" loading="lazy" />
-            {/* ✅ FIX: hapus backdrop-blur dari overlay */}
             <div className="absolute inset-0 bg-primary/65 flex flex-col items-center justify-center text-white">
               <Images size={19} className="mb-1" />
               <span className="text-[10px] font-black uppercase tracking-tighter">View All</span>
@@ -606,7 +581,7 @@ const PosoContent = () => {
         <div className="p-5 md:p-8 lg:p-10"><WildlifeSightings /></div>
       </motion.div>
 
-      {/* LIGHTBOX — ✅ FIX: hapus backdrop-blur dari overlay */}
+      {/* LIGHTBOX */}
       <AnimatePresence>
         {isGalleryOpen && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
@@ -632,7 +607,6 @@ const PosoContent = () => {
                     className="p-2 md:p-3 bg-white/15 hover:bg-white/25 text-white rounded-full border border-white/20 transition-colors pointer-events-auto"><ChevronRight size={19} /></button>
                 </div>
               </div>
-              {/* ✅ FIX: hapus backdrop-blur dari footer lightbox */}
               <div className="bg-black/80 p-3 px-4 flex justify-between items-center border-t border-white/10">
                 <div className="flex items-center gap-2">
                   <div className="w-2 h-2 bg-primary rounded-full" />

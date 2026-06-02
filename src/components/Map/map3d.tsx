@@ -348,22 +348,13 @@ const Mapping3D = () => {
 
   const isAnyLoading = Object.values(loadingLayers).some(Boolean);
 
-  // ✅ Radio behavior per group: aktifkan satu, matikan yang lain dalam grup yang sama
+  // ✅ Global radio: hanya 1 layer aktif di seluruh scene
   const toggleLayer = (id: string) => {
-    const layer = LAYERS.find(l => l.id === id);
-    if (!layer) return;
-
     setActiveLayers(prev => {
-      const next = new Set(prev);
-      if (next.has(id)) {
-        // Deselect
-        next.delete(id);
-      } else {
-        // Matikan layer lain dalam grup yang sama
-        LAYERS.filter(l => l.group === layer.group).forEach(l => next.delete(l.id));
-        next.add(id);
-      }
-      return next;
+      // Kalau sudah aktif → deselect (kosong)
+      if (prev.has(id)) return new Set<string>();
+      // Kalau belum aktif → matikan semua, aktifkan hanya ini
+      return new Set<string>([id]);
     });
   };
 
