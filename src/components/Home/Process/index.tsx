@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { ExternalLinkIcon, X } from "lucide-react";
 
 interface StepItem {
@@ -77,6 +78,9 @@ const steps: StepItem[] = [
   },
 ];
 
+// ---------------------------------------------------------------------------
+// SECTION TITLE
+// ---------------------------------------------------------------------------
 const SectionTitle = ({ title, description }: { title: string; description: string }) => (
   <div className="text-center mb-10 md:mb-16">
     <h2
@@ -94,11 +98,180 @@ const SectionTitle = ({ title, description }: { title: string; description: stri
   </div>
 );
 
+// ---------------------------------------------------------------------------
+// MODAL — dirender via Portal ke document.body agar selalu center di viewport
+// ---------------------------------------------------------------------------
+const Modal = ({
+  step,
+  onClose,
+}: {
+  step: StepItem;
+  onClose: () => void;
+}) => {
+  // Lock body scroll saat modal terbuka
+  useEffect(() => {
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = prev; };
+  }, []);
+
+  // Tutup dengan Escape
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [onClose]);
+
+  const content = (() => {
+    try { return JSON.parse(step.fullDesc) as FullDescContent; }
+    catch { return null; }
+  })();
+
+  return createPortal(
+    /*
+      ✅ Portal ke document.body:
+      - position: fixed + inset-0 sekarang relatif ke viewport window, bukan elemen parent
+      - Modal selalu tepat di tengah layar apapun konteks scroll/stacking yang ada
+    */
+    <div
+      className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center p-0 sm:p-4"
+      aria-modal="true"
+      role="dialog"
+      aria-labelledby="modal-title"
+    >
+      {/* Backdrop */}
+      <div
+        className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+        onClick={onClose}
+      />
+
+      {/* Panel */}
+      <div className="
+        relative bg-white dark:bg-darkmode
+        w-full sm:max-w-2xl lg:max-w-3xl
+        rounded-t-[2rem] sm:rounded-3xl
+        shadow-2xl overflow-hidden
+        border border-white/10
+        flex flex-col
+        max-h-[92dvh] sm:max-h-[88dvh]
+        mx-0 sm:mx-4
+      ">
+
+        {/* Drag handle — mobile only */}
+        <div className="sm:hidden flex justify-center pt-3 pb-1 shrink-0">
+          <div className="w-10 h-1 bg-gray-300 dark:bg-white/20 rounded-full" />
+        </div>
+
+        {/* Header */}
+        <div className="px-5 py-4 md:p-6 lg:p-8 border-b border-gray-100 dark:border-white/5 flex justify-between items-start gap-4 shrink-0">
+          <div>
+            <span className="text-primary font-bold text-[10px] md:text-xs tracking-widest uppercase">
+              Stage {step.id}
+            </span>
+            <h2
+              id="modal-title"
+              className="text-lg md:text-2xl lg:text-3xl font-bold text-dark dark:text-white mt-0.5 md:mt-1 leading-tight"
+            >
+              {step.title}
+            </h2>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-1.5 md:p-2 text-SlateBlueText hover:text-primary transition-colors bg-gray-100 dark:bg-white/5 rounded-full flex-shrink-0"
+            aria-label="Close modal"
+          >
+            <X size={20} />
+          </button>
+        </div>
+
+        {/* Scrollable body */}
+        <div className="px-4 py-5 md:p-6 lg:p-10 overflow-y-auto flex-1 overscroll-contain">
+          {content ? (
+            <div className="space-y-5 md:space-y-8">
+              {content.intro && (
+                <p className="text-sm md:text-base lg:text-lg font-medium text-dark dark:text-white leading-relaxed">
+                  {content.intro}
+                </p>
+              )}
+
+              <div className="flex flex-col gap-4 md:gap-6">
+                {content.points.map((point, idx) => (
+                  <div
+                    key={idx}
+                    className="group relative bg-gray-50 dark:bg-white/5 p-4 md:p-6 lg:p-8 rounded-xl md:rounded-2xl lg:rounded-3xl border border-gray-100 dark:border-white/10 transition-all duration-300 hover:bg-white dark:hover:bg-white/[0.08] hover:shadow-lg"
+                  >
+                    {/* Floating number */}
+                    <div className="absolute -top-3 -left-3 w-7 h-7 md:w-9 md:h-9 bg-primary text-white rounded-lg flex items-center justify-center font-bold shadow-lg text-xs md:text-sm rotate-[-10deg] group-hover:rotate-0 transition-transform">
+                      {idx + 1}
+                    </div>
+
+                    <div className="flex flex-col sm:flex-row gap-3 md:gap-5">
+                      {/* Icon */}
+                      <div className="flex-shrink-0">
+                        <div className="w-10 h-10 md:w-14 md:h-14 bg-primary/10 dark:bg-primary/20 rounded-xl md:rounded-2xl flex items-center justify-center text-xl md:text-3xl">
+                          {point.icon}
+                        </div>
+                      </div>
+
+                      {/* Content */}
+                      <div className="flex-1 min-w-0">
+                        <h4 className="text-sm md:text-lg lg:text-xl font-bold text-dark dark:text-white mb-1.5 md:mb-2 leading-snug">
+                          {point.title}
+                        </h4>
+                        <p className="text-xs md:text-sm lg:text-base text-SlateBlueText dark:text-opacity-80 leading-relaxed text-justify mb-2 md:mb-4">
+                          {point.details}
+                        </p>
+                        {point.tags && (
+                          <div className="flex flex-wrap gap-1 md:gap-2">
+                            {point.tags.map((tag, tIdx) => (
+                              <span
+                                key={tIdx}
+                                className="px-2 md:px-3 py-0.5 md:py-1 bg-white dark:bg-white/10 border border-gray-200 dark:border-white/10 text-primary text-[8px] md:text-[10px] font-bold rounded-full uppercase tracking-wider"
+                              >
+                                # {tag}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {content.conclusion && (
+                <div className="p-3 md:p-5 bg-primary/5 border-l-4 border-primary rounded-r-xl md:rounded-r-2xl italic text-xs md:text-sm lg:text-base text-SlateBlueText dark:text-opacity-90">
+                  "{content.conclusion}"
+                </div>
+              )}
+            </div>
+          ) : (
+            <p className="text-sm text-SlateBlueText dark:text-opacity-90 leading-relaxed text-justify whitespace-pre-line">
+              {step.fullDesc}
+            </p>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="px-4 py-3 md:p-5 border-t border-gray-100 dark:border-white/5 bg-gray-50 dark:bg-black/20 flex justify-end shrink-0">
+          <button
+            onClick={onClose}
+            className="px-5 md:px-8 py-2 md:py-3 bg-primary text-white font-bold rounded-xl hover:opacity-90 transition-opacity text-sm md:text-base"
+          >
+            Close Exploration
+          </button>
+        </div>
+      </div>
+    </div>,
+    document.body
+  );
+};
+
+// ---------------------------------------------------------------------------
+// MAIN COMPONENT
+// ---------------------------------------------------------------------------
 const WorkflowSteps: React.FC = () => {
   const [selectedStep, setSelectedStep] = useState<StepItem | null>(null);
-
-  const openModal  = (step: StepItem) => setSelectedStep(step);
-  const closeModal = () => setSelectedStep(null);
 
   return (
     <section className="relative overflow-hidden transition-colors duration-300 bg-white dark:bg-darkmode py-16 md:py-24 lg:py-32">
@@ -135,7 +308,7 @@ const WorkflowSteps: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* Dot (desktop only) */}
+                  {/* Dot — desktop only */}
                   <div className="hidden lg:flex absolute left-1/2 -translate-x-1/2 justify-center items-center z-10">
                     <div className="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center font-bold shadow-lg border-4 border-white dark:border-darkmode">
                       {step.id}
@@ -161,13 +334,12 @@ const WorkflowSteps: React.FC = () => {
                       {step.title}
                     </h3>
 
-                    {/* ✅ FIX: hapus line-clamp agar deskripsi tidak terpotong */}
                     <p className="text-sm md:text-base lg:text-lg text-SlateBlueText dark:text-opacity-80 font-normal leading-relaxed text-justify">
                       {step.description}
                     </p>
 
                     <button
-                      onClick={() => openModal(step)}
+                      onClick={() => setSelectedStep(step)}
                       className="inline-flex items-center gap-2 text-primary font-bold hover:gap-4 transition-all w-fit text-sm md:text-base mt-1"
                     >
                       Explore details
@@ -181,121 +353,9 @@ const WorkflowSteps: React.FC = () => {
         </div>
       </div>
 
-      {/* MODAL */}
+      {/* Modal dirender via Portal — selalu center di viewport */}
       {selectedStep && (
-        <div className="fixed inset-0 z-[999] flex items-end md:items-center justify-center p-0 md:p-4">
-          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={closeModal} />
-
-          <div className="relative bg-white dark:bg-darkmode w-full md:max-w-3xl rounded-t-[2rem] md:rounded-3xl shadow-2xl overflow-hidden border border-white/10 flex flex-col max-h-[92vh] md:max-h-[88vh]">
-
-            {/* Drag handle — mobile */}
-            <div className="md:hidden flex justify-center pt-3 pb-1">
-              <div className="w-10 h-1 bg-gray-300 dark:bg-white/20 rounded-full" />
-            </div>
-
-            {/* Header */}
-            <div className="px-5 py-4 md:p-6 lg:p-8 border-b border-gray-100 dark:border-white/5 flex justify-between items-start gap-4 bg-white dark:bg-darkmode shrink-0">
-              <div>
-                <span className="text-primary font-bold text-[10px] md:text-xs tracking-widest uppercase">Stage {selectedStep.id}</span>
-                <h2 className="text-lg md:text-2xl lg:text-3xl font-bold text-dark dark:text-white mt-0.5 md:mt-1 leading-tight">
-                  {selectedStep.title}
-                </h2>
-              </div>
-              <button
-                onClick={closeModal}
-                className="p-1.5 md:p-2 text-SlateBlueText hover:text-primary transition-colors bg-gray-100 dark:bg-white/5 rounded-full flex-shrink-0"
-              >
-                <X size={20} />
-              </button>
-            </div>
-
-            {/* Scrollable content */}
-            <div className="px-4 py-5 md:p-6 lg:p-10 overflow-y-auto flex-1">
-              {(() => {
-                try {
-                  const content: FullDescContent = JSON.parse(selectedStep.fullDesc);
-                  return (
-                    <div className="space-y-5 md:space-y-8">
-                      {content.intro && (
-                        <p className="text-sm md:text-base lg:text-lg font-medium text-dark dark:text-white leading-relaxed">
-                          {content.intro}
-                        </p>
-                      )}
-
-                      <div className="flex flex-col gap-4 md:gap-6">
-                        {content.points.map((point, idx) => (
-                          <div
-                            key={idx}
-                            className="group relative bg-gray-50 dark:bg-white/5 p-4 md:p-6 lg:p-8 rounded-xl md:rounded-2xl lg:rounded-3xl border border-gray-100 dark:border-white/10 transition-all duration-300 hover:bg-white dark:hover:bg-white/[0.08] hover:shadow-lg"
-                          >
-                            {/* Floating number */}
-                            <div className="absolute -top-3 -left-3 w-7 h-7 md:w-9 md:h-9 bg-primary text-white rounded-lg flex items-center justify-center font-bold shadow-lg text-xs md:text-sm rotate-[-10deg] group-hover:rotate-0 transition-transform">
-                              {idx + 1}
-                            </div>
-
-                            <div className="flex flex-col sm:flex-row gap-3 md:gap-5">
-                              {/* Icon */}
-                              <div className="flex-shrink-0">
-                                <div className="w-10 h-10 md:w-14 md:h-14 bg-primary/10 dark:bg-primary/20 rounded-xl md:rounded-2xl flex items-center justify-center text-xl md:text-3xl">
-                                  {point.icon}
-                                </div>
-                              </div>
-
-                              {/* Content */}
-                              <div className="flex-1 min-w-0">
-                                <h4 className="text-sm md:text-lg lg:text-xl font-bold text-dark dark:text-white mb-1.5 md:mb-2 leading-snug">
-                                  {point.title}
-                                </h4>
-                                <p className="text-xs md:text-sm lg:text-base text-SlateBlueText dark:text-opacity-80 leading-relaxed text-justify mb-2 md:mb-4">
-                                  {point.details}
-                                </p>
-
-                                {point.tags && (
-                                  <div className="flex flex-wrap gap-1 md:gap-2">
-                                    {point.tags.map((tag, tIdx) => (
-                                      <span
-                                        key={tIdx}
-                                        className="px-2 md:px-3 py-0.5 md:py-1 bg-white dark:bg-white/10 border border-gray-200 dark:border-white/10 text-primary text-[8px] md:text-[10px] font-bold rounded-full uppercase tracking-wider"
-                                      >
-                                        # {tag}
-                                      </span>
-                                    ))}
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-
-                      {content.conclusion && (
-                        <div className="p-3 md:p-5 bg-primary/5 border-l-4 border-primary rounded-r-xl md:rounded-r-2xl italic text-xs md:text-sm lg:text-base text-SlateBlueText dark:text-opacity-90">
-                          "{content.conclusion}"
-                        </div>
-                      )}
-                    </div>
-                  );
-                } catch {
-                  return (
-                    <p className="text-sm text-SlateBlueText dark:text-opacity-90 leading-relaxed text-justify whitespace-pre-line">
-                      {selectedStep.fullDesc}
-                    </p>
-                  );
-                }
-              })()}
-            </div>
-
-            {/* Footer */}
-            <div className="px-4 py-3 md:p-5 border-t border-gray-100 dark:border-white/5 bg-gray-50 dark:bg-black/20 flex justify-end shrink-0">
-              <button
-                onClick={closeModal}
-                className="px-5 md:px-8 py-2 md:py-3 bg-primary text-white font-bold rounded-xl hover:opacity-90 transition-opacity text-sm md:text-base"
-              >
-                Close Exploration
-              </button>
-            </div>
-          </div>
-        </div>
+        <Modal step={selectedStep} onClose={() => setSelectedStep(null)} />
       )}
     </section>
   );
