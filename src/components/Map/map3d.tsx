@@ -47,8 +47,6 @@ const OBJMeshModel = ({ url, active, onLoadingChange, id }: MeshModelProps) => {
 
     const load = async () => {
       try {
-        // ✅ FIX: dynamic import — tidak perlu install package tambahan
-        // Kompatibel dengan semua versi Three.js yang dipakai React Three Fiber
         const { OBJLoader } = await import("three/examples/jsm/loaders/OBJLoader.js");
         if (cancelled) return;
 
@@ -58,28 +56,80 @@ const OBJMeshModel = ({ url, active, onLoadingChange, id }: MeshModelProps) => {
           (loadedObj) => {
             if (cancelled) return;
 
-            // Hitung bounding box untuk centering & scaling
+            // ✅ FIX ALIGNMENT: OBJ pakai koordinat geo (X=East, Y=North, Z=Up)
+            // LAS juga pakai sistem yang sama tapi di-swap saat processing:
+            //   LAS: centeredPositions[i+1] = (Z - centerZ) * scale   ← jadi Y di Three.js
+            //   LAS: centeredPositions[i+2] = -(Y - centerY) * scale  ← jadi Z di Three.js
+            // Jadi OBJ harus pakai rotasi yang sama agar sejajar:
+            //   rotateX(-90°) → swap Y↔Z dan flip sign Z → cocok dengan cara LAS di-process
+
+            // Step 1: Hitung bounding box SEBELUM transformasi
             const box    = new THREE.Box3().setFromObject(loadedObj);
             const center = box.getCenter(new THREE.Vector3());
             const size   = box.getSize(new THREE.Vector3());
+            // Pakai range terbesar di XY plane (horizontal) agar scale sesuai LAS
             const maxDim = Math.max(size.x, size.y, size.z);
             const scale  = 20 / (maxDim || 1);
 
-            // Center dan scale mesh agar sesuai dengan scene
-            loadedObj.position.sub(center.multiplyScalar(scale));
+            // Step 2: Terapkan transformasi identik dengan LAS processing
+            // - Translate ke origin dulu
+            // - Rotate X -90° (swap Y↔Z, Y=up → Z=depth)
+            // - Scale seragam
+            loadedObj.position.set(
+              -center.x * scale,
+              -center.z * scale,   // ← Z geo menjadi Y Three.js (height)
+               center.y * scale    // ← Y geo menjadi Z Three.js (depth), flip sign
+            );
             loadedObj.scale.setScalar(scale);
+            // Rotasi -90° di X axis agar orientasi sesuai LAS axis swap
+            loadedObj.rotation.set(-Math.PI / 2, 0, 0);
 
-            // Material solid dengan warna laut
+            // Step 3: Material dengan depth-based vertex color menggunakan ShaderMaterial
+            // agar warna mirip dengan point cloud (biru dalam → kuning dangkal)
+            const depthColorVert = `
+              varying float vHeight;
+              void main() {
+                vec4 worldPos = modelMatrix * vec4(position, 1.0);
+                vHeight = worldPos.y;
+                gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+              }
+            `;
+            const depthColorFrag = `
+              uniform float uMinY;
+              uniform float uMaxY;
+              varying float vHeight;
+              void main() {
+                float t = clamp((vHeight - uMinY) / max(uMaxY - uMinY, 0.001), 0.0, 1.0);
+                // Gradient: deep blue → cyan → teal → pale yellow (sama dengan LAS)
+                vec3 c0 = vec3(0.031, 0.114, 0.345); // #081d58
+                vec3 c1 = vec3(0.114, 0.569, 0.753); // #1d91c0
+                vec3 c2 = vec3(0.498, 0.804, 0.733); // #7fcdbb
+                vec3 c3 = vec3(1.0,   1.0,   0.851); // #ffffd9
+                vec3 col;
+                if      (t < 0.33) col = mix(c0, c1, t / 0.33);
+                else if (t < 0.66) col = mix(c1, c2, (t - 0.33) / 0.33);
+                else               col = mix(c2, c3, (t - 0.66) / 0.34);
+                gl_FragColor = vec4(col, 0.88);
+              }
+            `;
+
+            // Hitung Y range setelah transformasi untuk uniform shader
+            const transformedBox = new THREE.Box3().setFromObject(loadedObj);
+            const minY = transformedBox.min.y;
+            const maxY = transformedBox.max.y;
+
             loadedObj.traverse((child) => {
               if ((child as THREE.Mesh).isMesh) {
-                (child as THREE.Mesh).material = new THREE.MeshPhongMaterial({
-                  color:             new THREE.Color("#1d91c0"),
-                  emissive:          new THREE.Color("#081d58"),
-                  emissiveIntensity: 0.3,
-                  shininess:         40,
-                  transparent:       true,
-                  opacity:           0.85,
-                  side:              THREE.DoubleSide,
+                (child as THREE.Mesh).material = new THREE.ShaderMaterial({
+                  vertexShader:   depthColorVert,
+                  fragmentShader: depthColorFrag,
+                  uniforms: {
+                    uMinY: { value: minY },
+                    uMaxY: { value: maxY },
+                  },
+                  transparent: true,
+                  side: THREE.DoubleSide,
+                  depthWrite: true,
                 });
               }
             });
