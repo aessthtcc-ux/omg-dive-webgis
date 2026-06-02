@@ -32,8 +32,8 @@ const steps: StepItem[] = [
       intro: "Line survey planning is structured in three progressive stages to ensure hydrographic accuracy and high-resolution shipwreck documentation.",
       points: [
         { icon: "✨", title: "Stage 1: Patch Test Calibration", details: "Dedicated lines are designed for patch test calibration. These lines are arranged in reciprocal and crossing patterns over identifiable seabed features to resolve systematic biases in roll, pitch, yaw, and latency between sensors. Proper patch test planning ensures angular alignment, timing synchronization, and compliance with IHO S-44 calibration requirements before full acquisition begins.", tags: ["IHO S-44", "Sensor Calibration"] },
-        { icon: "🌊", title: "Stage 2: General Coverage Lines", details: "General coverage lines are planned for the broader shipwreck area. Line spacing is calculated based on water depth and expected swath width to achieve sufficient overlap and full seabed coverage. Survey order specifications follow IHO S-44 standards to maintain controlled Total Horizontal Uncertainty (THU) and Total Vertical Uncertainty (TVU). This stage confirms wreck presence, maps surrounding morphology, and identifies debris distribution or sediment anomalies.", tags: ["Seabed Mapping", "IHO S-44", "THU/TVU"] },
-        { icon: "🔎", title: "Stage 3: Detailed Feature Documentation", details: "The survey design is refined for detailed feature documentation of the shipwreck itself. Moving beyond standard IHO coverage, the configuration adopts a feature-based approach inspired by Westley (2019), modifying the line pattern to maximize 3D reconstruction quality. The survey integrates parallel lines for consistent coverage, perpendicular lines to strengthen geometric definition of vertical structures, and oblique lines to minimize acoustic shadowing and improve structural perspective.", tags: ["3D Reconstruction", "Marine Archaeology", "Westley (2019)"] }
+        { icon: "🌊", title: "Stage 2: General Coverage Lines", details: "General coverage lines are planned for the broader shipwreck area. Line spacing is calculated based on water depth and expected swath width to achieve sufficient overlap and full seabed coverage. Survey order specifications follow IHO S-44 standards to maintain controlled Total Horizontal Uncertainty (THU) and Total Vertical Uncertainty (TVU).", tags: ["Seabed Mapping", "IHO S-44", "THU/TVU"] },
+        { icon: "🔎", title: "Stage 3: Detailed Feature Documentation", details: "The survey design is refined for detailed feature documentation of the shipwreck itself. The configuration adopts a feature-based approach inspired by Westley (2019), integrating parallel lines for consistent coverage, perpendicular lines to strengthen geometric definition of vertical structures, and oblique lines to minimize acoustic shadowing.", tags: ["3D Reconstruction", "Marine Archaeology", "Westley (2019)"] }
       ],
       conclusion: "This structured approach ensures comprehensive and high-fidelity data acquisition for accurate underwater mapping."
     }),
@@ -48,9 +48,9 @@ const steps: StepItem[] = [
       intro: "Multibeam data acquisition is conducted under IHO S-44 Special Order requirements to ensure high positional accuracy, controlled uncertainty, and complete seabed coverage for shipwreck documentation.",
       points: [
         { icon: "📍", title: "Positioning System & Horizontal Accuracy", details: "Positioning is achieved using RT-PPP and RTK GNSS methodologies. RT-PPP provides horizontal accuracy within 5–15 cm, while RTK achieves 1–5 cm accuracy within a 10 km baseline. Horizontal uncertainty (THU) is controlled within 2 meters as specified under IHO S-44 standards.", tags: ["RTK", "RT-PPP", "THU Control", "IHO S-44"] },
-        { icon: "📏", title: "Vertical Uncertainty & Depth Control", details: "Vertical accuracy is managed according to IHO S-44 Special Order Total Vertical Uncertainty (TVU) formula: TVU = √(a² + (b × d)²), where a = 0.25 m and b = 0.0075. Sound Velocity Profile (SVP) measurements and tidal observations collected on the survey day are applied to correct acoustic refraction and water level variations.", tags: ["TVU", "SVP Correction", "Tidal Reduction", "Special Order"] },
+        { icon: "📏", title: "Vertical Uncertainty & Depth Control", details: "Vertical accuracy is managed according to IHO S-44 Special Order Total Vertical Uncertainty (TVU) formula: TVU = √(a² + (b × d)²), where a = 0.25 m and b = 0.0075. SVP measurements and tidal observations are applied to correct acoustic refraction and water level variations.", tags: ["TVU", "SVP Correction", "Tidal Reduction", "Special Order"] },
         { icon: "🌊", title: "Full Seabed Coverage Requirement", details: "The survey ensures 100% seabed coverage as required under Special Order classification. Swath width is dynamically adjusted according to water depth to maintain overlap and avoid data gaps. Survey speed is optimized to preserve sounding density and reduce motion-induced noise.", tags: ["100% Coverage", "Sounding Density", "Special Order"] },
-        { icon: "📐", title: "Swath Angle & Feature Resolution", details: "Swath angle configuration follows geometric considerations. For detailed shipwreck feature detection, survey lines are modified into parallel, perpendicular, and oblique orientations. This multi-directional acquisition enhances point cloud density, reduces acoustic shadowing, and improves 3D structural definition of the wreck.", tags: ["Swath Geometry", "Feature Survey", "Westley (2019)", "3D Visualization"] }
+        { icon: "📐", title: "Swath Angle & Feature Resolution", details: "For detailed shipwreck feature detection, survey lines are modified into parallel, perpendicular, and oblique orientations. This multi-directional acquisition enhances point cloud density, reduces acoustic shadowing, and improves 3D structural definition of the wreck.", tags: ["Swath Geometry", "Feature Survey", "Westley (2019)", "3D Visualization"] }
       ],
       conclusion: "By integrating precise GNSS positioning, strict uncertainty control, full seabed coverage, and feature-oriented swath configuration, the multibeam acquisition stage produces high-quality bathymetric datasets suitable for detailed 3D shipwreck reconstruction."
     }),
@@ -64,17 +64,17 @@ const steps: StepItem[] = [
     fullDesc: JSON.stringify({
       intro: "Post-processing transforms raw multibeam soundings into accurate and interpretable seafloor models.",
       points: [
-        { icon: "🧹", title: "Line-by-Line Data Cleaning (NaviEdit)", details: "Each survey line is individually reviewed and cleaned using NaviEdit. Spikes, outliers, and noise caused by motion instability, acoustic interference, or water column anomalies are identified and removed. Beam angle artifacts and edge-of-swath distortions are carefully filtered to maintain consistent sounding density.", tags: ["NaviEdit", "Data Cleaning", "Quality Control", "IHO S-44"] },
-        { icon: "⚙️", title: "Patch Test & Sensor Parameter Integration", details: "Calibration results obtained from the patch test are applied during processing. Roll, pitch, yaw, and latency corrections are inserted into the dataset to eliminate systematic angular and timing errors. Sensor offset measurements between GNSS antenna, IMU, and transducer are verified to maintain geometric consistency.", tags: ["Patch Test", "Sensor Offsets", "Calibration", "Alignment Correction"] },
-        { icon: "🌊", title: "Tidal Correction & Vertical Referencing", details: "Tidal observations recorded during acquisition are applied to each sounding according to its timestamp. Depth values are reduced to the designated vertical datum using observed water level data. Sound Velocity Profile (SVP) corrections are also applied to compensate for acoustic beam refraction.", tags: ["Tidal Reduction", "SVP Correction", "TVU Control", "Vertical Datum"] },
-        { icon: "🗺️", title: "DEM Generation & Surface Modeling", details: "After cleaning and corrections, validated soundings are gridded to generate a Digital Elevation Model (DEM) of the seafloor. Grid resolution is selected based on depth and sounding density to preserve fine-scale wreck morphology. The DEM serves as the primary surface for bathymetric contour extraction, shaded relief mapping, and slope analysis.", tags: ["DEM", "Gridding", "Bathymetry Surface", "Seafloor Modeling"] },
-        { icon: "🔷", title: "3D Visualization with NaviModel", details: "The finalized bathymetric surface is imported into NaviModel to generate a 3D visualization of the shipwreck structure. Shaded relief rendering, vertical exaggeration, and perspective views are applied to enhance structural interpretation. This allows identification of hull curvature, structural collapse patterns, sediment interaction, and debris distribution.", tags: ["NaviModel", "3D Reconstruction", "Shipwreck Visualization", "Marine Archaeology"] }
+        { icon: "🧹", title: "Line-by-Line Data Cleaning (NaviEdit)", details: "Each survey line is individually reviewed and cleaned using NaviEdit. Spikes, outliers, and noise caused by motion instability, acoustic interference, or water column anomalies are identified and removed. Beam angle artifacts and edge-of-swath distortions are carefully filtered.", tags: ["NaviEdit", "Data Cleaning", "Quality Control", "IHO S-44"] },
+        { icon: "⚙️", title: "Patch Test & Sensor Parameter Integration", details: "Calibration results obtained from the patch test are applied during processing. Roll, pitch, yaw, and latency corrections are inserted into the dataset. Sensor offset measurements between GNSS antenna, IMU, and transducer are verified to maintain geometric consistency.", tags: ["Patch Test", "Sensor Offsets", "Calibration", "Alignment Correction"] },
+        { icon: "🌊", title: "Tidal Correction & Vertical Referencing", details: "Tidal observations recorded during acquisition are applied to each sounding according to its timestamp. Depth values are reduced to the designated vertical datum using observed water level data. SVP corrections are also applied to compensate for acoustic beam refraction.", tags: ["Tidal Reduction", "SVP Correction", "TVU Control", "Vertical Datum"] },
+        { icon: "🗺️", title: "DEM Generation & Surface Modeling", details: "Validated soundings are gridded to generate a Digital Elevation Model (DEM) of the seafloor. Grid resolution is selected based on depth and sounding density to preserve fine-scale wreck morphology. The DEM serves as the primary surface for bathymetric contour extraction and slope analysis.", tags: ["DEM", "Gridding", "Bathymetry Surface", "Seafloor Modeling"] },
+        { icon: "🔷", title: "3D Visualization with NaviModel", details: "The finalized bathymetric surface is imported into NaviModel to generate a 3D visualization of the shipwreck structure. Shaded relief rendering, vertical exaggeration, and perspective views are applied to enhance structural interpretation and support marine archaeological documentation.", tags: ["NaviModel", "3D Reconstruction", "Shipwreck Visualization", "Marine Archaeology"] }
       ],
       conclusion: "Through systematic cleaning, calibration integration, tidal correction, and surface modeling, the processing stage converts raw acoustic measurements into a high-resolution DEM and immersive 3D representation of the submerged shipwreck."
     }),
     link: "#processing",
     image: "/images/world-class-speakers/dataprocess.webp",
-  }
+  },
 ];
 
 const SectionTitle = ({ title, description }: { title: string; description: string }) => (
@@ -86,7 +86,7 @@ const SectionTitle = ({ title, description }: { title: string; description: stri
       {title}
     </h2>
     <p
-      className="mt-3 md:mt-4 text-base md:text-xl text-SlateBlueText dark:text-opacity-80 max-w-2xl mx-auto font-normal"
+      className="mt-3 md:mt-4 text-sm md:text-base lg:text-xl text-SlateBlueText dark:text-opacity-80 max-w-2xl mx-auto font-normal"
       data-aos="fade-up" data-aos-delay="200" data-aos-duration="1000"
     >
       {description}
@@ -108,13 +108,12 @@ const WorkflowSteps: React.FC = () => {
           description="An integrated hydrographic survey process that captures, corrects, and reconstructs the seafloor to uncover shipwreck features around Pramuka Island."
         />
 
-        {/* ✅ MOBILE FIX: timeline */}
         <div className="relative mt-12 md:mt-20">
+          {/* Timeline line — desktop only */}
           <div className="hidden lg:flex flex-col items-center absolute left-1/2 -translate-x-1/2 h-full z-0">
             <div className="w-[1px] h-full bg-primary/20 dark:bg-white/10" />
           </div>
 
-          {/* ✅ MOBILE FIX: space-y lebih kecil di mobile */}
           <div className="space-y-12 md:space-y-24 lg:space-y-40">
             {steps.map((step, index) => {
               const isEven = index % 2 !== 0;
@@ -123,12 +122,11 @@ const WorkflowSteps: React.FC = () => {
                   key={step.id}
                   className="grid lg:grid-cols-12 grid-cols-1 items-center gap-6 md:gap-10 lg:gap-30"
                 >
-                  {/* Gambar */}
+                  {/* Image */}
                   <div
                     className={`lg:col-span-6 ${isEven ? 'lg:order-last lg:pl-20' : 'lg:pr-20'}`}
                     data-aos={isEven ? "fade-left" : "fade-right"} data-aos-duration="1000"
                   >
-                    {/* ✅ MOBILE FIX: padding gambar lebih kecil */}
                     <div className="relative p-1.5 md:p-2 bg-white dark:bg-white/5 border border-primary/10 dark:border-white/10 rounded-xl md:rounded-2xl shadow-xl">
                       <img
                         src={step.image} alt={step.title}
@@ -137,21 +135,21 @@ const WorkflowSteps: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* Dot tengah (desktop only) */}
+                  {/* Dot (desktop only) */}
                   <div className="hidden lg:flex absolute left-1/2 -translate-x-1/2 justify-center items-center z-10">
                     <div className="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center font-bold shadow-lg border-4 border-white dark:border-darkmode">
                       {step.id}
                     </div>
                   </div>
 
-                  {/* Teks */}
+                  {/* Text */}
                   <div
                     className={`lg:col-span-6 flex flex-col gap-3 md:gap-4 
                       ${isEven ? 'lg:pr-16 lg:pl-0' : 'lg:pl-16 lg:pr-0'} 
                       text-left justify-center`}
                     data-aos={isEven ? "fade-right" : "fade-left"} data-aos-duration="1000"
                   >
-                    {/* ✅ MOBILE FIX: nomor step kelihatan di mobile */}
+                    {/* Step badge — mobile only */}
                     <div className="flex items-center gap-2 lg:hidden">
                       <div className="w-7 h-7 rounded-full bg-primary text-white flex items-center justify-center font-bold text-sm shadow">
                         {step.id}
@@ -162,16 +160,18 @@ const WorkflowSteps: React.FC = () => {
                     <h3 className="text-xl md:text-2xl lg:text-3xl font-bold text-dark dark:text-white">
                       {step.title}
                     </h3>
-                    {/* ✅ MOBILE FIX: deskripsi lebih kecil, tidak terlalu panjang di mobile */}
-                    <p className="text-sm md:text-base lg:text-lg text-SlateBlueText dark:text-opacity-80 font-normal leading-relaxed text-justify line-clamp-4 md:line-clamp-none">
+
+                    {/* ✅ FIX: hapus line-clamp agar deskripsi tidak terpotong */}
+                    <p className="text-sm md:text-base lg:text-lg text-SlateBlueText dark:text-opacity-80 font-normal leading-relaxed text-justify">
                       {step.description}
                     </p>
+
                     <button
                       onClick={() => openModal(step)}
-                      className="inline-flex items-center gap-2 text-primary font-bold hover:gap-4 transition-all w-fit text-sm md:text-base"
+                      className="inline-flex items-center gap-2 text-primary font-bold hover:gap-4 transition-all w-fit text-sm md:text-base mt-1"
                     >
                       Explore details
-                      <ExternalLinkIcon size={16} className="transition-transform group-hover:scale-110" />
+                      <ExternalLinkIcon size={16} />
                     </button>
                   </div>
                 </div>
@@ -181,21 +181,20 @@ const WorkflowSteps: React.FC = () => {
         </div>
       </div>
 
-      {/* ✅ MOBILE FIX: MODAL */}
+      {/* MODAL */}
       {selectedStep && (
         <div className="fixed inset-0 z-[999] flex items-end md:items-center justify-center p-0 md:p-4">
-          <div className="absolute inset-0 bg-black/70 backdrop-blur-md" onClick={closeModal} />
+          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={closeModal} />
 
-          {/* ✅ MOBILE FIX: modal dari bawah di mobile (sheet style), centered di desktop */}
-          <div className="relative bg-white dark:bg-darkmode w-full md:max-w-3xl rounded-t-[2rem] md:rounded-3xl shadow-2xl overflow-hidden border border-white/10 flex flex-col max-h-[92vh] md:max-h-[90vh]">
-            
-            {/* ✅ MOBILE FIX: drag handle bar di mobile */}
+          <div className="relative bg-white dark:bg-darkmode w-full md:max-w-3xl rounded-t-[2rem] md:rounded-3xl shadow-2xl overflow-hidden border border-white/10 flex flex-col max-h-[92vh] md:max-h-[88vh]">
+
+            {/* Drag handle — mobile */}
             <div className="md:hidden flex justify-center pt-3 pb-1">
               <div className="w-10 h-1 bg-gray-300 dark:bg-white/20 rounded-full" />
             </div>
 
             {/* Header */}
-            <div className="px-5 py-4 md:p-6 lg:p-8 border-b border-gray-100 dark:border-white/5 flex justify-between items-start gap-4 bg-white dark:bg-darkmode">
+            <div className="px-5 py-4 md:p-6 lg:p-8 border-b border-gray-100 dark:border-white/5 flex justify-between items-start gap-4 bg-white dark:bg-darkmode shrink-0">
               <div>
                 <span className="text-primary font-bold text-[10px] md:text-xs tracking-widest uppercase">Stage {selectedStep.id}</span>
                 <h2 className="text-lg md:text-2xl lg:text-3xl font-bold text-dark dark:text-white mt-0.5 md:mt-1 leading-tight">
@@ -210,53 +209,53 @@ const WorkflowSteps: React.FC = () => {
               </button>
             </div>
 
-            {/* Scrollable Content */}
-            <div className="px-5 py-5 md:p-6 lg:p-10 overflow-y-auto custom-scrollbar flex-1">
+            {/* Scrollable content */}
+            <div className="px-4 py-5 md:p-6 lg:p-10 overflow-y-auto flex-1">
               {(() => {
                 try {
                   const content: FullDescContent = JSON.parse(selectedStep.fullDesc);
                   return (
-                    <div className="space-y-6 md:space-y-10">
+                    <div className="space-y-5 md:space-y-8">
                       {content.intro && (
-                        <p className="text-sm md:text-base lg:text-xl font-medium text-dark dark:text-white leading-relaxed">
+                        <p className="text-sm md:text-base lg:text-lg font-medium text-dark dark:text-white leading-relaxed">
                           {content.intro}
                         </p>
                       )}
 
-                      <div className="flex flex-col gap-5 md:gap-8">
+                      <div className="flex flex-col gap-4 md:gap-6">
                         {content.points.map((point, idx) => (
                           <div
                             key={idx}
-                            className="group relative bg-gray-50 dark:bg-white/5 p-5 md:p-8 rounded-2xl md:rounded-3xl border border-gray-100 dark:border-white/10 transition-all duration-300 hover:bg-white dark:hover:bg-white/[0.08] hover:shadow-xl hover:shadow-primary/5"
+                            className="group relative bg-gray-50 dark:bg-white/5 p-4 md:p-6 lg:p-8 rounded-xl md:rounded-2xl lg:rounded-3xl border border-gray-100 dark:border-white/10 transition-all duration-300 hover:bg-white dark:hover:bg-white/[0.08] hover:shadow-lg"
                           >
-                            {/* Nomor floating */}
-                            <div className="absolute -top-3 -left-3 w-8 h-8 md:w-10 md:h-10 bg-primary text-white rounded-lg md:rounded-xl flex items-center justify-center font-bold shadow-lg text-sm rotate-[-10deg] group-hover:rotate-0 transition-transform">
+                            {/* Floating number */}
+                            <div className="absolute -top-3 -left-3 w-7 h-7 md:w-9 md:h-9 bg-primary text-white rounded-lg flex items-center justify-center font-bold shadow-lg text-xs md:text-sm rotate-[-10deg] group-hover:rotate-0 transition-transform">
                               {idx + 1}
                             </div>
 
-                            <div className="flex flex-col md:flex-row gap-4 md:gap-6">
+                            <div className="flex flex-col sm:flex-row gap-3 md:gap-5">
                               {/* Icon */}
                               <div className="flex-shrink-0">
-                                <div className="w-12 h-12 md:w-16 md:h-16 bg-primary/10 dark:bg-primary/20 rounded-xl md:rounded-2xl flex items-center justify-center text-2xl md:text-4xl">
+                                <div className="w-10 h-10 md:w-14 md:h-14 bg-primary/10 dark:bg-primary/20 rounded-xl md:rounded-2xl flex items-center justify-center text-xl md:text-3xl">
                                   {point.icon}
                                 </div>
                               </div>
 
                               {/* Content */}
-                              <div className="flex-1">
-                                <h4 className="text-base md:text-xl lg:text-2xl font-bold text-dark dark:text-white mb-2 md:mb-3">
+                              <div className="flex-1 min-w-0">
+                                <h4 className="text-sm md:text-lg lg:text-xl font-bold text-dark dark:text-white mb-1.5 md:mb-2 leading-snug">
                                   {point.title}
                                 </h4>
-                                <p className="text-sm md:text-base lg:text-lg text-SlateBlueText dark:text-opacity-80 leading-relaxed text-justify mb-3 md:mb-5">
+                                <p className="text-xs md:text-sm lg:text-base text-SlateBlueText dark:text-opacity-80 leading-relaxed text-justify mb-2 md:mb-4">
                                   {point.details}
                                 </p>
 
                                 {point.tags && (
-                                  <div className="flex flex-wrap gap-1.5 md:gap-2">
+                                  <div className="flex flex-wrap gap-1 md:gap-2">
                                     {point.tags.map((tag, tIdx) => (
                                       <span
                                         key={tIdx}
-                                        className="px-2.5 md:px-4 py-1 md:py-1.5 bg-white dark:bg-white/10 border border-gray-200 dark:border-white/10 text-primary dark:text-primary-light text-[9px] md:text-xs font-bold rounded-full uppercase tracking-wider"
+                                        className="px-2 md:px-3 py-0.5 md:py-1 bg-white dark:bg-white/10 border border-gray-200 dark:border-white/10 text-primary text-[8px] md:text-[10px] font-bold rounded-full uppercase tracking-wider"
                                       >
                                         # {tag}
                                       </span>
@@ -270,15 +269,15 @@ const WorkflowSteps: React.FC = () => {
                       </div>
 
                       {content.conclusion && (
-                        <div className="p-4 md:p-6 bg-primary/5 border-l-4 border-primary rounded-r-xl md:rounded-r-2xl italic text-sm md:text-base lg:text-lg text-SlateBlueText dark:text-opacity-90">
+                        <div className="p-3 md:p-5 bg-primary/5 border-l-4 border-primary rounded-r-xl md:rounded-r-2xl italic text-xs md:text-sm lg:text-base text-SlateBlueText dark:text-opacity-90">
                           "{content.conclusion}"
                         </div>
                       )}
                     </div>
                   );
-                } catch (e) {
+                } catch {
                   return (
-                    <p className="text-sm md:text-lg text-SlateBlueText dark:text-opacity-90 leading-relaxed text-justify whitespace-pre-line">
+                    <p className="text-sm text-SlateBlueText dark:text-opacity-90 leading-relaxed text-justify whitespace-pre-line">
                       {selectedStep.fullDesc}
                     </p>
                   );
@@ -287,10 +286,10 @@ const WorkflowSteps: React.FC = () => {
             </div>
 
             {/* Footer */}
-            <div className="px-5 py-4 md:p-6 border-t border-gray-100 dark:border-white/5 bg-gray-50 dark:bg-black/20 flex justify-end">
+            <div className="px-4 py-3 md:p-5 border-t border-gray-100 dark:border-white/5 bg-gray-50 dark:bg-black/20 flex justify-end shrink-0">
               <button
                 onClick={closeModal}
-                className="px-6 md:px-8 py-2.5 md:py-3 bg-primary text-white font-bold rounded-xl hover:opacity-90 transition-opacity text-sm md:text-base"
+                className="px-5 md:px-8 py-2 md:py-3 bg-primary text-white font-bold rounded-xl hover:opacity-90 transition-opacity text-sm md:text-base"
               >
                 Close Exploration
               </button>
