@@ -161,10 +161,10 @@ const layerGroups = [
     subLayers: [
       { id: "dem_tabularasa",     filePath: "/data/dem/DEM_Tabularasa_RGB_1m_WGS84.tif",     title: "DEM Tabularasa Shipwreck",            project: "Site 1",  color: "#8b5cf6", dash: "0", isDummy: false, isRaster: true },
       { id: "dem_poso",           filePath: "/data/dem/DEM_Poso_RGB_1m_WGS84.tif",           title: "DEM Poso Shipwreck",    project: "Site 2",  color: "#ec4899", dash: "0", isDummy: false, isRaster: true },
-      { id: "dem_perairandangkal",filePath: "/data/dem/DEM_PerairanDangkal_RGB_0.5m.tif",    title: "DEM Perairan Dangkal",  project: "Site 3",  color: "#06b6d4", dash: "0", isDummy: false, isRaster: true },
-      { id: "dem_pesisirpanggang",filePath: "/data/dem/DEM_PesisirPanggang_RGB_0.5m.tif",    title: "DEM Pesisir Panggang",  project: "Site 4",  color: "#f97316", dash: "0", isDummy: false, isRaster: true },
-      { id: "dem_site5",          filePath: "/data/dem/DEM_Site5.tif",                       title: "DEM Site 5",            project: "Site 5",  color: "#22c55e", dash: "0", isDummy: false, isRaster: true },
-      { id: "dem_site6",          filePath: "/data/dem/DEM_Site6.tif",                       title: "DEM Site 6",            project: "Site 6",  color: "#eab308", dash: "0", isDummy: false, isRaster: true },
+      { id: "dem_perairandangkal",filePath: "/data/dem/DEM_PerairanDangkal_RGB_1m_WGS84.tif",    title: "DEM Perairan Dangkal",  project: "Site 3",  color: "#06b6d4", dash: "0", isDummy: false, isRaster: true },
+      { id: "dem_pesisirpanggang",filePath: "/data/dem/DEM_PesisirPanggangRidge_RGB_1m_WGS84.tif",    title: "DEM Pesisir Panggang",  project: "Site 4",  color: "#f97316", dash: "0", isDummy: false, isRaster: true },
+      { id: "dem_kanalpramuka",          filePath: "/data/dem/DEM_KanalPramuka_RGB_1m.tif",                       title: "DEM Kanal Pramuka",            project: "Site 5",  color: "#22c55e", dash: "0", isDummy: false, isRaster: true },
+      { id: "dem_pesisirpramuka",          filePath: "/data/dem/DEM_PesisirPramuka_ProjectALB_RGB_0.5m_WGS84.tif",                       title: "DEM Pesisir Pramuka",            project: "Site 6",  color: "#eab308", dash: "0", isDummy: false, isRaster: true },
     ]
   }
 ];
