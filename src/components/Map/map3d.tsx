@@ -4,6 +4,7 @@ import React, { useState, useEffect, Suspense, useMemo, useCallback } from "reac
 import { Canvas } from "@react-three/fiber";
 import { OrbitControls, PerspectiveCamera, Stars, Center } from "@react-three/drei";
 import * as THREE from "three";
+
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Box, ChevronRight, ChevronLeft, Eye, EyeOff,
@@ -11,7 +12,7 @@ import {
 } from 'lucide-react';
 import WebGLCheck from "../WebGLCheck";
 
-// ── Panel widths (identik dengan Mapping2D) ─────────────
+// ── Panel widths ─────────────────────────────────────────
 const PANEL_W = { mobile: 280, tablet: 300, desktop: 360 };
 
 // ── Interfaces ───────────────────────────────────────────
@@ -24,7 +25,94 @@ interface PointCloudProps {
   onLoadingChange: (id: string, isLoading: boolean) => void;
 }
 
-// ── PointCloudModel (tidak berubah) ──────────────────────
+interface MeshModelProps {
+  url: string;
+  active: boolean;
+  onLoadingChange: (id: string, isLoading: boolean) => void;
+  id: string;
+}
+
+// ── OBJ MESH COMPONENT ───────────────────────────────────
+const OBJMeshModel = ({ url, active, onLoadingChange, id }: MeshModelProps) => {
+  const [obj, setObj] = useState<THREE.Group | null>(null);
+  const [hasFetched, setHasFetched] = useState(false);
+
+  useEffect(() => {
+    if (!active && !hasFetched) return;
+    if (obj) return;
+
+    let cancelled = false;
+    setHasFetched(true);
+    onLoadingChange(id, true);
+
+    const load = async () => {
+      try {
+        // ✅ FIX: dynamic import — tidak perlu install package tambahan
+        // Kompatibel dengan semua versi Three.js yang dipakai React Three Fiber
+        const { OBJLoader } = await import("three/examples/jsm/loaders/OBJLoader.js");
+        if (cancelled) return;
+
+        const loader = new OBJLoader();
+        loader.load(
+          url,
+          (loadedObj) => {
+            if (cancelled) return;
+
+            // Hitung bounding box untuk centering & scaling
+            const box    = new THREE.Box3().setFromObject(loadedObj);
+            const center = box.getCenter(new THREE.Vector3());
+            const size   = box.getSize(new THREE.Vector3());
+            const maxDim = Math.max(size.x, size.y, size.z);
+            const scale  = 20 / (maxDim || 1);
+
+            // Center dan scale mesh agar sesuai dengan scene
+            loadedObj.position.sub(center.multiplyScalar(scale));
+            loadedObj.scale.setScalar(scale);
+
+            // Material solid dengan warna laut
+            loadedObj.traverse((child) => {
+              if ((child as THREE.Mesh).isMesh) {
+                (child as THREE.Mesh).material = new THREE.MeshPhongMaterial({
+                  color:             new THREE.Color("#1d91c0"),
+                  emissive:          new THREE.Color("#081d58"),
+                  emissiveIntensity: 0.3,
+                  shininess:         40,
+                  transparent:       true,
+                  opacity:           0.85,
+                  side:              THREE.DoubleSide,
+                });
+              }
+            });
+
+            setObj(loadedObj);
+            onLoadingChange(id, false);
+          },
+          undefined,
+          (error) => {
+            if (!cancelled) {
+              console.error(`Gagal memuat OBJ (${id}):`, error);
+              onLoadingChange(id, false);
+            }
+          }
+        );
+      } catch (err) {
+        if (!cancelled) {
+          console.error(`OBJLoader import error (${id}):`, err);
+          onLoadingChange(id, false);
+        }
+      }
+    };
+
+    load();
+    return () => { cancelled = true; };
+  }, [active, hasFetched, id, url]);
+
+  if (!active || !obj) return null;
+
+  return <primitive object={obj} />;
+};
+
+// ── POINT CLOUD COMPONENT ────────────────────────────────
 const PointCloudModel = ({ id, url, active, density, onDataLoaded, onLoadingChange }: PointCloudProps) => {
   const [fullGeoData, setFullGeoData] = useState<{ positions: Float32Array; colors: Float32Array } | null>(null);
   const [zBounds,     setZBounds]     = useState({ min: 0, max: 0 });
@@ -94,7 +182,7 @@ const PointCloudModel = ({ id, url, active, density, onDataLoaded, onLoadingChan
         setFullGeoData({ positions: centeredPositions, colors });
         setZBounds({ min: minZ, max: maxZ });
       } catch (error) {
-        console.error(`Gagal memuat file LAS (${id}):`, error);
+        console.error(`Gagal memuat LAS (${id}):`, error);
       } finally {
         onLoadingChange(id, false);
       }
@@ -137,14 +225,60 @@ const PointCloudModel = ({ id, url, active, density, onDataLoaded, onLoadingChan
   );
 };
 
+// ── LAYER CONFIG ─────────────────────────────────────────
+// Tipe layer: 'pointcloud' | 'mesh'
+type LayerType = 'pointcloud' | 'mesh';
+
+interface LayerConfig {
+  id: string;
+  label: string;
+  subtitle: string;
+  type: LayerType;
+  url: string;
+  group: 'tabularasa' | 'poso'; // untuk exclusive toggle per wreck
+}
+
+const LAYERS: LayerConfig[] = [
+  {
+    id: 'pc_tabularasa',
+    label: 'Tabularasa Point Cloud',
+    subtitle: 'Wreck Site 1 · LAS',
+    type: 'pointcloud',
+    url: '/data/3D/PointCloud_Tabularasa.las',
+    group: 'tabularasa',
+  },
+  {
+    id: 'mesh_tabularasa',
+    label: 'Tabularasa 3D Mesh',
+    subtitle: 'Wreck Site 1 · OBJ',
+    type: 'mesh',
+    url: '/data/3D/OBJ_Mesh_Tabularasa.obj',
+    group: 'tabularasa',
+  },
+  {
+    id: 'pc_poso',
+    label: 'Poso Point Cloud',
+    subtitle: 'Wreck Site 2 · LAS',
+    type: 'pointcloud',
+    url: '/data/3D/PointCloud_Poso.las',
+    group: 'poso',
+  },
+  {
+    id: 'mesh_poso',
+    label: 'Poso 3D Mesh',
+    subtitle: 'Wreck Site 2 · OBJ',
+    type: 'mesh',
+    url: '/data/3D/OBJ_Mesh_Poso.obj',
+    group: 'poso',
+  },
+];
+
 // ── MAIN COMPONENT ───────────────────────────────────────
 const Mapping3D = () => {
-  const [mounted,       setMounted]       = useState(false);
-  const [isPanelOpen,   setIsPanelOpen]   = useState(false);
-  const [isLegendOpen,  setIsLegendOpen]  = useState(false);
-
-  // ✅ Track window width — identik dengan Mapping2D
-  const [winWidth, setWinWidth] = useState(
+  const [mounted,      setMounted]      = useState(false);
+  const [isPanelOpen,  setIsPanelOpen]  = useState(false);
+  const [isLegendOpen, setIsLegendOpen] = useState(false);
+  const [winWidth,     setWinWidth]     = useState(
     typeof window !== 'undefined' ? window.innerWidth : 1024
   );
 
@@ -154,58 +288,68 @@ const Mapping3D = () => {
     return () => window.removeEventListener('resize', onResize);
   }, []);
 
-  const [activeLayers, setActiveLayers] = useState({
-    tabularasa: true,
-    poso:       false,
-    grid:       true,
-  });
+  // Active layers: set of layer IDs
+  const [activeLayers, setActiveLayers] = useState<Set<string>>(new Set(['pc_tabularasa']));
+  const [showGrid,     setShowGrid]     = useState(true);
+  const [pointDensity, setPointDensity] = useState<number>(4);
 
-  const [pointDensity,  setPointDensity]  = useState<number>(4);
   const [layerStats,    setLayerStats]    = useState<Record<string, { count: number; minZ: number; maxZ: number }>>({});
   const [loadingLayers, setLoadingLayers] = useState<Record<string, boolean>>({});
 
   const isAnyLoading = Object.values(loadingLayers).some(Boolean);
 
+  // ✅ Radio behavior per group: aktifkan satu, matikan yang lain dalam grup yang sama
+  const toggleLayer = (id: string) => {
+    const layer = LAYERS.find(l => l.id === id);
+    if (!layer) return;
+
+    setActiveLayers(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        // Deselect
+        next.delete(id);
+      } else {
+        // Matikan layer lain dalam grup yang sama
+        LAYERS.filter(l => l.group === layer.group).forEach(l => next.delete(l.id));
+        next.add(id);
+      }
+      return next;
+    });
+  };
+
   const engineStats = useMemo(() => {
-    if (isAnyLoading) return { points: "Loading...", status: "Parsing Data", statusColor: "text-primary bg-primary/10", minZ: 0, maxZ: 0, hasActiveCloud: false };
+    if (isAnyLoading) return {
+      points: "Loading...", status: "Parsing Data",
+      statusColor: "text-primary bg-primary/10", minZ: 0, maxZ: 0, hasActiveCloud: false
+    };
+
     let totalPoints = 0, minZ = Infinity, maxZ = -Infinity, count = 0;
-    for (const [key, on] of Object.entries(activeLayers)) {
-      if (on && layerStats[key]) {
-        totalPoints += layerStats[key].count;
-        minZ = Math.min(minZ, layerStats[key].minZ);
-        maxZ = Math.max(maxZ, layerStats[key].maxZ);
+    activeLayers.forEach(id => {
+      if (layerStats[id]) {
+        totalPoints += layerStats[id].count;
+        minZ = Math.min(minZ, layerStats[id].minZ);
+        maxZ = Math.max(maxZ, layerStats[id].maxZ);
         count++;
       }
-    }
+    });
+
+    const hasActive = activeLayers.size > 0;
     return {
-      points:         count > 0 ? `${totalPoints.toLocaleString()} pts` : "0 pts",
-      status:         count > 0 ? "Optimal" : (activeLayers.grid ? "Standby" : "Idle"),
-      statusColor:    count > 0 ? "text-green-500 bg-green-500/10" : "text-yellow-500 bg-yellow-500/10",
+      points:         hasActive ? `${totalPoints > 0 ? totalPoints.toLocaleString() : '—'} pts` : "0 pts",
+      status:         hasActive ? "Optimal" : (showGrid ? "Standby" : "Idle"),
+      statusColor:    hasActive ? "text-green-500 bg-green-500/10" : "text-yellow-500 bg-yellow-500/10",
       minZ:           minZ === Infinity  ? 0 : minZ,
       maxZ:           maxZ === -Infinity ? 0 : maxZ,
       hasActiveCloud: count > 0,
     };
-  }, [activeLayers, layerStats, isAnyLoading]);
+  }, [activeLayers, layerStats, isAnyLoading, showGrid]);
 
   useEffect(() => { setMounted(true); }, []);
 
-  const handleDataLoaded    = useCallback((id: string, c: number, mn: number, mx: number) => setLayerStats(p => ({ ...p, [id]: { count: c, minZ: mn, maxZ: mx } })), []);
-  const handleLoadingChange = useCallback((id: string, loading: boolean)                   => setLoadingLayers(p => ({ ...p, [id]: loading })), []);
-  const toggleLayer = (k: keyof typeof activeLayers) => {
-    if (k === 'grid') {
-      // grid tetap independent
-      setActiveLayers(p => ({ ...p, grid: !p.grid }));
-      return;
-    }
-    setActiveLayers(p => ({
-      ...p,
-      // matikan semua layer point cloud
-      tabularasa: false,
-      poso: false,
-      // aktifkan hanya yang diklik — kalau sudah aktif, matikan (deselect)
-      [k]: !p[k as keyof typeof p],
-    }));
-  };
+  const handleDataLoaded    = useCallback((id: string, c: number, mn: number, mx: number) =>
+    setLayerStats(p => ({ ...p, [id]: { count: c, minZ: mn, maxZ: mx } })), []);
+  const handleLoadingChange = useCallback((id: string, loading: boolean) =>
+    setLoadingLayers(p => ({ ...p, [id]: loading })), []);
 
   if (!mounted) return (
     <div className="h-screen w-full flex items-center justify-center bg-[#050505]">
@@ -215,21 +359,23 @@ const Mapping3D = () => {
     </div>
   );
 
-  // ✅ Kalkulasi posisi — identik dengan Mapping2D
-  const panelW    = winWidth >= 1024 ? PANEL_W.desktop : winWidth >= 768 ? PANEL_W.tablet : PANEL_W.mobile;
-  const panelLeft = winWidth >= 1024 ? '1.5rem'        : winWidth >= 768 ? '1rem'         : '0.5rem';
+  const panelW     = winWidth >= 1024 ? PANEL_W.desktop : winWidth >= 768 ? PANEL_W.tablet : PANEL_W.mobile;
+  const panelLeft  = winWidth >= 1024 ? '1.5rem' : winWidth >= 768 ? '1rem' : '0.5rem';
   const toggleLeft = isPanelOpen ? `calc(${panelLeft} + ${panelW}px + 0.5rem)` : '0.5rem';
+
+  // Group layers untuk tampilan panel
+  const tabularasaLayers = LAYERS.filter(l => l.group === 'tabularasa');
+  const posoLayers       = LAYERS.filter(l => l.group === 'poso');
 
   return (
     <section className="relative h-screen w-full overflow-hidden bg-white dark:bg-darklight pt-24">
-      {/* Navbar spacer */}
       <div className="absolute top-0 left-0 w-full h-24 bg-white dark:bg-secondary z-40 border-b border-gray-100 dark:border-white/5" />
 
       {/* Loading overlay */}
       {isAnyLoading && (
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 flex flex-col items-center gap-3 bg-black/60 backdrop-blur-md px-6 py-4 rounded-2xl border border-white/10">
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 flex flex-col items-center gap-3 bg-black/70 px-6 py-4 rounded-2xl border border-white/10">
           <Loader2 className="text-primary w-8 h-8 animate-spin" />
-          <span className="text-white text-xs font-bold tracking-widest uppercase">Decrypting Point Cloud...</span>
+          <span className="text-white text-xs font-bold tracking-widest uppercase">Loading 3D Data...</span>
         </div>
       )}
 
@@ -240,13 +386,36 @@ const Mapping3D = () => {
             <color attach="background" args={["#050505"]} />
             <PerspectiveCamera makeDefault position={[15, 15, 15]} near={0.1} far={1000} />
             <OrbitControls makeDefault enableDamping dampingFactor={0.1} />
-            <ambientLight intensity={0.5} />
+            <ambientLight intensity={0.8} />
             <pointLight position={[10, 10, 10]} intensity={1.5} />
+            <pointLight position={[-10, -5, -10]} intensity={0.5} color="#1d91c0" />
             <Suspense fallback={null}>
               <Center>
-                {activeLayers.grid && <gridHelper args={[30, 30, "#1e1e1e", "#121212"]} position={[0, -2, 0]} />}
-                <PointCloudModel id="tabularasa" url="/data/3D/PointCloud_Tabularasa.las" active={activeLayers.tabularasa} density={pointDensity} onDataLoaded={handleDataLoaded} onLoadingChange={handleLoadingChange} />
-                <PointCloudModel id="poso"       url="/data/3D/PointCloud_Poso.las"       active={activeLayers.poso}       density={pointDensity} onDataLoaded={handleDataLoaded} onLoadingChange={handleLoadingChange} />
+                {showGrid && <gridHelper args={[30, 30, "#1e1e1e", "#121212"]} position={[0, -2, 0]} />}
+
+                {/* Point Cloud Layers */}
+                <PointCloudModel
+                  id="pc_tabularasa" url="/data/3D/PointCloud_Tabularasa.las"
+                  active={activeLayers.has('pc_tabularasa')} density={pointDensity}
+                  onDataLoaded={handleDataLoaded} onLoadingChange={handleLoadingChange}
+                />
+                <PointCloudModel
+                  id="pc_poso" url="/data/3D/PointCloud_Poso.las"
+                  active={activeLayers.has('pc_poso')} density={pointDensity}
+                  onDataLoaded={handleDataLoaded} onLoadingChange={handleLoadingChange}
+                />
+
+                {/* OBJ Mesh Layers */}
+                <OBJMeshModel
+                  id="mesh_tabularasa" url="/data/3D/OBJ_Mesh_Tabularasa.obj"
+                  active={activeLayers.has('mesh_tabularasa')}
+                  onLoadingChange={handleLoadingChange}
+                />
+                <OBJMeshModel
+                  id="mesh_poso" url="/data/3D/OBJ_Mesh_Poso.obj"
+                  active={activeLayers.has('mesh_poso')}
+                  onLoadingChange={handleLoadingChange}
+                />
               </Center>
               <Stars radius={100} depth={50} count={3000} factor={4} fade speed={1} />
             </Suspense>
@@ -254,115 +423,171 @@ const Mapping3D = () => {
         </WebGLCheck>
       </div>
 
-      {/* ✅ TOGGLE BUTTON — posisi dinamis via inline style, identik Mapping2D */}
+      {/* Toggle button */}
       <div
         className="absolute top-[120px] z-[10] flex flex-col justify-center h-[calc(100vh-160px)] pointer-events-none transition-all duration-500"
         style={{ left: toggleLeft }}
       >
-        <button
-          onClick={() => setIsPanelOpen(!isPanelOpen)}
-          className="w-10 h-20 md:h-24 bg-primary hover:bg-primary/90 rounded-2xl flex items-center justify-center text-white shadow-xl transition-all active:scale-95 pointer-events-auto"
-          aria-label={isPanelOpen ? "Close panel" : "Open panel"}
-        >
+        <button onClick={() => setIsPanelOpen(!isPanelOpen)}
+          className="w-10 h-20 md:h-24 bg-primary hover:bg-primary/90 rounded-2xl flex items-center justify-center text-white shadow-xl transition-all active:scale-95 pointer-events-auto">
           {isPanelOpen ? <ChevronLeft size={22} /> : <ChevronRight size={22} />}
         </button>
       </div>
 
-      {/* ✅ SIDE PANEL — lebar & posisi via inline style, identik Mapping2D */}
+      {/* Side panel */}
       <motion.div
         animate={{ x: isPanelOpen ? 0 : -(panelW + 20) }}
         transition={{ type: "spring", stiffness: 260, damping: 25 }}
         style={{ width: panelW, left: panelLeft }}
         className="absolute top-[120px] bottom-10 z-[1] pointer-events-none h-[calc(100vh-160px)]"
       >
-        <div className="bg-white/90 dark:bg-gray-900/95 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-[2rem] md:rounded-[2.5rem] shadow-2xl p-4 md:p-5 lg:p-6 flex flex-col pointer-events-auto overflow-hidden h-full">
+        <div className="bg-white/90 dark:bg-gray-900/95 border border-gray-200 dark:border-white/10 rounded-[2rem] md:rounded-[2.5rem] shadow-2xl p-4 md:p-5 lg:p-6 flex flex-col pointer-events-auto overflow-hidden h-full">
 
-          {/* Header */}
-          <div className="mb-4 md:mb-6 shrink-0">
-            <h2 className="text-lg md:text-xl lg:text-2xl font-black text-gray-900 dark:text-white tracking-tighter uppercase flex items-center gap-2 md:gap-3">
-              <Box className="text-primary" size={20} /> 3D<span className="text-primary">Data</span>
+          <div className="mb-4 shrink-0">
+            <h2 className="text-lg md:text-xl font-black text-gray-900 dark:text-white tracking-tighter uppercase flex items-center gap-2">
+              <Box className="text-primary" size={19} /> 3D<span className="text-primary">Data</span>
             </h2>
-            <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-2 flex items-center gap-2">
-              <Layers size={12} /> Select One Layer
+            <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-1.5 flex items-center gap-1.5">
+              <Layers size={11} /> Select one layer per wreck
             </p>
           </div>
 
-          {/* Layer list */}
-          <div className="flex-1 space-y-3 overflow-y-auto pr-2 custom-scrollbar">
+          <div className="flex-1 space-y-4 overflow-y-auto pr-1 custom-scrollbar">
 
-            {/* Layer: Tabularasa */}
-            <div className={`rounded-2xl md:rounded-3xl border p-3 md:p-4 transition-all ${activeLayers.tabularasa ? 'bg-primary/5 border-primary/20' : 'bg-gray-50 dark:bg-white/5 border-gray-100 dark:border-white/5'}`}>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <button
-                    onClick={() => toggleLayer('tabularasa')}
-                    disabled={isAnyLoading}
-                    className={`p-2 md:p-2.5 rounded-xl md:rounded-2xl transition-all ${activeLayers.tabularasa ? 'bg-primary text-white shadow-lg shadow-primary/30' : 'bg-gray-200 dark:bg-white/10 text-gray-400'} ${isAnyLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
-                  >
-                    {activeLayers.tabularasa ? <Eye size={15} /> : <EyeOff size={15} />}
-                  </button>
-                  <div>
-                    <h4 className="text-[10px] md:text-[11px] font-black text-gray-900 dark:text-white uppercase tracking-tight">Tabularasa Shipwreck</h4>
-                    <span className="text-[9px] text-gray-500 font-bold">Wreck Site 1</span>
-                  </div>
+            {/* ── TABULARASA GROUP ── */}
+            <div>
+              <div className="flex items-center gap-2 mb-2 px-1">
+                <div className="w-2 h-2 rounded-full bg-blue-400 flex-shrink-0" />
+                <span className="text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-gray-400">Tabularasa Wreck</span>
+              </div>
+              <div className="space-y-2 pl-1">
+                {tabularasaLayers.map(layer => {
+                  const isActive = activeLayers.has(layer.id);
+                  const isLoading = loadingLayers[layer.id];
+                  return (
+                    <div key={layer.id}
+                      className={`rounded-xl md:rounded-2xl border p-3 transition-colors ${isActive ? 'bg-primary/5 border-primary/20' : 'bg-gray-50 dark:bg-white/5 border-gray-100 dark:border-white/5'}`}>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2.5">
+                          <button onClick={() => toggleLayer(layer.id)} disabled={isAnyLoading}
+                            className={`p-2 rounded-xl transition-colors ${isActive ? 'bg-primary text-white shadow-md shadow-primary/30' : 'bg-gray-200 dark:bg-white/10 text-gray-400'} ${isAnyLoading ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                            {isLoading
+                              ? <Loader2 size={14} className="animate-spin" />
+                              : isActive ? <Eye size={14} /> : <EyeOff size={14} />
+                            }
+                          </button>
+                          <div>
+                            <h4 className="text-[10px] font-black text-gray-900 dark:text-white uppercase tracking-tight leading-tight">{layer.label}</h4>
+                            <div className="flex items-center gap-1.5 mt-0.5">
+                              {/* Badge tipe layer */}
+                              <span className={`text-[8px] font-black uppercase px-1.5 py-0.5 rounded-sm ${
+                                layer.type === 'mesh'
+                                  ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400'
+                                  : 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'
+                              }`}>
+                                {layer.type === 'mesh' ? '3D Mesh' : 'Point Cloud'}
+                              </span>
+                              <span className="text-[8px] text-gray-400 font-bold">{layer.subtitle.split('·')[1]?.trim()}</span>
+                            </div>
+                          </div>
+                        </div>
+                        {layer.type === 'mesh'
+                          ? <Box size={14} className={`${isActive ? 'text-primary' : 'text-gray-400'} opacity-50 flex-shrink-0`} />
+                          : <Wind size={14} className={`${isActive ? 'text-primary' : 'text-gray-400'} opacity-50 flex-shrink-0`} />
+                        }
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* ── POSO GROUP ── */}
+            <div>
+              <div className="flex items-center gap-2 mb-2 px-1">
+                <div className="w-2 h-2 rounded-full bg-amber-400 flex-shrink-0" />
+                <span className="text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-gray-400">Poso Wreck</span>
+              </div>
+              <div className="space-y-2 pl-1">
+                {posoLayers.map(layer => {
+                  const isActive = activeLayers.has(layer.id);
+                  const isLoading = loadingLayers[layer.id];
+                  return (
+                    <div key={layer.id}
+                      className={`rounded-xl md:rounded-2xl border p-3 transition-colors ${isActive ? 'bg-primary/5 border-primary/20' : 'bg-gray-50 dark:bg-white/5 border-gray-100 dark:border-white/5'}`}>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2.5">
+                          <button onClick={() => toggleLayer(layer.id)} disabled={isAnyLoading}
+                            className={`p-2 rounded-xl transition-colors ${isActive ? 'bg-primary text-white shadow-md shadow-primary/30' : 'bg-gray-200 dark:bg-white/10 text-gray-400'} ${isAnyLoading ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                            {isLoading
+                              ? <Loader2 size={14} className="animate-spin" />
+                              : isActive ? <Eye size={14} /> : <EyeOff size={14} />
+                            }
+                          </button>
+                          <div>
+                            <h4 className="text-[10px] font-black text-gray-900 dark:text-white uppercase tracking-tight leading-tight">{layer.label}</h4>
+                            <div className="flex items-center gap-1.5 mt-0.5">
+                              <span className={`text-[8px] font-black uppercase px-1.5 py-0.5 rounded-sm ${
+                                layer.type === 'mesh'
+                                  ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400'
+                                  : 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'
+                              }`}>
+                                {layer.type === 'mesh' ? '3D Mesh' : 'Point Cloud'}
+                              </span>
+                              <span className="text-[8px] text-gray-400 font-bold">{layer.subtitle.split('·')[1]?.trim()}</span>
+                            </div>
+                          </div>
+                        </div>
+                        {layer.type === 'mesh'
+                          ? <Box size={14} className={`${isActive ? 'text-primary' : 'text-gray-400'} opacity-50 flex-shrink-0`} />
+                          : <Wind size={14} className={`${isActive ? 'text-primary' : 'text-gray-400'} opacity-50 flex-shrink-0`} />
+                        }
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* ── RENDER QUALITY + GRID ── */}
+            <div className="border-t border-gray-200 dark:border-white/10 pt-3 space-y-3">
+              {/* Grid toggle */}
+              <div className="flex items-center justify-between px-1">
+                <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Grid Helper</span>
+                <button onClick={() => setShowGrid(g => !g)}
+                  className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase transition-colors ${showGrid ? 'bg-primary/10 text-primary' : 'bg-gray-100 dark:bg-white/5 text-gray-400'}`}>
+                  {showGrid ? 'On' : 'Off'}
+                </button>
+              </div>
+
+              {/* Render quality — hanya untuk point cloud */}
+              <div>
+                <div className="flex items-center gap-2 mb-2 px-1">
+                  <Sliders size={12} className="text-gray-400" />
+                  <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Point Cloud Quality</span>
                 </div>
-                <Wind size={15} className={`${activeLayers.tabularasa ? 'text-primary' : 'text-gray-400'} opacity-50`} />
-              </div>
-            </div>
-
-            {/* Layer: Poso */}
-            <div className={`rounded-2xl md:rounded-3xl border p-3 md:p-4 transition-all ${activeLayers.poso ? 'bg-primary/5 border-primary/20' : 'bg-gray-50 dark:bg-white/5 border-gray-100 dark:border-white/5'}`}>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <button
-                    onClick={() => toggleLayer('poso')}
-                    disabled={isAnyLoading}
-                    className={`p-2 md:p-2.5 rounded-xl md:rounded-2xl transition-all ${activeLayers.poso ? 'bg-primary text-white shadow-lg shadow-primary/30' : 'bg-gray-200 dark:bg-white/10 text-gray-400'} ${isAnyLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
-                  >
-                    {activeLayers.poso ? <Eye size={15} /> : <EyeOff size={15} />}
-                  </button>
-                  <div>
-                    <h4 className="text-[10px] md:text-[11px] font-black text-gray-900 dark:text-white uppercase tracking-tight">Poso Shipwreck</h4>
-                    <span className="text-[9px] text-gray-500 font-bold">Wreck Site 2</span>
-                  </div>
+                <div className="flex gap-1.5 bg-gray-100 dark:bg-black/30 p-1.5 rounded-2xl">
+                  {[{ label: 'Low', value: 10 }, { label: 'Med', value: 4 }, { label: 'High', value: 1 }].map(p => (
+                    <button key={p.label} onClick={() => setPointDensity(p.value)}
+                      disabled={isAnyLoading}
+                      className={`flex-1 py-2 rounded-xl text-[10px] font-bold uppercase transition-colors ${pointDensity === p.value ? 'bg-white dark:bg-gray-800 text-primary shadow-sm' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'}`}>
+                      {p.label}
+                    </button>
+                  ))}
                 </div>
-                <Wind size={15} className={`${activeLayers.poso ? 'text-primary' : 'text-gray-400'} opacity-50`} />
               </div>
             </div>
 
-            {/* Render Quality */}
-            <div className="mt-4 border-t border-gray-200 dark:border-white/10 pt-4">
-              <div className="flex items-center gap-2 mb-3">
-                <Sliders size={14} className="text-gray-400" />
-                <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Render Quality</span>
-              </div>
-              <div className="flex gap-2 bg-gray-100 dark:bg-black/30 p-1.5 rounded-2xl">
-                {[{ label: 'Low', value: 10 }, { label: 'Med', value: 4 }, { label: 'High', value: 1 }].map((p) => (
-                  <button
-                    key={p.label}
-                    onClick={() => setPointDensity(p.value)}
-                    disabled={isAnyLoading || !engineStats.hasActiveCloud}
-                    className={`flex-1 py-2 rounded-xl text-[10px] font-bold uppercase transition-all ${pointDensity === p.value ? 'bg-white dark:bg-gray-800 text-primary shadow-sm' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'}`}
-                  >
-                    {p.label}
-                  </button>
-                ))}
-              </div>
-            </div>
           </div>
         </div>
       </motion.div>
 
-      {/* ── MOBILE LEGEND ──────────────────────────────── */}
+      {/* Mobile legend */}
       <div className="md:hidden absolute bottom-3 right-2 z-[1] pointer-events-auto">
-        <button
-          onClick={() => setIsLegendOpen(!isLegendOpen)}
-          className={`flex items-center gap-1.5 px-3 py-2 rounded-xl shadow-lg border transition-all text-[10px] font-black uppercase tracking-wider ${
-            isLegendOpen
-              ? 'bg-primary text-white border-primary/80'
-              : 'bg-gray-900/95 text-white border-white/10 backdrop-blur-xl'
-          }`}
-        >
+        <button onClick={() => setIsLegendOpen(!isLegendOpen)}
+          className={`flex items-center gap-1.5 px-3 py-2 rounded-xl shadow-lg border transition-colors text-[10px] font-black uppercase tracking-wider ${
+            isLegendOpen ? 'bg-primary text-white border-primary/80' : 'bg-gray-900/95 text-white border-white/10'
+          }`}>
           <List size={12} className={isLegendOpen ? 'text-white' : 'text-primary'} />
           Diagnostics
           <ChevronRight size={11} className={`transition-transform ${isLegendOpen ? 'rotate-90' : ''}`} />
@@ -370,41 +595,35 @@ const Mapping3D = () => {
 
         <AnimatePresence>
           {isLegendOpen && (
-            <motion.div
-              initial={{ opacity: 0, y: 8, scale: 0.95 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 8, scale: 0.95 }}
-              transition={{ duration: 0.2 }}
-              className="absolute bottom-full right-0 mb-2 w-52 bg-gray-900/97 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl overflow-hidden"
-            >
+            <motion.div initial={{ opacity: 0, y: 8, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 8, scale: 0.95 }} transition={{ duration: 0.2 }}
+              className="absolute bottom-full right-0 mb-2 w-52 bg-gray-900/97 border border-white/10 rounded-2xl shadow-2xl overflow-hidden">
               <div className="px-3 py-2 border-b border-white/10 flex items-center gap-2">
                 <div className="w-1.5 h-4 bg-primary rounded-full" />
                 <span className="text-[10px] font-black uppercase tracking-widest text-gray-300">Engine Diagnostics</span>
               </div>
               <div className="p-3 space-y-2 border-b border-white/10">
                 <div className="flex justify-between items-center">
-                  <span className="text-[9px] text-gray-400 font-bold uppercase tracking-tight">System Status</span>
+                  <span className="text-[9px] text-gray-400 font-bold uppercase">System Status</span>
                   <span className={`text-[9px] font-black px-2 py-0.5 rounded-md ${engineStats.statusColor}`}>{engineStats.status}</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-[9px] text-gray-400 font-bold uppercase tracking-tight">Active Points</span>
+                  <span className="text-[9px] text-gray-400 font-bold uppercase">Active Points</span>
                   <span className="text-[9px] font-black text-blue-400">{engineStats.points}</span>
                 </div>
                 <div className="w-full h-1 bg-white/10 rounded-full overflow-hidden">
-                  <motion.div
-                    animate={{
-                      width: engineStats.hasActiveCloud && !isAnyLoading ? "100%" : (isAnyLoading ? "60%" : "30%"),
-                      backgroundColor: isAnyLoading ? "#3b82f6" : (engineStats.hasActiveCloud ? "#10b981" : "#eab308"),
-                    }}
-                    className="h-full rounded-full"
-                  />
+                  <motion.div animate={{
+                    width: engineStats.hasActiveCloud && !isAnyLoading ? "100%" : (isAnyLoading ? "60%" : "30%"),
+                    backgroundColor: isAnyLoading ? "#3b82f6" : (engineStats.hasActiveCloud ? "#10b981" : "#eab308"),
+                  }} className="h-full rounded-full" />
                 </div>
               </div>
               {engineStats.hasActiveCloud && !isAnyLoading && (
                 <div className="p-3">
                   <p className="text-[8px] text-gray-500 font-bold uppercase tracking-widest mb-2 text-center">Depth Scale (Z)</p>
                   <div className="flex items-center gap-3">
-                    <div className="w-3 h-16 rounded-full flex-shrink-0" style={{ background: 'linear-gradient(to top, #081d58, #1d91c0, #7fcdbb, #ffffd9)' }} />
+                    <div className="w-3 h-16 rounded-full flex-shrink-0"
+                      style={{ background: 'linear-gradient(to top, #081d58, #1d91c0, #7fcdbb, #ffffd9)' }} />
                     <div className="flex flex-col justify-between h-16 py-0.5">
                       <span className="text-[9px] font-mono font-bold text-gray-300">{engineStats.maxZ.toFixed(1)} m</span>
                       <span className="text-[9px] font-mono text-gray-500">{((engineStats.minZ + engineStats.maxZ) / 2).toFixed(1)} m</span>
@@ -418,57 +637,46 @@ const Mapping3D = () => {
         </AnimatePresence>
       </div>
 
-      {/* ── DESKTOP LEGEND ─────────────────────────────── */}
-      <motion.div
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
-        className="hidden md:block absolute bottom-10 right-6 z-[1] pointer-events-none"
-      >
-        <div className="bg-white/90 dark:bg-gray-900/95 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-[2rem] shadow-2xl p-6 w-64 pointer-events-auto">
-          <h5 className="text-[10px] font-black text-gray-400 uppercase mb-5 tracking-[0.2em] flex items-center gap-2">
-            <List size={14} className="text-primary" /> Engine Diagnostics
+      {/* Desktop legend */}
+      <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
+        className="hidden md:block absolute bottom-10 right-6 z-[1] pointer-events-none">
+        <div className="bg-white/90 dark:bg-gray-900/95 border border-gray-200 dark:border-white/10 rounded-[2rem] shadow-2xl p-6 w-64 pointer-events-auto">
+          <h5 className="text-[10px] font-black text-gray-400 uppercase mb-4 tracking-[0.2em] flex items-center gap-2">
+            <List size={13} className="text-primary" /> Engine Diagnostics
           </h5>
-          <div className="space-y-4">
+          <div className="space-y-3">
             <div className="flex justify-between items-center">
-              <span className="text-[10px] text-gray-500 font-bold uppercase tracking-tight">System Status</span>
+              <span className="text-[10px] text-gray-500 font-bold uppercase">System Status</span>
               <AnimatePresence mode="wait">
-                <motion.span
-                  key={engineStats.status}
-                  initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -5 }}
-                  className={`text-[9px] font-black px-2 py-1 rounded-lg italic ${engineStats.statusColor}`}
-                >
+                <motion.span key={engineStats.status} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }}
+                  className={`text-[9px] font-black px-2 py-1 rounded-lg italic ${engineStats.statusColor}`}>
                   {engineStats.status}
                 </motion.span>
               </AnimatePresence>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-[10px] text-gray-500 font-bold uppercase tracking-tight">Active Points</span>
+              <span className="text-[10px] text-gray-500 font-bold uppercase">Active Points</span>
               <motion.span animate={{ color: engineStats.hasActiveCloud ? "#3b82f6" : "#6b7280" }} className="text-[10px] font-black italic">
                 {engineStats.points}
               </motion.span>
             </div>
             <div className="w-full h-1 bg-gray-100 dark:bg-white/5 rounded-full overflow-hidden">
-              <motion.div
-                animate={{
-                  width: engineStats.hasActiveCloud && !isAnyLoading ? "100%" : (isAnyLoading ? "60%" : (activeLayers.grid ? "30%" : "0%")),
-                  backgroundColor: isAnyLoading ? "#3b82f6" : (engineStats.hasActiveCloud ? "#10b981" : "#eab308"),
-                }}
-                className="h-full"
-              />
+              <motion.div animate={{
+                width: engineStats.hasActiveCloud && !isAnyLoading ? "100%" : (isAnyLoading ? "60%" : (showGrid ? "30%" : "0%")),
+                backgroundColor: isAnyLoading ? "#3b82f6" : (engineStats.hasActiveCloud ? "#10b981" : "#eab308"),
+              }} className="h-full" />
             </div>
           </div>
 
           <AnimatePresence>
             {engineStats.hasActiveCloud && !isAnyLoading && (
-              <motion.div
-                initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }}
-                className="mt-5 border-t border-gray-100 dark:border-white/10 pt-4 overflow-hidden"
-              >
+              <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }}
+                className="mt-4 border-t border-gray-100 dark:border-white/10 pt-4 overflow-hidden">
                 <span className="text-[9px] text-gray-400 font-bold uppercase tracking-widest mb-3 block text-center">Depth Scale (Z-Axis)</span>
                 <div className="flex items-center justify-center gap-4">
-                  <div className="w-4 h-32 rounded-full shadow-inner border border-white/10"
+                  <div className="w-4 h-28 rounded-full border border-white/10"
                     style={{ background: 'linear-gradient(to top, #081d58, #1d91c0, #7fcdbb, #ffffd9)' }} />
-                  <div className="flex flex-col justify-between h-32 py-1">
+                  <div className="flex flex-col justify-between h-28 py-1">
                     <span className="text-[11px] font-mono font-bold text-gray-700 dark:text-gray-300">{engineStats.maxZ.toFixed(2)} m</span>
                     <span className="text-[11px] font-mono font-bold text-gray-500">{((engineStats.minZ + engineStats.maxZ) / 2).toFixed(2)} m</span>
                     <span className="text-[11px] font-mono font-bold text-gray-700 dark:text-gray-300">{engineStats.minZ.toFixed(2)} m</span>
@@ -477,6 +685,18 @@ const Mapping3D = () => {
               </motion.div>
             )}
           </AnimatePresence>
+
+          {/* Layer type legend */}
+          <div className="mt-4 pt-3 border-t border-gray-100 dark:border-white/10 space-y-1.5">
+            <div className="flex items-center gap-2">
+              <span className="text-[8px] font-black uppercase px-1.5 py-0.5 rounded-sm bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400">Point Cloud</span>
+              <span className="text-[9px] text-gray-400">Raw LAS sonar data</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-[8px] font-black uppercase px-1.5 py-0.5 rounded-sm bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400">3D Mesh</span>
+              <span className="text-[9px] text-gray-400">Reconstructed OBJ surface</span>
+            </div>
+          </div>
         </div>
       </motion.div>
     </section>
