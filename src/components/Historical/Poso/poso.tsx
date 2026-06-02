@@ -591,11 +591,11 @@ const PosoContent = () => {
       <AnimatePresence>
         {isGalleryOpen && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[999] bg-black/95 flex flex-col items-center justify-center p-3 sm:p-6 md:p-10"
+            className="fixed inset-0 z-[999] bg-black/90 flex items-center justify-center p-4 sm:p-8 md:p-12 lg:p-16"
             onClick={() => setIsGalleryOpen(false)}>
             <motion.div initial={{ scale: 0.94, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.94, opacity: 0 }}
-              className="relative w-full max-w-5xl flex flex-col bg-[#0d0d0d] rounded-2xl md:rounded-3xl overflow-hidden shadow-2xl border border-white/10"
-              style={{ maxHeight: 'calc(100vh - 2rem)' }}
+              className="relative w-full max-w-3xl flex flex-col bg-[#0d0d0d] rounded-2xl overflow-hidden shadow-2xl border border-white/10"
+              style={{ maxHeight: 'calc(100vh - 4rem)' }}
               onClick={(e) => e.stopPropagation()}>
 
               {/* Header bar */}
@@ -623,21 +623,21 @@ const PosoContent = () => {
                     exit={{ opacity: 0, scale: 0.98 }}
                     transition={{ duration: 0.2 }}
                     className="w-full h-full object-contain"
-                    style={{ maxHeight: 'calc(100vh - 10rem)' }}
+                    style={{ maxHeight: 'calc(100vh - 12rem)', maxWidth: '100%' }}
                     alt={`Poso Wreck ${currentSlide + 1}`}
                   />
                 </AnimatePresence>
 
-                {/* Nav arrows — kiri & kanan */}
+                {/* Nav arrows — selalu di dalam area gambar */}
                 <button
                   onClick={() => setCurrentSlide(p => p === 0 ? posoImages.length - 1 : p - 1)}
-                  className="absolute left-2 sm:left-4 p-2 sm:p-3 bg-black/50 hover:bg-black/80 text-white rounded-full border border-white/15 transition-colors">
-                  <ChevronLeft size={18} />
+                  className="absolute left-3 p-2 bg-black/60 hover:bg-primary text-white rounded-full border border-white/20 transition-colors z-10">
+                  <ChevronLeft size={16} />
                 </button>
                 <button
                   onClick={() => setCurrentSlide(p => p === posoImages.length - 1 ? 0 : p + 1)}
-                  className="absolute right-2 sm:right-4 p-2 sm:p-3 bg-black/50 hover:bg-black/80 text-white rounded-full border border-white/15 transition-colors">
-                  <ChevronRight size={18} />
+                  className="absolute right-3 p-2 bg-black/60 hover:bg-primary text-white rounded-full border border-white/20 transition-colors z-10">
+                  <ChevronRight size={16} />
                 </button>
               </div>
 
