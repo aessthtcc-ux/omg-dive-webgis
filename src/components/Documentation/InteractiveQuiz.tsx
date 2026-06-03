@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Anchor, Fish, Waves, Trophy, RefreshCw,
+  Fish, Waves, Trophy, RefreshCw,
   CheckCircle, XCircle, Zap, Star,
   ChevronRight, Shield, Target, Award, Clock
 } from "lucide-react";
@@ -23,21 +23,21 @@ interface Question {
 }
 
 const questions: Question[] = [
-  { id:1, category:"history", difficulty:"easy", question:"In what year did KM Tabularasa sink in the waters of Pramuka Island?", options:["1985","1990","1995","2000"], correct:2, explanation:"KM Tabularasa sank in 1995 due to damage in the ship's engine room.", funFact:"Despite being less than 50 years old, Tabularasa already holds significant national maritime historical value." },
-  { id:2, category:"wreck", difficulty:"easy", question:"What is the maximum depth of the Tabularasa wreck site?", options:["15–20 meters","20–33 meters","33–45 meters","10–15 meters"], correct:1, explanation:"Tabularasa rests at 20–33 meters depth, ideal for Advanced Open Water certified divers.", funFact:"The ship's structure remains remarkably intact, making it highly attractive for wreck exploration." },
-  { id:3, category:"history", difficulty:"medium", question:"Which vessel collided with KM Poso, causing it to sink?", options:["KM Nusantara","KM Berdikari","KM Jaya Bahari","KM Sriwijaya"], correct:1, explanation:"KM Poso sank in 1970 after colliding with KM Berdikari in the waters of Karang Congkak.", funFact:"KM Poso was originally a Dutch maritime trading vessel before being converted into a cement cargo ship." },
-  { id:4, category:"ecology", difficulty:"medium", question:"What is the coral cover percentage at the Poso wreck site?", options:["34.92%","55.00%","80.18%","92.50%"], correct:2, explanation:"Poso has an 80.18% coral cover — the highest among all surveyed wrecks — making it a prime candidate for an eco-archaeological park.", funFact:"This high coral coverage supports over 28 species of living coral." },
-  { id:5, category:"marine", difficulty:"easy", question:"Which marine animal is most commonly found inside the crevices of a shipwreck hull?", options:["Green Sea Turtle","Moray Eel","Angelfish","Stingray"], correct:1, explanation:"The Moray Eel is a permanent resident in engine rooms and cargo hold crevices, spotted year-round.", funFact:"Moray Eels can live over 30 years and consistently return to the same hiding spot." },
-  { id:6, category:"wreck", difficulty:"hard", question:"What is the total site assessment score of Poso based on I. Dillenia et al. (2021) criteria?", options:["18 / 30","22 / 30","26 / 30","30 / 30"], correct:2, explanation:"Poso scored 26/30 — the highest among all surveyed wrecks — indicating exceptional potential as an underwater archaeological park.", funFact:"Tabularasa scored 22/30, still categorised as a high-potential site." },
-  { id:7, category:"ecology", difficulty:"medium", question:"What seabed substrate type best supports underwater visibility around Pramuka Island wrecks?", options:["Fine mud","Sandy substrate","Hard coral","Gravel"], correct:1, explanation:"Sandy substrate is not easily disturbed by currents, keeping water clarity high for diving.", funFact:"Parrotfish actually contribute to creating this sand through their coral-feeding process!" },
-  { id:8, category:"marine", difficulty:"hard", question:"Which sea turtle species is Critically Endangered and feeds on sponges growing on wreck structures?", options:["Green Sea Turtle","Leatherback Turtle","Hawksbill Turtle","Loggerhead Turtle"], correct:2, explanation:"The Hawksbill Turtle (Eretmochelys imbricata) is Critically Endangered and is known to feed on sponges colonising wreck surfaces.", funFact:"The Hawksbill's narrow beak is perfectly shaped to extract sponges from tight crevices." },
-  { id:9, category:"history", difficulty:"easy", question:"What was KM Tabularasa's original function before it sank?", options:["Oil tanker","Passenger ferry","STP Training vessel","Fishing boat"], correct:2, explanation:"Tabularasa was a training ship belonging to STP (Sekolah Tinggi Perikanan) that sank in the waters of Pramuka Island in 1995.", funFact:"Its role as an educational vessel gives Tabularasa additional value in Indonesia's maritime history." },
-  { id:10, category:"ecology", difficulty:"hard", question:"During which season does underwater visibility in Pramuka Island waters reach its peak?", options:["West Monsoon (Nov–Mar)","Transition Season (Apr–May)","East Monsoon (Jun–Oct)","Same year-round"], correct:2, explanation:"The East Monsoon (Jun–Oct) typically produces the best visibility — up to 12 meters — with more stable currents.", funFact:"The Transition Season (Apr–May) is also excellent and recommended for all diver levels." },
-  { id:11, category:"marine", difficulty:"medium", question:"Which fish is known to produce white sand as a byproduct of its feeding?", options:["Angelfish","Surgeonfish","Parrotfish","Butterfly Fish"], correct:2, explanation:"Parrotfish bite coral and algae with their hard teeth, producing fine sand grains that form white sandy beaches.", funFact:"A single Parrotfish can produce over 100 kg of sand per year!" },
-  { id:12, category:"wreck", difficulty:"medium", question:"What is the depth range of the Poso wreck site?", options:["10–20 meters","15–25 meters","25–30 meters","30–40 meters"], correct:2, explanation:"Poso rests at 25–30 meters depth, slightly deeper than Tabularasa, suited for experienced divers.", funFact:"This depth falls within the safe recreational diving zone using standard equipment." },
-  { id:13, category:"history", difficulty:"hard", question:"From which country did KM Poso originate before operating in Indonesia?", options:["England","Japan","Netherlands","Germany"], correct:2, explanation:"KM Poso was originally a Dutch maritime trading vessel before being converted into a cement cargo ship.", funFact:"Its connection to Dutch trade routes gives Poso global maritime historical significance." },
-  { id:14, category:"marine", difficulty:"easy", question:"What animal group does a Nudibranch belong to?", options:["Fish","Mollusc (sea slug)","Crustacean","Echinoderm"], correct:1, explanation:"Nudibranchs are shell-less sea slugs belonging to the class Gastropoda, known for their vivid warning colours.", funFact:"The name 'nudibranch' comes from Latin: nudus (naked) + brankhia (gills)." },
-  { id:15, category:"ecology", difficulty:"medium", question:"What does 'underwater visibility' measured by a Secchi disk indicate?", options:["Water temperature at depth","Water clarity — how far you can see underwater","Underwater current speed","Dissolved oxygen levels"], correct:1, explanation:"A Secchi disk is lowered until it disappears from sight — that distance indicates water clarity (visibility).", funFact:"The Secchi disk was invented by Pastor Pietro Angelo Secchi in 1865 in the Mediterranean Sea." },
+  { id:1,  category:"history", difficulty:"easy",   question:"In what year did KM Tabularasa sink in the waters of Pramuka Island?",                                  options:["1985","1990","1995","2000"],                                                                         correct:2, explanation:"KM Tabularasa sank in 1995 due to damage in the ship's engine room.",                                                                                          funFact:"Despite being less than 50 years old, Tabularasa already holds significant national maritime historical value." },
+  { id:2,  category:"wreck",   difficulty:"easy",   question:"What is the maximum depth of the Tabularasa wreck site?",                                                options:["15–20 meters","20–33 meters","33–45 meters","10–15 meters"],                                         correct:1, explanation:"Tabularasa rests at 20–33 meters depth, ideal for Advanced Open Water certified divers.",                                                                        funFact:"The ship's structure remains remarkably intact, making it highly attractive for wreck exploration." },
+  { id:3,  category:"history", difficulty:"medium", question:"Which vessel collided with KM Poso, causing it to sink?",                                                options:["KM Nusantara","KM Berdikari","KM Jaya Bahari","KM Sriwijaya"],                                       correct:1, explanation:"KM Poso sank in 1970 after colliding with KM Berdikari in the waters of Karang Congkak.",                                                                       funFact:"KM Poso was originally a Dutch maritime trading vessel before being converted into a cement cargo ship." },
+  { id:4,  category:"ecology", difficulty:"medium", question:"What is the coral cover percentage at the Poso wreck site?",                                             options:["34.92%","55.00%","80.18%","92.50%"],                                                                 correct:2, explanation:"Poso has an 80.18% coral cover — the highest among all surveyed wrecks — making it a prime candidate for an eco-archaeological park.",                         funFact:"This high coral coverage supports over 28 species of living coral." },
+  { id:5,  category:"marine",  difficulty:"easy",   question:"Which marine animal is most commonly found inside the crevices of a shipwreck hull?",                   options:["Green Sea Turtle","Moray Eel","Angelfish","Stingray"],                                               correct:1, explanation:"The Moray Eel is a permanent resident in engine rooms and cargo hold crevices, spotted year-round.",                                                               funFact:"Moray Eels can live over 30 years and consistently return to the same hiding spot." },
+  { id:6,  category:"wreck",   difficulty:"hard",   question:"What is the total site assessment score of Poso based on I. Dillenia et al. (2021) criteria?",          options:["18 / 30","22 / 30","26 / 30","30 / 30"],                                                             correct:2, explanation:"Poso scored 26/30 — the highest among all surveyed wrecks — indicating exceptional potential as an underwater archaeological park.",                             funFact:"Tabularasa scored 22/30, still categorised as a high-potential site." },
+  { id:7,  category:"ecology", difficulty:"medium", question:"What seabed substrate type best supports underwater visibility around Pramuka Island wrecks?",           options:["Fine mud","Sandy substrate","Hard coral","Gravel"],                                                   correct:1, explanation:"Sandy substrate is not easily disturbed by currents, keeping water clarity high for diving.",                                                                     funFact:"Parrotfish actually contribute to creating this sand through their coral-feeding process!" },
+  { id:8,  category:"marine",  difficulty:"hard",   question:"Which sea turtle species is Critically Endangered and feeds on sponges growing on wreck structures?",   options:["Green Sea Turtle","Leatherback Turtle","Hawksbill Turtle","Loggerhead Turtle"],                      correct:2, explanation:"The Hawksbill Turtle (Eretmochelys imbricata) is Critically Endangered and is known to feed on sponges colonising wreck surfaces.",                             funFact:"The Hawksbill's narrow beak is perfectly shaped to extract sponges from tight crevices." },
+  { id:9,  category:"history", difficulty:"easy",   question:"What was KM Tabularasa's original function before it sank?",                                            options:["Oil tanker","Passenger ferry","STP Training vessel","Fishing boat"],                                  correct:2, explanation:"Tabularasa was a training ship belonging to STP (Sekolah Tinggi Perikanan) that sank in the waters of Pramuka Island in 1995.",                                 funFact:"Its role as an educational vessel gives Tabularasa additional value in Indonesia's maritime history." },
+  { id:10, category:"ecology", difficulty:"hard",   question:"During which season does underwater visibility in Pramuka Island waters reach its peak?",                options:["West Monsoon (Nov–Mar)","Transition Season (Apr–May)","East Monsoon (Jun–Oct)","Same year-round"],  correct:2, explanation:"The East Monsoon (Jun–Oct) typically produces the best visibility — up to 12 meters — with more stable currents.",                                               funFact:"The Transition Season (Apr–May) is also excellent and recommended for all diver levels." },
+  { id:11, category:"marine",  difficulty:"medium", question:"Which fish is known to produce white sand as a byproduct of its feeding?",                              options:["Angelfish","Surgeonfish","Parrotfish","Butterfly Fish"],                                              correct:2, explanation:"Parrotfish bite coral and algae with their hard teeth, producing fine sand grains that form white sandy beaches.",                                                  funFact:"A single Parrotfish can produce over 100 kg of sand per year!" },
+  { id:12, category:"wreck",   difficulty:"medium", question:"What is the depth range of the Poso wreck site?",                                                        options:["10–20 meters","15–25 meters","25–30 meters","30–40 meters"],                                         correct:2, explanation:"Poso rests at 25–30 meters depth, slightly deeper than Tabularasa, suited for experienced divers.",                                                              funFact:"This depth falls within the safe recreational diving zone using standard equipment." },
+  { id:13, category:"history", difficulty:"hard",   question:"From which country did KM Poso originate before operating in Indonesia?",                                options:["England","Japan","Netherlands","Germany"],                                                            correct:2, explanation:"KM Poso was originally a Dutch maritime trading vessel before being converted into a cement cargo ship.",                                                           funFact:"Its connection to Dutch trade routes gives Poso global maritime historical significance." },
+  { id:14, category:"marine",  difficulty:"easy",   question:"What animal group does a Nudibranch belong to?",                                                         options:["Fish","Mollusc (sea slug)","Crustacean","Echinoderm"],                                               correct:1, explanation:"Nudibranchs are shell-less sea slugs belonging to the class Gastropoda, known for their vivid warning colours.",                                                 funFact:"The name 'nudibranch' comes from Latin: nudus (naked) + brankhia (gills)." },
+  { id:15, category:"ecology", difficulty:"medium", question:"What does 'underwater visibility' measured by a Secchi disk indicate?",                                  options:["Water temperature at depth","Water clarity — how far you can see underwater","Underwater current speed","Dissolved oxygen levels"], correct:1, explanation:"A Secchi disk is lowered until it disappears from sight — that distance indicates water clarity (visibility).", funFact:"The Secchi disk was invented by Pastor Pietro Angelo Secchi in 1865 in the Mediterranean Sea." },
 ];
 
 // ---------------------------------------------------------------------------
@@ -51,10 +51,10 @@ const POINTS_BASE       = 100;
 const POINTS_TIME_BONUS = 5;
 
 const catMeta = {
-  wreck:   { label: "Wreck",   dot: "bg-blue-500",    pill: "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20",    bar: "bg-blue-500"    },
-  marine:  { label: "Marine",  dot: "bg-teal-500",    pill: "bg-teal-500/10 text-teal-600 dark:text-teal-400 border-teal-500/20",    bar: "bg-teal-500"    },
-  history: { label: "History", dot: "bg-amber-500",   pill: "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20", bar: "bg-amber-500"   },
-  ecology: { label: "Ecology", dot: "bg-emerald-500", pill: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20", bar: "bg-emerald-500" },
+  wreck:   { label: "Wreck",   dot: "bg-blue-500",    pill: "bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300 border-blue-300 dark:border-blue-500/30",    bar: "bg-blue-500"    },
+  marine:  { label: "Marine",  dot: "bg-teal-500",    pill: "bg-teal-100 dark:bg-teal-500/20 text-teal-700 dark:text-teal-300 border-teal-300 dark:border-teal-500/30",    bar: "bg-teal-500"    },
+  history: { label: "History", dot: "bg-amber-500",   pill: "bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300 border-amber-300 dark:border-amber-500/30", bar: "bg-amber-500"   },
+  ecology: { label: "Ecology", dot: "bg-emerald-500", pill: "bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border-emerald-300 dark:border-emerald-500/30", bar: "bg-emerald-500" },
 } as const;
 
 const diffMeta = {
@@ -93,22 +93,28 @@ const OptionButton = ({ label, index, selected, correct, revealed, onClick }: {
   label: string; index: number; selected: boolean; correct: boolean; revealed: boolean; onClick: () => void;
 }) => {
   const letters = ["A", "B", "C", "D"];
-  let wrap  = "bg-white dark:bg-white/5 border-gray-200 dark:border-white/10 hover:border-primary hover:bg-primary/5 dark:hover:bg-white/10 cursor-pointer shadow-sm";
-  let badge = "bg-gray-100 dark:bg-white/10 text-gray-500 dark:text-white/50";
-  let text  = "text-gray-800 dark:text-white/90";
+
+  // ✅ Semua class ditulis penuh — tidak ada dynamic string concat
+  let wrap  = "bg-white dark:bg-white/5 border-gray-200 dark:border-white/10 hover:border-primary hover:bg-primary/5 dark:hover:bg-primary/10 cursor-pointer shadow-sm";
+  let badge = "bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-white/60";
+  let text  = "text-gray-800 dark:text-white";
+
   if (revealed) {
     if (correct) {
-      wrap  = "bg-emerald-50 dark:bg-emerald-500/15 border-emerald-400 cursor-default";
+      wrap  = "bg-emerald-50 dark:bg-emerald-500/20 border-emerald-400 dark:border-emerald-400/60 cursor-default";
       badge = "bg-emerald-500 text-white";
-      text  = "text-emerald-800 dark:text-emerald-300 font-semibold";
+      text  = "text-emerald-800 dark:text-emerald-200 font-semibold";
     } else if (selected) {
-      wrap  = "bg-red-50 dark:bg-red-500/15 border-red-400 cursor-default";
+      wrap  = "bg-red-50 dark:bg-red-500/20 border-red-400 dark:border-red-400/60 cursor-default";
       badge = "bg-red-500 text-white";
-      text  = "text-red-800 dark:text-red-300";
+      text  = "text-red-800 dark:text-red-200";
     } else {
-      wrap  = "bg-gray-50 dark:bg-white/[0.02] border-gray-100 dark:border-white/5 opacity-40 cursor-default";
+      wrap  = "bg-gray-50 dark:bg-white/[0.03] border-gray-100 dark:border-white/5 opacity-40 cursor-default";
+      badge = "bg-gray-200 dark:bg-white/10 text-gray-500 dark:text-white/40";
+      text  = "text-gray-500 dark:text-white/40";
     }
   }
+
   return (
     <motion.button
       initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
@@ -132,12 +138,11 @@ const OptionButton = ({ label, index, selected, correct, revealed, onClick }: {
 const IntroScreen = ({ onStart }: { onStart: () => void }) => (
   <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
     className="flex flex-col gap-6 py-2">
-
     <div>
       <h2 className="text-3xl lg:text-4xl font-black tracking-tighter leading-[1.05] text-gray-900 dark:text-white mb-3">
         How deep does your <span className="text-primary">knowledge go?</span>
       </h2>
-      <p className="text-gray-500 dark:text-white/40 text-sm leading-relaxed max-w-lg">
+      <p className="text-gray-500 dark:text-gray-400 text-sm leading-relaxed max-w-lg">
         15 questions about wreck diving, marine life, and maritime history of the Pramuka Islands. Answer fast — earn more points.
       </p>
     </div>
@@ -146,11 +151,11 @@ const IntroScreen = ({ onStart }: { onStart: () => void }) => (
     <div className="flex flex-wrap gap-2">
       {[
         { icon: <Target size={12} />, text: "15 questions" },
-        { icon: <Clock size={12} />, text: "20 sec / question" },
-        { icon: <Zap size={12} />, text: "Time bonus" },
-        { icon: <Star size={12} />, text: "3 difficulty levels" },
+        { icon: <Clock size={12} />,  text: "20 sec / question" },
+        { icon: <Zap size={12} />,   text: "Time bonus" },
+        { icon: <Star size={12} />,  text: "3 difficulty levels" },
       ].map(({ icon, text }) => (
-        <div key={text} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gray-100 dark:bg-white/10 border border-gray-200 dark:border-white/10 text-gray-700 dark:text-white/70 text-xs font-semibold">
+        <div key={text} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gray-100 dark:bg-white/10 border border-gray-200 dark:border-white/15 text-gray-700 dark:text-gray-300 text-xs font-semibold">
           <span className="text-primary">{icon}</span>
           {text}
         </div>
@@ -159,7 +164,7 @@ const IntroScreen = ({ onStart }: { onStart: () => void }) => (
 
     {/* Category grid */}
     <div>
-      <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-white/30 mb-3">Question categories</p>
+      <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-3">Question categories</p>
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
         {Object.entries(catMeta).map(([key, cfg], i) => (
           <motion.div key={key} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
@@ -168,7 +173,7 @@ const IntroScreen = ({ onStart }: { onStart: () => void }) => (
             <div className={`w-1.5 h-6 rounded-full ${cfg.dot} opacity-80 flex-shrink-0`} />
             <div>
               <p className="text-xs font-black text-gray-800 dark:text-white">{cfg.label}</p>
-              <p className="text-[10px] text-gray-400 dark:text-white/30">
+              <p className="text-[10px] text-gray-500 dark:text-gray-400">
                 {questions.filter(q => q.category === key).length} Question
               </p>
             </div>
@@ -206,7 +211,7 @@ const PlayingScreen = ({ question, questionIndex, total, score, timeLeft, select
       {/* Top bar */}
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2 min-w-0">
-          <span className="text-xs font-black text-gray-400 dark:text-white/30 tabular-nums flex-shrink-0">
+          <span className="text-xs font-black text-gray-500 dark:text-gray-400 tabular-nums flex-shrink-0">
             {questionIndex + 1}<span className="opacity-40">/{total}</span>
           </span>
           <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[9px] font-black uppercase tracking-widest ${cat.pill}`}>
@@ -235,13 +240,13 @@ const PlayingScreen = ({ question, questionIndex, total, score, timeLeft, select
       </div>
 
       {/* Question */}
-      <div className="p-4 rounded-2xl bg-gray-50 dark:bg-white/[0.04] border border-gray-200 dark:border-white/10">
+      <div className="p-4 rounded-2xl bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10">
         <p className="text-base font-bold text-gray-900 dark:text-white leading-snug">
           {question.question}
         </p>
       </div>
 
-      {/* Options — 1 col always to avoid cramped layout on narrow screens */}
+      {/* Options */}
       <div className="grid grid-cols-1 gap-2">
         {question.options.map((opt, i) => (
           <OptionButton key={i} index={i} label={opt}
@@ -255,10 +260,11 @@ const PlayingScreen = ({ question, questionIndex, total, score, timeLeft, select
         {revealed && (
           <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
             className="space-y-3">
+            {/* Result box */}
             <div className={`flex items-start gap-3 p-4 rounded-xl border-2 ${
               selected === question.correct
-                ? "bg-emerald-50 dark:bg-emerald-500/10 border-emerald-300 dark:border-emerald-500/30"
-                : "bg-red-50 dark:bg-red-500/10 border-red-300 dark:border-red-500/30"
+                ? "bg-emerald-50 dark:bg-emerald-500/15 border-emerald-300 dark:border-emerald-500/40"
+                : "bg-red-50 dark:bg-red-500/15 border-red-300 dark:border-red-500/40"
             }`}>
               <div className="flex-shrink-0 mt-0.5">
                 {selected === question.correct
@@ -268,23 +274,31 @@ const PlayingScreen = ({ question, questionIndex, total, score, timeLeft, select
               </div>
               <div className="flex-1 min-w-0">
                 <p className={`text-xs font-black uppercase tracking-widest mb-1 ${
-                  selected === question.correct ? "text-emerald-700 dark:text-emerald-400" : "text-red-700 dark:text-red-400"
+                  selected === question.correct
+                    ? "text-emerald-700 dark:text-emerald-300"
+                    : "text-red-700 dark:text-red-300"
                 }`}>
-                  {selected === question.correct ? `Correct! +${POINTS_BASE + timeLeft * POINTS_TIME_BONUS} pts` : "Incorrect"}
+                  {selected === question.correct
+                    ? `Correct! +${POINTS_BASE + timeLeft * POINTS_TIME_BONUS} pts`
+                    : "Incorrect"}
                 </p>
-                <p className="text-sm text-gray-600 dark:text-white/60 leading-relaxed">{question.explanation}</p>
+                <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
+                  {question.explanation}
+                </p>
               </div>
             </div>
 
+            {/* Fun fact */}
             {question.funFact && (
-              <div className="flex gap-3 p-3.5 rounded-xl bg-primary/5 border border-primary/15">
+              <div className="flex gap-3 p-3.5 rounded-xl bg-primary/5 dark:bg-primary/10 border border-primary/15 dark:border-primary/25">
                 <Shield size={13} className="text-primary flex-shrink-0 mt-0.5" />
-                <p className="text-xs text-gray-600 dark:text-white/50 leading-relaxed">
+                <p className="text-xs text-gray-600 dark:text-gray-300 leading-relaxed">
                   <span className="font-black text-primary">Fun fact — </span>{question.funFact}
                 </p>
               </div>
             )}
 
+            {/* Next button */}
             <motion.button whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.98 }} onClick={onNext}
               className="w-full flex items-center justify-center gap-2 bg-gray-900 dark:bg-white text-white dark:text-gray-900 font-black py-3 rounded-xl text-sm transition-colors hover:bg-gray-700 dark:hover:bg-white/90">
               {questionIndex + 1 < total
@@ -310,10 +324,10 @@ const ResultScreen = ({ score, answers, questions: qs, onRestart }: {
   const pct     = Math.round((correct / total) * 100);
 
   const grade =
-    pct >= 90 ? { emoji: "🐠", label: "Master Diver",     desc: "Outstanding! You know Pramuka Island like a seasoned marine archaeologist.",   color: "text-primary border-primary/30 bg-primary/5" } :
-    pct >= 70 ? { emoji: "🐟", label: "Advanced Diver",   desc: "Impressive! A few more dives and you'll master every corner of these wrecks.", color: "text-emerald-600 dark:text-emerald-400 border-emerald-300 dark:border-emerald-500/30 bg-emerald-50 dark:bg-emerald-500/10" } :
-    pct >= 50 ? { emoji: "🌊", label: "Open Water Diver", desc: "Good start! Keep exploring the storymap to deepen your knowledge.",            color: "text-amber-600 dark:text-amber-400 border-amber-300 dark:border-amber-500/30 bg-amber-50 dark:bg-amber-500/10" } :
-                { emoji: "🏊", label: "Surface Swimmer",  desc: "Every expert was once a beginner. Dive back into the storymap and try again!", color: "text-red-600 dark:text-red-400 border-red-300 dark:border-red-500/30 bg-red-50 dark:bg-red-500/10" };
+    pct >= 90 ? { emoji: "🐠", label: "Master Diver",     desc: "Outstanding! You know Pramuka Island like a seasoned marine archaeologist.",    color: "text-primary border-primary/30 dark:border-primary/40 bg-primary/5 dark:bg-primary/10" } :
+    pct >= 70 ? { emoji: "🐟", label: "Advanced Diver",   desc: "Impressive! A few more dives and you'll master every corner of these wrecks.",  color: "text-emerald-700 dark:text-emerald-300 border-emerald-300 dark:border-emerald-500/40 bg-emerald-50 dark:bg-emerald-500/15" } :
+    pct >= 50 ? { emoji: "🌊", label: "Open Water Diver", desc: "Good start! Keep exploring the storymap to deepen your knowledge.",             color: "text-amber-700 dark:text-amber-300 border-amber-300 dark:border-amber-500/40 bg-amber-50 dark:bg-amber-500/15" } :
+                { emoji: "🏊", label: "Surface Swimmer",  desc: "Every expert was once a beginner. Dive back into the storymap and try again!",  color: "text-red-700 dark:text-red-300 border-red-300 dark:border-red-500/40 bg-red-50 dark:bg-red-500/15" };
 
   const byCategory = Object.keys(catMeta).map(cat => {
     const catQs  = qs.filter(q => q.category === cat);
@@ -331,7 +345,7 @@ const ResultScreen = ({ score, answers, questions: qs, onRestart }: {
         <div>
           <p className="text-xs font-black uppercase tracking-widest opacity-70 mb-0.5">Your rank</p>
           <p className="text-xl font-black leading-tight">{grade.label}</p>
-          <p className="text-xs opacity-70 leading-relaxed mt-1">{grade.desc}</p>
+          <p className="text-xs opacity-80 leading-relaxed mt-1">{grade.desc}</p>
         </div>
       </div>
 
@@ -345,14 +359,14 @@ const ResultScreen = ({ score, answers, questions: qs, onRestart }: {
           <div key={l} className="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10">
             {icon}
             <span className="text-lg font-black text-gray-900 dark:text-white">{v}</span>
-            <span className="text-[10px] font-bold text-gray-400 dark:text-white/30 uppercase tracking-widest">{l}</span>
+            <span className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">{l}</span>
           </div>
         ))}
       </div>
 
       {/* Category bars */}
       <div className="space-y-2.5">
-        <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-white/30">By Category</p>
+        <p className="text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-gray-400 mb-1">By Category</p>
         {byCategory.map(({ cat, total: t, correct: c }) => {
           const cfg = catMeta[cat as keyof typeof catMeta];
           const p   = t > 0 ? Math.round((c / t) * 100) : 0;
@@ -366,7 +380,7 @@ const ResultScreen = ({ score, answers, questions: qs, onRestart }: {
                   transition={{ duration: 0.7, ease: "easeOut", delay: 0.2 }}
                   className={`h-full rounded-full ${cfg.bar}`} />
               </div>
-              <span className="text-xs font-black text-gray-500 dark:text-white/50 w-8 text-right">{c}/{t}</span>
+              <span className="text-xs font-black text-gray-600 dark:text-gray-300 w-8 text-right">{c}/{t}</span>
             </div>
           );
         })}
@@ -374,27 +388,27 @@ const ResultScreen = ({ score, answers, questions: qs, onRestart }: {
 
       {/* Answer review */}
       <div className="space-y-2">
-        <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-white/30">Answer Review</p>
+        <p className="text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-gray-400">Answer Review</p>
         <div className="space-y-1.5 max-h-52 overflow-y-auto pr-1" style={{ scrollbarWidth: "thin" }}>
           {answers.map((ans) => {
             const q = qs.find(q => q.id === ans.questionId)!;
             return (
               <div key={ans.questionId} className={`flex items-start gap-2.5 p-3 rounded-xl text-sm border ${
                 ans.correct
-                  ? "bg-emerald-50 dark:bg-emerald-500/8 border-emerald-200 dark:border-emerald-500/20"
-                  : "bg-red-50 dark:bg-red-500/8 border-red-200 dark:border-red-500/20"
+                  ? "bg-emerald-50 dark:bg-emerald-500/10 border-emerald-200 dark:border-emerald-500/25"
+                  : "bg-red-50 dark:bg-red-500/10 border-red-200 dark:border-red-500/25"
               }`}>
                 {ans.correct
                   ? <CheckCircle size={13} className="text-emerald-500 flex-shrink-0 mt-0.5" />
                   : <XCircle size={13} className="text-red-500 flex-shrink-0 mt-0.5" />
                 }
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs font-semibold text-gray-700 dark:text-white/70 line-clamp-1">{q.question}</p>
+                  <p className="text-xs font-semibold text-gray-700 dark:text-gray-200 line-clamp-1">{q.question}</p>
                   {!ans.correct && (
                     <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-bold mt-0.5">✓ {q.options[q.correct]}</p>
                   )}
                 </div>
-                <span className="text-[10px] text-gray-400 dark:text-white/25 flex-shrink-0">{ans.timeLeft}s</span>
+                <span className="text-[10px] text-gray-400 dark:text-gray-500 flex-shrink-0">{ans.timeLeft}s</span>
               </div>
             );
           })}
@@ -483,20 +497,18 @@ const MarineQuiz: React.FC = () => {
 
         {/* Page title */}
         <div className="mb-6">
-          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 dark:text-white/30 mb-1">OMG-DIVE · Interactive</p>
+          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500 mb-1">
+            OMG-DIVE · Interactive
+          </p>
           <h1 className="text-2xl lg:text-3xl font-black tracking-tighter text-gray-900 dark:text-white">
             Marine <span className="text-primary">Knowledge</span> Quiz
           </h1>
         </div>
 
-        {/* ── Responsive layout ──
-            mobile / tablet / split-screen : single column (main card full width)
-            wide desktop (≥1280px)          : two columns (main + sidebar)
-        */}
         <div className="flex flex-col xl:flex-row gap-5 items-start">
 
-          {/* ── Main card — always full width below xl ── */}
-          <div className="w-full xl:flex-1 xl:min-w-0 rounded-2xl bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-white/10 shadow-lg dark:shadow-none overflow-hidden">
+          {/* Main card */}
+          <div className="w-full xl:flex-1 xl:min-w-0 rounded-2xl bg-white dark:bg-white/[0.04] border border-gray-200 dark:border-white/10 shadow-lg dark:shadow-none overflow-hidden">
             <div className="p-5 lg:p-7">
               <AnimatePresence mode="wait">
                 {phase === "intro" && (
@@ -520,33 +532,30 @@ const MarineQuiz: React.FC = () => {
             </div>
           </div>
 
-          {/* ── Sidebar — only rendered at xl (≥1280px) ── */}
+          {/* Sidebar — xl only */}
           <div className="hidden xl:flex flex-col gap-4 w-52 flex-shrink-0 sticky top-28">
-
-            {/* Scoring */}
-            <div className="rounded-2xl bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-white/10 p-4 shadow-sm dark:shadow-none">
-              <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-white/30 mb-3">Scoring</p>
+            <div className="rounded-2xl bg-white dark:bg-white/[0.04] border border-gray-200 dark:border-white/10 p-4 shadow-sm dark:shadow-none">
+              <p className="text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-gray-400 mb-3">Scoring</p>
               <div className="space-y-2">
                 {[
                   { l: "Correct answer", v: "100 pts"    },
                   { l: "Time bonus",     v: "+5 pts/sec" },
-                  { l: "Max per Q",      v: "200 pts", accent: true },
+                  { l: "Max per Q",      v: "200 pts",   accent: true },
                 ].map(({ l, v, accent }) => (
                   <div key={l} className="flex justify-between items-center text-xs">
-                    <span className="text-gray-500 dark:text-white/40">{l}</span>
+                    <span className="text-gray-500 dark:text-gray-400">{l}</span>
                     <span className={`font-black ${accent ? "text-primary" : "text-gray-800 dark:text-white"}`}>{v}</span>
                   </div>
                 ))}
               </div>
             </div>
 
-            {/* Difficulty */}
-            <div className="rounded-2xl bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-white/10 p-4 shadow-sm dark:shadow-none">
-              <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-white/30 mb-3">Difficulty</p>
+            <div className="rounded-2xl bg-white dark:bg-white/[0.04] border border-gray-200 dark:border-white/10 p-4 shadow-sm dark:shadow-none">
+              <p className="text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-gray-400 mb-3">Difficulty</p>
               <div className="space-y-2">
                 {Object.entries(diffMeta).map(([key, cfg]) => (
                   <div key={key} className="flex items-center justify-between">
-                    <span className="text-xs text-gray-600 dark:text-white/50 capitalize">{key}</span>
+                    <span className="text-xs text-gray-600 dark:text-gray-300 capitalize">{key}</span>
                     <div className="flex gap-0.5">
                       {[1,2,3].map(i => (
                         <Star key={i} size={9} className={i <= cfg.stars ? `${cfg.color} fill-current` : "text-gray-200 dark:text-white/15"} />
@@ -556,9 +565,8 @@ const MarineQuiz: React.FC = () => {
                 ))}
               </div>
             </div>
-
-           
           </div>
+
         </div>
       </div>
     </section>
