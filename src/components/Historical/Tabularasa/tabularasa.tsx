@@ -592,10 +592,13 @@ const DiveEnvironmentProfile = () => {
           <div className="flex gap-2 flex-wrap">
             {seasonData.map((s) => (
               <button key={s.key} onClick={() => setActiveSeason(s.key)}
-                className={`px-3 md:px-4 py-1.5 rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5 ${activeSeason === s.key ? "bg-white text-gray-900 shadow-md" : "bg-white/15 text-white hover:bg-white/25 border border-white/20"}`}>
+                className={`px-3 md:px-4 py-1.5 rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5 ${
+                  activeSeason === s.key
+                    ? "bg-white text-gray-900 shadow-md"
+                    : "bg-white/15 text-white hover:bg-white/25 border border-white/20"
+                }`}>
                 {s.icon}
-                <span className="hidden sm:inline">{s.label}</span>
-                <span className="sm:hidden">{s.period.split(" ")[0]}</span>
+                <span>{s.label}</span>
               </button>
             ))}
           </div>
