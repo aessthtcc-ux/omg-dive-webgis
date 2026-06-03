@@ -39,10 +39,11 @@ const AutoFitBounds = ({ geoData }: { geoData: Record<string, any> }) => {
 };
 
 // ---------------------------------------------------------------------------
-// GeoTIFFLayer — tooltip style premium glassmorphism
+// GeoTIFFLayer — floating tooltip untuk SEMUA device (desktop + mobile)
 // ---------------------------------------------------------------------------
-const GeoTIFFLayer = ({ url, isVisible, title }: {
+const GeoTIFFLayer = ({ url, elevUrl, isVisible, title }: {
   url: string;
+  elevUrl?: string;
   isVisible: boolean;
   title: string;
 }) => {
@@ -50,31 +51,30 @@ const GeoTIFFLayer = ({ url, isVisible, title }: {
   const map          = useMapLeaflet();
   const layerRef     = useRef<any>(null);
   const georasterRef = useRef<any>(null);
+  const elevRef      = useRef<any>(null);
   const tooltipRef   = useRef<HTMLDivElement | null>(null);
 
-  // ── Inject CSS animation sekali ──────────────────────────────────────────
+  // Inject CSS animation sekali
   useEffect(() => {
-    if (document.getElementById('dem-tooltip-style')) return;
-    const style = document.createElement('style');
-    style.id = 'dem-tooltip-style';
-    style.textContent = `
-      @keyframes dem-fadein {
-        from { opacity: 0; transform: scale(0.92) translateY(4px); }
-        to   { opacity: 1; transform: scale(1)    translateY(0); }
+    if (document.getElementById('dem-tip-css')) return;
+    const s = document.createElement('style');
+    s.id = 'dem-tip-css';
+    s.textContent = `
+      @keyframes dem-in {
+        from { opacity:0; transform:scale(0.93) translateY(4px); }
+        to   { opacity:1; transform:scale(1)    translateY(0); }
       }
-      @keyframes dem-pulse-dot {
-        0%, 100% { opacity: 1; transform: scale(1); }
-        50%       { opacity: 0.5; transform: scale(1.4); }
+      @keyframes dem-dot {
+        0%,100% { opacity:1; transform:scale(1); }
+        50%      { opacity:0.35; transform:scale(1.6); }
       }
-      .dem-tooltip-enter {
-        animation: dem-fadein 0.15s cubic-bezier(0.21,0.47,0.32,0.98) forwards;
-      }
-      .dem-pulse { animation: dem-pulse-dot 1.4s ease-in-out infinite; }
+      .dem-in  { animation: dem-in  0.14s cubic-bezier(.21,.47,.32,.98) both; }
+      .dem-dot { animation: dem-dot 1.6s ease-in-out infinite; }
     `;
-    document.head.appendChild(style);
+    document.head.appendChild(s);
   }, []);
 
-  // ── Buat tooltip DOM element ─────────────────────────────────────────────
+  // Tooltip element — selalu melayang, pointer-events none
   useEffect(() => {
     const div = document.createElement("div");
     div.style.cssText = `
@@ -82,7 +82,7 @@ const GeoTIFFLayer = ({ url, isVisible, title }: {
       pointer-events: none;
       z-index: 99999;
       display: none;
-      width: 200px;
+      width: 196px;
     `;
     document.body.appendChild(div);
     tooltipRef.current = div;
@@ -96,12 +96,12 @@ const GeoTIFFLayer = ({ url, isVisible, title }: {
         map.removeLayer(layerRef.current);
         layerRef.current = null;
         georasterRef.current = null;
+        elevRef.current = null;
       }
       if (tooltipRef.current) tooltipRef.current.style.display = "none";
       return;
     }
-    if (!map) return;
-    if (layerRef.current) return;
+    if (!map || layerRef.current) return;
 
     let isMounted = true;
 
@@ -120,24 +120,30 @@ const GeoTIFFLayer = ({ url, isVisible, title }: {
         const gr = await parseGeoraster(buf);
         georasterRef.current = gr;
 
-        const mn    = gr.mins[0];
-        const mx    = gr.maxs[0];
-        const range = (mx - mn) || 1;
+        if (elevUrl) {
+          try {
+            const resE = await fetch(elevUrl);
+            if (resE.ok) {
+              const bufE = await resE.arrayBuffer();
+              if (isMounted) elevRef.current = await parseGeoraster(bufE);
+            } else {
+              console.warn(`Elevation file not found: ${elevUrl}`);
+            }
+          } catch { console.warn(`Could not load: ${elevUrl}`); }
+        }
 
         const layer = new GeoRasterLayer({
-          georaster: gr,
-          opacity: 0.9,
-          resolution: 256,
+          georaster: gr, opacity: 0.9, resolution: 256,
           pixelValuesToColorFn: (v: any) => {
             if (v[0] === gr.noDataValue || v[0] === undefined || isNaN(v[0]) || v[0] === 0) return null;
-            if (v.length >= 3)
-              return `rgb(${Math.round(v[0])},${Math.round(v[1])},${Math.round(v[2])})`;
+            if (v.length >= 3) return `rgb(${Math.round(v[0])},${Math.round(v[1])},${Math.round(v[2])})`;
+            const mn = gr.mins[0], mx = gr.maxs[0], range = (mx - mn) || 1;
             const p = Math.max(0, Math.min(1, (v[0] - mn) / range));
-            let r = 0, g = 0, b = 0;
-            if      (p < .25) { r = 0;                        g = Math.round(4*p*255);           b = 255; }
-            else if (p < .5)  { r = 0;                        g = 255;                           b = Math.round(255-4*(p-.25)*255); }
-            else if (p < .75) { r = Math.round(4*(p-.5)*255); g = 255;                           b = 0; }
-            else               { r = 255;                      g = Math.round(255-4*(p-.75)*255); b = 0; }
+            let r=0,g=0,b=0;
+            if      (p<.25){r=0;g=Math.round(4*p*255);b=255;}
+            else if (p<.5) {r=0;g=255;b=Math.round(255-4*(p-.25)*255);}
+            else if (p<.75){r=Math.round(4*(p-.5)*255);g=255;b=0;}
+            else            {r=255;g=Math.round(255-4*(p-.75)*255);b=0;}
             return `rgba(${r},${g},${b},0.9)`;
           },
         });
@@ -145,358 +151,196 @@ const GeoTIFFLayer = ({ url, isVisible, title }: {
         if (isMounted) {
           layer.addTo(map);
           layerRef.current = layer;
-          const bounds = layer.getBounds();
-          if (bounds?.isValid()) map.fitBounds(bounds, { padding: [50, 50], maxZoom: 20 });
+          const b = layer.getBounds();
+          if (b?.isValid()) map.fitBounds(b, { padding:[50,50], maxZoom:20 });
         }
 
-        // ── Build tooltip HTML ──────────────────────────────────────────
+        // Accent color berdasarkan kedalaman
+        const accentFor = (z: number | null) =>
+          !z || z >= 0 ? { fg:"#34d399", glow:"rgba(52,211,153,0.35)",  bg:"rgba(52,211,153,0.08)"  } :
+          z > -5       ? { fg:"#67e8f9", glow:"rgba(103,232,249,0.35)", bg:"rgba(103,232,249,0.08)" } :
+          z > -15      ? { fg:"#60a5fa", glow:"rgba(96,165,250,0.35)",  bg:"rgba(96,165,250,0.08)"  } :
+          z > -30      ? { fg:"#818cf8", glow:"rgba(129,140,248,0.35)", bg:"rgba(129,140,248,0.08)" } :
+                         { fg:"#a78bfa", glow:"rgba(167,139,250,0.35)", bg:"rgba(167,139,250,0.08)" };
+
+        // ── Build HTML tooltip — sama persis untuk desktop & mobile ──────
         const buildHTML = (
           lat: number, lng: number,
-          zValue: number,
+          zValue: number | null,
           rVal: number, gVal: number, bVal: number
         ) => {
-          const isDepth  = zValue < 0;
-          const zLabel   = isDepth ? "DEPTH" : "ELEVATION";
-          const zAbs     = Math.abs(zValue).toFixed(3);
-          const zUnit    = "m";
-          // Warna accent berdasarkan kedalaman
-          const accent   = isDepth
-            ? zValue > -5   ? "#67e8f9"   // sangat dangkal → cyan
-            : zValue > -15  ? "#60a5fa"   // sedang → biru
-            : zValue > -30  ? "#818cf8"   // dalam → indigo
-            :                 "#a78bfa"   // sangat dalam → ungu
-            : "#34d399"; // elevasi → hijau
-
-          const accentDim = isDepth
-            ? zValue > -5   ? "rgba(103,232,249,0.12)"
-            : zValue > -15  ? "rgba(96,165,250,0.12)"
-            : zValue > -30  ? "rgba(129,140,248,0.12)"
-            :                 "rgba(167,139,250,0.12)"
-            : "rgba(52,211,153,0.12)";
-
-          // Depth bar — visualisasi seberapa dalam
-          const maxDepth = 50;
-          const depthPct = isDepth ? Math.min(100, (Math.abs(zValue) / maxDepth) * 100) : 0;
+          const ac   = accentFor(zValue);
+          const hasZ = zValue !== null;
+          const isD  = hasZ && zValue! < 0;
+          const zAbs = hasZ ? Math.abs(zValue!).toFixed(3) : null;
+          const maxD = 50;
+          const barW = isD ? Math.min(100, (Math.abs(zValue!)/maxD)*100) : 0;
 
           return `
-            <div class="dem-tooltip-enter" style="
-              background: linear-gradient(135deg, rgba(8,15,30,0.97) 0%, rgba(15,25,50,0.97) 100%);
-              border: 1px solid rgba(255,255,255,0.1);
-              border-radius: 16px;
+            <div class="dem-in" style="
+              background: linear-gradient(145deg,rgba(6,12,28,0.97),rgba(12,22,48,0.97));
+              border: 1px solid rgba(255,255,255,0.09);
+              border-radius: 14px;
               overflow: hidden;
-              box-shadow:
-                0 20px 40px rgba(0,0,0,0.5),
-                0 0 0 1px rgba(255,255,255,0.05),
-                inset 0 1px 0 rgba(255,255,255,0.08);
-              font-family: ui-sans-serif, system-ui, sans-serif;
+              box-shadow: 0 16px 40px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.07);
+              font-family: ui-sans-serif,system-ui,sans-serif;
             ">
-
-              <!-- Header bar dengan warna accent -->
-              <div style="
-                background: linear-gradient(90deg, ${accentDim}, transparent);
-                border-bottom: 1px solid rgba(255,255,255,0.06);
-                padding: 8px 12px;
-                display: flex;
-                align-items: center;
-                gap: 7px;
-              ">
-                <div class="dem-pulse" style="
-                  width: 6px; height: 6px; border-radius: 50%;
-                  background: ${accent};
-                  box-shadow: 0 0 8px ${accent};
-                  flex-shrink: 0;
-                "></div>
-                <span style="
-                  color: rgba(255,255,255,0.5);
-                  font-size: 9px;
-                  font-weight: 800;
-                  letter-spacing: 0.12em;
-                  text-transform: uppercase;
-                  flex: 1;
-                  overflow: hidden;
-                  text-overflow: ellipsis;
-                  white-space: nowrap;
-                ">${title}</span>
+              <!-- header -->
+              <div style="background:${ac.bg};border-bottom:1px solid rgba(255,255,255,0.06);padding:7px 11px;display:flex;align-items:center;gap:6px;">
+                <div class="dem-dot" style="width:5px;height:5px;border-radius:50%;flex-shrink:0;background:${ac.fg};box-shadow:0 0 7px ${ac.glow};"></div>
+                <span style="color:rgba(255,255,255,0.45);font-size:8.5px;font-weight:800;letter-spacing:0.12em;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;">${title}</span>
               </div>
-
-              <!-- Z Value section -->
-              <div style="padding: 10px 12px 8px;">
-
-                <!-- Label -->
-                <div style="
-                  color: rgba(255,255,255,0.3);
-                  font-size: 8px;
-                  font-weight: 800;
-                  letter-spacing: 0.15em;
-                  text-transform: uppercase;
-                  margin-bottom: 3px;
-                ">${zLabel}</div>
-
-                <!-- Value display -->
-                <div style="
-                  display: flex;
-                  align-items: baseline;
-                  gap: 4px;
-                  margin-bottom: 8px;
-                ">
-                  ${isDepth ? `<span style="color: rgba(255,255,255,0.25); font-size: 18px; font-weight: 300; line-height:1;">−</span>` : ''}
-                  <span style="
-                    color: ${accent};
-                    font-size: 26px;
-                    font-weight: 900;
-                    letter-spacing: -0.04em;
-                    line-height: 1;
-                    font-variant-numeric: tabular-nums;
-                    text-shadow: 0 0 20px ${accent}60;
-                  ">${zAbs}</span>
-                  <span style="
-                    color: rgba(255,255,255,0.3);
-                    font-size: 11px;
-                    font-weight: 600;
-                    margin-bottom: 2px;
-                  ">${zUnit}</span>
+              <!-- body -->
+              <div style="padding:10px 11px 9px;">
+                <!-- Z label -->
+                <div style="color:rgba(255,255,255,0.25);font-size:7.5px;font-weight:800;letter-spacing:0.14em;text-transform:uppercase;margin-bottom:2px;">
+                  ${hasZ ? (isD ? "DEPTH" : "ELEVATION") : "Z VALUE"}
                 </div>
-
-                <!-- Depth bar (hanya untuk kedalaman) -->
-                ${isDepth ? `
-                  <div style="margin-bottom: 10px;">
-                    <div style="
-                      width: 100%;
-                      height: 3px;
-                      background: rgba(255,255,255,0.06);
-                      border-radius: 99px;
-                      overflow: hidden;
-                    ">
-                      <div style="
-                        width: ${depthPct}%;
-                        height: 100%;
-                        background: linear-gradient(90deg, ${accent}40, ${accent});
-                        border-radius: 99px;
-                        transition: width 0.3s ease;
-                      "></div>
+                <!-- Z value -->
+                <div style="display:flex;align-items:baseline;gap:3px;margin-bottom:${isD?'7px':'10px'};">
+                  ${isD?`<span style="color:rgba(255,255,255,0.2);font-size:17px;font-weight:300;line-height:1;">−</span>`:''}
+                  <span style="color:${hasZ?ac.fg:'rgba(255,255,255,0.25)'};font-size:${hasZ?'24px':'12px'};font-weight:900;letter-spacing:-0.04em;line-height:1;font-variant-numeric:tabular-nums;text-shadow:0 0 16px ${ac.glow};">
+                    ${hasZ ? zAbs : 'N/A'}
+                  </span>
+                  ${hasZ?`<span style="color:rgba(255,255,255,0.25);font-size:10px;font-weight:600;margin-bottom:2px;">m</span>`:''}
+                </div>
+                <!-- depth bar -->
+                ${isD ? `
+                  <div style="margin-bottom:9px;">
+                    <div style="width:100%;height:2.5px;background:rgba(255,255,255,0.06);border-radius:99px;overflow:hidden;">
+                      <div style="width:${barW}%;height:100%;background:linear-gradient(90deg,${ac.fg}30,${ac.fg});border-radius:99px;"></div>
                     </div>
-                    <div style="
-                      display: flex;
-                      justify-content: space-between;
-                      margin-top: 3px;
-                    ">
-                      <span style="color: rgba(255,255,255,0.2); font-size: 7px; font-weight: 700;">0 m</span>
-                      <span style="color: rgba(255,255,255,0.2); font-size: 7px; font-weight: 700;">${maxDepth} m</span>
+                    <div style="display:flex;justify-content:space-between;margin-top:2.5px;">
+                      <span style="color:rgba(255,255,255,0.15);font-size:6.5px;font-weight:700;">0 m</span>
+                      <span style="color:rgba(255,255,255,0.15);font-size:6.5px;font-weight:700;">${maxD} m</span>
                     </div>
                   </div>
-                ` : '<div style="margin-bottom:6px;"></div>'}
-
-                <!-- Divider -->
-                <div style="
-                  height: 1px;
-                  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent);
-                  margin-bottom: 8px;
-                "></div>
-
-                <!-- RGB row -->
-                <div style="
-                  display: flex;
-                  align-items: center;
-                  gap: 8px;
-                  margin-bottom: 7px;
-                ">
-                  <!-- Color swatch dengan glow -->
-                  <div style="
-                    width: 22px; height: 22px;
-                    border-radius: 7px;
-                    background: rgb(${rVal},${gVal},${bVal});
-                    border: 1px solid rgba(255,255,255,0.15);
-                    box-shadow:
-                      0 0 10px rgba(${rVal},${gVal},${bVal},0.6),
-                      0 2px 8px rgba(0,0,0,0.3);
-                    flex-shrink: 0;
-                  "></div>
+                ` : ''}
+                <!-- divider -->
+                <div style="height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.07),transparent);margin-bottom:8px;"></div>
+                <!-- RGB swatch -->
+                <div style="display:flex;align-items:center;gap:7px;margin-bottom:7px;">
+                  <div style="width:20px;height:20px;border-radius:6px;flex-shrink:0;background:rgb(${rVal},${gVal},${bVal});border:1px solid rgba(255,255,255,0.15);box-shadow:0 0 9px rgba(${rVal},${gVal},${bVal},0.55);"></div>
                   <div>
-                    <div style="color: rgba(255,255,255,0.2); font-size: 7px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 1px;">Pixel Color</div>
-                    <div style="
-                      color: rgba(255,255,255,0.45);
-                      font-size: 9px;
-                      font-weight: 700;
-                      font-family: ui-monospace, monospace;
-                      letter-spacing: 0.02em;
-                    ">rgb(${rVal}, ${gVal}, ${bVal})</div>
+                    <div style="color:rgba(255,255,255,0.18);font-size:6.5px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;">Pixel Color</div>
+                    <div style="color:rgba(255,255,255,0.4);font-size:8.5px;font-weight:700;font-family:ui-monospace,monospace;">rgb(${rVal},&thinsp;${gVal},&thinsp;${bVal})</div>
                   </div>
                 </div>
-
-                <!-- Coordinates -->
-                <div style="
-                  background: rgba(255,255,255,0.04);
-                  border: 1px solid rgba(255,255,255,0.06);
-                  border-radius: 8px;
-                  padding: 5px 8px;
-                  display: flex;
-                  align-items: center;
-                  gap: 5px;
-                ">
-                  <span style="color: rgba(255,255,255,0.2); font-size: 8px;">📍</span>
-                  <span style="
-                    color: rgba(255,255,255,0.3);
-                    font-size: 8px;
-                    font-family: ui-monospace, monospace;
-                    font-weight: 600;
-                    letter-spacing: 0.02em;
-                  ">${lat.toFixed(5)}°, ${lng.toFixed(5)}°</span>
+                <!-- coords pill -->
+                <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.06);border-radius:7px;padding:4px 7px;display:flex;align-items:center;gap:4px;">
+                  <span style="color:rgba(255,255,255,0.18);font-size:7px;">📍</span>
+                  <span style="color:rgba(255,255,255,0.28);font-size:7.5px;font-family:ui-monospace,monospace;font-weight:600;">${lat.toFixed(5)}°,&thinsp;${lng.toFixed(5)}°</span>
                 </div>
-
               </div>
             </div>
           `;
         };
 
-        // ── Mouse events ────────────────────────────────────────────────
-        const onMouseMove = (e: L.LeafletMouseEvent) => {
-          const gr      = georasterRef.current;
-          const tooltip = tooltipRef.current;
-          if (!gr || !tooltip || !layerRef.current) return;
-
-          const { lat, lng } = e.latlng;
-
-          const bounds = layerRef.current.getBounds?.();
-          if (bounds && !bounds.contains([lat, lng])) {
-            tooltip.style.display = "none";
-            return;
-          }
-
-          const xIndex = Math.floor((lng - gr.xmin) / gr.pixelWidth);
-          const yIndex = Math.floor((gr.ymax - lat)  / gr.pixelHeight);
-
-          if (xIndex < 0 || yIndex < 0 || xIndex >= gr.width || yIndex >= gr.height) {
-            tooltip.style.display = "none";
-            return;
-          }
-
-          try {
-            const zValue: number = gr.values[0]?.[yIndex]?.[xIndex];
-            const isNoData =
-              zValue === gr.noDataValue || zValue === undefined ||
-              isNaN(zValue) || zValue === 0;
-            if (isNoData) { tooltip.style.display = "none"; return; }
-
-            const rVal = Math.round(gr.values[0]?.[yIndex]?.[xIndex] ?? 0);
-            const gVal = Math.round(gr.values[1]?.[yIndex]?.[xIndex] ?? 0);
-            const bVal = Math.round(gr.values[2]?.[yIndex]?.[xIndex] ?? 0);
-
-            tooltip.innerHTML = buildHTML(lat, lng, zValue, rVal, gVal, bVal);
-            tooltip.style.display = "block";
-
-            // Smart positioning
-            const cx = e.originalEvent.clientX;
-            const cy = e.originalEvent.clientY;
-            const tw = 210;
-            const th = 230;
-            const vw = window.innerWidth;
-            const vh = window.innerHeight;
-            tooltip.style.left = (cx + 18 + tw > vw ? cx - tw - 10 : cx + 18) + "px";
-            tooltip.style.top  = (cy + th      > vh ? cy - th - 10 : cy + 0)   + "px";
-
-          } catch { tooltip.style.display = "none"; }
+        // ── Helper: baca pixel ──────────────────────────────────────────
+        const readPixel = (graster: any, lat: number, lng: number) => {
+          const xIdx = Math.floor((lng - graster.xmin) / graster.pixelWidth);
+          const yIdx = Math.floor((graster.ymax - lat)  / graster.pixelHeight);
+          if (xIdx<0||yIdx<0||xIdx>=graster.width||yIdx>=graster.height) return null;
+          return { xIdx, yIdx };
         };
 
+        // ── Helper: proses koordinat & tampilkan tooltip melayang ────────
+        const processAndShow = (lat: number, lng: number, clientX: number, clientY: number) => {
+          const grRGB  = georasterRef.current;
+          const grElev = elevRef.current;
+          const tip    = tooltipRef.current;
+          if (!grRGB || !tip || !layerRef.current) return;
+
+          const bounds = layerRef.current.getBounds?.();
+          if (bounds && !bounds.contains([lat, lng])) { tip.style.display="none"; return; }
+
+          const rgbPx = readPixel(grRGB, lat, lng);
+          if (!rgbPx) { tip.style.display="none"; return; }
+
+          const rVal = Math.round(grRGB.values[0]?.[rgbPx.yIdx]?.[rgbPx.xIdx] ?? 0);
+          const gVal = Math.round(grRGB.values[1]?.[rgbPx.yIdx]?.[rgbPx.xIdx] ?? 0);
+          const bVal = Math.round(grRGB.values[2]?.[rgbPx.yIdx]?.[rgbPx.xIdx] ?? 0);
+          if (rVal===0 && gVal===0 && bVal===0) { tip.style.display="none"; return; }
+
+          // Baca Z dari elevation file kalau ada
+          let zValue: number | null = null;
+          if (grElev) {
+            const elevPx = readPixel(grElev, lat, lng);
+            if (elevPx) {
+              const raw = grElev.values[0]?.[elevPx.yIdx]?.[elevPx.xIdx];
+              if (raw !== undefined && raw !== grElev.noDataValue && !isNaN(raw) && raw !== 0)
+                zValue = raw;
+            }
+          }
+
+          tip.innerHTML = buildHTML(lat, lng, zValue, rVal, gVal, bVal);
+          tip.style.display = "block";
+
+          // ✅ Smart positioning — melayang di dekat kursor/tap
+          const tw = 204, th = 230;
+          const vw = window.innerWidth, vh = window.innerHeight;
+          tip.style.left = (clientX + 18 + tw > vw ? clientX - tw - 10 : clientX + 18) + "px";
+          tip.style.top  = (clientY + th      > vh ? clientY - th - 10 : clientY + 2)  + "px";
+        };
+
+        // ── DESKTOP: ikut kursor ─────────────────────────────────────────
+        const onMouseMove = (e: L.LeafletMouseEvent) => {
+          processAndShow(e.latlng.lat, e.latlng.lng, e.originalEvent.clientX, e.originalEvent.clientY);
+        };
         const onMouseOut = () => {
           if (tooltipRef.current) tooltipRef.current.style.display = "none";
         };
 
-        if (isMounted) {
-          map.on("mousemove", onMouseMove);
-          map.on("mouseout",  onMouseOut);
-          layerRef.current._cleanupEvents = () => {
-            map.off("mousemove", onMouseMove);
-            map.off("mouseout",  onMouseOut);
-          };
-        }
+        // ── MOBILE/TABLET: tap → melayang di dekat titik tap ────────────
+        // Toggle: tap pertama = tampil, tap lagi = hilang
+        // Auto-hide setelah 4 detik
+        let hideTimer: ReturnType<typeof setTimeout> | null = null;
 
-        // ── Touch / tap → bottom sheet ──────────────────────────────────
         const onTap = (e: L.LeafletMouseEvent) => {
-          const gr      = georasterRef.current;
-          const tooltip = tooltipRef.current;
-          if (!gr || !tooltip) return;
+          if (hideTimer) clearTimeout(hideTimer);
+          const tip = tooltipRef.current;
+          if (!tip) return;
 
-          const { lat, lng } = e.latlng;
-          const xIndex = Math.floor((lng - gr.xmin) / gr.pixelWidth);
-          const yIndex = Math.floor((gr.ymax - lat)  / gr.pixelHeight);
-          if (xIndex < 0 || yIndex < 0 || xIndex >= gr.width || yIndex >= gr.height) return;
+          // Toggle off kalau sudah tampil
+          if (tip.style.display === "block") {
+            tip.style.display = "none";
+            return;
+          }
 
-          try {
-            const zValue: number = gr.values[0]?.[yIndex]?.[xIndex];
-            if (!zValue || isNaN(zValue) || zValue === gr.noDataValue) return;
+          processAndShow(
+            e.latlng.lat, e.latlng.lng,
+            e.originalEvent.clientX, e.originalEvent.clientY
+          );
 
-            const rVal = Math.round(gr.values[0]?.[yIndex]?.[xIndex] ?? 0);
-            const gVal = Math.round(gr.values[1]?.[yIndex]?.[xIndex] ?? 0);
-            const bVal = Math.round(gr.values[2]?.[yIndex]?.[xIndex] ?? 0);
-
-            // Bottom sheet style untuk mobile
-            tooltip.style.cssText = `
-              position: fixed;
-              pointer-events: auto;
-              z-index: 99999;
-              left: 0; right: 0; bottom: 0;
-              display: block;
-              padding: 0 12px 12px;
-              background: transparent;
-            `;
-
-            tooltip.innerHTML = `
-              <div style="
-                background: linear-gradient(135deg, rgba(8,15,30,0.98) 0%, rgba(15,25,50,0.98) 100%);
-                border: 1px solid rgba(255,255,255,0.1);
-                border-bottom: none;
-                border-radius: 24px 24px 0 0;
-                overflow: hidden;
-                box-shadow: 0 -12px 40px rgba(0,0,0,0.6);
-              ">
-                <!-- Drag handle -->
-                <div style="display:flex;justify-content:center;padding:12px 0 4px;">
-                  <div style="width:36px;height:4px;border-radius:99px;background:rgba(255,255,255,0.15);"></div>
-                </div>
-
-                <!-- Close button -->
-                <div style="position:absolute;top:12px;right:16px;">
-                  <button id="dem-close-btn" style="
-                    background: rgba(255,255,255,0.08);
-                    border: 1px solid rgba(255,255,255,0.1);
-                    color: rgba(255,255,255,0.5);
-                    width: 28px; height: 28px;
-                    border-radius: 50%;
-                    cursor: pointer;
-                    font-size: 16px;
-                    line-height: 1;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                  ">×</button>
-                </div>
-
-                ${buildHTML(lat, lng, zValue, rVal, gVal, bVal).replace('class="dem-tooltip-enter"', '').replace('border-radius: 16px;', '').replace('box-shadow:', 'box-shadow-disabled:')}
-              </div>
-            `;
-
-            setTimeout(() => {
-              document.getElementById('dem-close-btn')?.addEventListener('click', () => {
-                if (tooltipRef.current) tooltipRef.current.style.display = "none";
-              }, { once: true });
-            }, 50);
-
-          } catch { /* noop */ }
+          // Auto-hide setelah 4 detik
+          if (tip.style.display === "block") {
+            hideTimer = setTimeout(() => {
+              if (tooltipRef.current) tooltipRef.current.style.display = "none";
+            }, 4000);
+          }
         };
 
-        // Gunakan click untuk touch device
-        if (typeof window !== 'undefined' && ('ontouchstart' in window || navigator.maxTouchPoints > 0)) {
-          if (isMounted) {
-            map.off("mousemove", onMouseMove);
-            map.off("mouseout",  onMouseOut);
+        if (isMounted) {
+          const isTouch = typeof window !== 'undefined' &&
+            ('ontouchstart' in window || navigator.maxTouchPoints > 0);
+
+          if (isTouch) {
             map.on("click", onTap);
-            layerRef.current._cleanupEvents = () => { map.off("click", onTap); };
+            layerRef.current._cleanupEvents = () => {
+              map.off("click", onTap);
+              if (hideTimer) clearTimeout(hideTimer);
+            };
+          } else {
+            map.on("mousemove", onMouseMove);
+            map.on("mouseout",  onMouseOut);
+            layerRef.current._cleanupEvents = () => {
+              map.off("mousemove", onMouseMove);
+              map.off("mouseout",  onMouseOut);
+            };
           }
         }
 
-      } catch (e) {
-        console.error("GeoTIFF error:", e);
-      }
+      } catch(e) { console.error("GeoTIFF error:", e); }
     };
 
     load();
@@ -509,9 +353,10 @@ const GeoTIFFLayer = ({ url, isVisible, title }: {
         layerRef.current = null;
       }
       georasterRef.current = null;
+      elevRef.current = null;
       if (tooltipRef.current) tooltipRef.current.style.display = "none";
     };
-  }, [url, map, isVisible, title]);
+  }, [url, elevUrl, map, isVisible, title]);
 
   return null;
 };
@@ -546,12 +391,12 @@ const layerGroups = [
     groupId: "dem", title: "Digital Elevation Model",
     icon: <ImageIcon size={18} className="text-purple-500" />,
     subLayers: [
-      { id: "dem_tabularasa",      filePath: "/data/dem/DEM_Tabularasa_RGB_1m_WGS84.tif",                   title: "DEM Tabularasa Shipwreck", project: "Site 1", color: "#8b5cf6", dash: "0", isDummy: false, isRaster: true },
-      { id: "dem_poso",            filePath: "/data/dem/DEM_Poso_RGB_1m_WGS84.tif",                         title: "DEM Poso Shipwreck",       project: "Site 2", color: "#ec4899", dash: "0", isDummy: false, isRaster: true },
-      { id: "dem_perairandangkal", filePath: "/data/dem/DEM_PerairanDangkal_RGB_1m_WGS84.tif",              title: "DEM Perairan Dangkal",     project: "Site 3", color: "#06b6d4", dash: "0", isDummy: false, isRaster: true },
-      { id: "dem_pesisirpanggang", filePath: "/data/dem/DEM_PesisirPanggangRidge_RGB_1m_WGS84.tif",        title: "DEM Pesisir Panggang",     project: "Site 4", color: "#f97316", dash: "0", isDummy: false, isRaster: true },
-      { id: "dem_kanalpramuka",    filePath: "/data/dem/DEM_KanalPramuka_RGB_1m.tif",                       title: "DEM Kanal Pramuka",        project: "Site 5", color: "#22c55e", dash: "0", isDummy: false, isRaster: true },
-      { id: "dem_pesisirpramuka",  filePath: "/data/dem/DEM_PesisirPramuka_ProjectALB_RGB_0.5m_WGS84.tif", title: "DEM Pesisir Pramuka",      project: "Site 6", color: "#eab308", dash: "0", isDummy: false, isRaster: true },
+      { id: "dem_tabularasa",      filePath: "/data/dem/DEM_Tabularasa_RGB_1m_WGS84.tif",                   elevPath: "/data/dem/DEM_Tabularasa_elev_1m_WGS84.tif",            title: "DEM Tabularasa Shipwreck", project: "Site 1", color: "#8b5cf6", dash: "0", isDummy: false, isRaster: true },
+      { id: "dem_poso",            filePath: "/data/dem/DEM_Poso_RGB_1m_WGS84.tif",                         elevPath: "/data/dem/DEM_Poso_elev_1m_WGS84.tif",                  title: "DEM Poso Shipwreck",       project: "Site 2", color: "#ec4899", dash: "0", isDummy: false, isRaster: true },
+      { id: "dem_perairandangkal", filePath: "/data/dem/DEM_PerairanDangkal_RGB_1m_WGS84.tif",              elevPath: "/data/dem/DEM_PerairanDangkal_elev_1m_WGS84.tif",        title: "DEM Perairan Dangkal",     project: "Site 3", color: "#06b6d4", dash: "0", isDummy: false, isRaster: true },
+      { id: "dem_pesisirpanggang", filePath: "/data/dem/DEM_PesisirPanggangRidge_RGB_1m_WGS84.tif",        elevPath: "/data/dem/DEM_PesisirPanggang_elev_1m_WGS84.tif",        title: "DEM Pesisir Panggang",     project: "Site 4", color: "#f97316", dash: "0", isDummy: false, isRaster: true },
+      { id: "dem_kanalpramuka",    filePath: "/data/dem/DEM_KanalPramuka_RGB_1m.tif",                       elevPath: "/data/dem/DEM_KanalPramuka_elev_1m.tif",                 title: "DEM Kanal Pramuka",        project: "Site 5", color: "#22c55e", dash: "0", isDummy: false, isRaster: true },
+      { id: "dem_pesisirpramuka",  filePath: "/data/dem/DEM_PesisirPramuka_ProjectALB_RGB_0.5m_WGS84.tif", elevPath: "/data/dem/elev/DEM_PesisirPramuka_elev_0.5m_WGS84.tif", title: "DEM Pesisir Pramuka",      project: "Site 6", color: "#eab308", dash: "0", isDummy: false, isRaster: true },
     ]
   }
 ];
@@ -597,10 +442,7 @@ const Mapping2D = () => {
       // @ts-ignore
       const fetchable = layerGroups.flatMap(g => g.subLayers).filter(s => !s.isDummy && !s.isRaster);
       const results = await Promise.all(fetchable.map(async cfg => {
-        try {
-          const res = await fetch(cfg.filePath);
-          if (res.ok) return { id: cfg.id, data: await res.json() };
-        } catch {}
+        try { const res = await fetch(cfg.filePath); if (res.ok) return { id: cfg.id, data: await res.json() }; } catch {}
         return null;
       }));
       results.forEach(r => { if (r) dataMap[r.id] = r.data; });
@@ -627,15 +469,8 @@ const Mapping2D = () => {
     <section className="relative h-screen w-full overflow-hidden bg-slate-950 pt-24">
       <div className="absolute top-0 left-0 w-full h-24 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md z-[10] border-b border-gray-200 dark:border-white/5" />
       <style>{`
-        .permanent-label {
-          background-color: rgba(15,23,42,0.7);
-          border: 1px solid rgba(255,255,255,0.2);
-          color: white; font-weight: 700; font-size: 11px;
-          text-transform: uppercase; letter-spacing: 0.1em;
-          padding: 4px 8px; border-radius: 8px;
-          backdrop-filter: blur(4px);
-        }
-        .permanent-label::before { display: none; }
+        .permanent-label { background-color:rgba(15,23,42,0.7); border:1px solid rgba(255,255,255,0.2); color:white; font-weight:700; font-size:11px; text-transform:uppercase; letter-spacing:0.1em; padding:4px 8px; border-radius:8px; backdrop-filter:blur(4px); }
+        .permanent-label::before { display:none; }
       `}</style>
 
       <div className="absolute top-24 bottom-0 left-0 right-0 z-0">
@@ -651,22 +486,12 @@ const Mapping2D = () => {
             if (!activeSubLayers[config.id] || !data?.type || config.isDummy) return null;
             return (
               <GeoJSON key={`geojson-${config.id}-${data.features?.length||0}`} data={data}
-                style={{
-                  color: config.color,
-                  // @ts-ignore
-                  weight: config.isPolygon ? 2 : 4,
-                  opacity: 0.9, dashArray: config.dash, fillColor: config.color,
-                  // @ts-ignore
-                  fillOpacity: config.isPolygon ? 0.15 : 0,
-                }}
-                eventHandlers={{ contextmenu: e => {
-                  const l=e.target; if(l._map) l._map.flyToBounds(l.getBounds(),{padding:[100,100],duration:1.5,maxZoom:20});
-                }}}
+                style={{ color:config.color, weight:(config as any).isPolygon?2:4, opacity:0.9, dashArray:config.dash, fillColor:config.color, fillOpacity:(config as any).isPolygon?0.15:0 }}
+                eventHandlers={{ contextmenu: e => { const l=e.target; if(l._map) l._map.flyToBounds(l.getBounds(),{padding:[100,100],duration:1.5,maxZoom:20}); }}}
                 onEachFeature={(feature, layer: any) => {
-                  // @ts-ignore
-                  if (config.isPolygon) {
+                  if ((config as any).isPolygon) {
                     const c = layer.getBounds().getCenter();
-                    layer.bindTooltip(config.title, { permanent: true, direction: 'center', className: 'permanent-label' });
+                    layer.bindTooltip(config.title, { permanent:true, direction:'center', className:'permanent-label' });
                     layer.bindPopup(`<div class="p-2"><div class="text-[10px] font-black text-red-500 uppercase tracking-widest border-b border-gray-100 mb-2 pb-1">Area Boundary</div><div class="text-sm font-bold text-gray-800 uppercase">${config.title}</div><div class="text-[11px] text-gray-500 mt-1 italic font-mono">Center: ${c.lat.toFixed(5)}, ${c.lng.toFixed(5)}</div></div>`);
                   } else {
                     layer.bindPopup(`<div class="p-2"><div class="text-[10px] font-black text-blue-500 uppercase tracking-widest border-b border-gray-100 mb-2 pb-1">Survey Segment</div><div class="text-sm font-bold text-gray-800 uppercase italic">${config.title}</div><div class="text-[11px] text-gray-500 mt-1 italic">Project: ${config.project}</div></div>`);
@@ -683,6 +508,7 @@ const Mapping2D = () => {
               <GeoTIFFLayer
                 key={`raster-${config.id}`}
                 url={config.filePath}
+                elevUrl={(config as any).elevPath}
                 isVisible={activeSubLayers[config.id]}
                 title={config.title}
               />
@@ -693,7 +519,7 @@ const Mapping2D = () => {
         </MapContainer>
       </div>
 
-      {/* BASEMAP CONTROLLER */}
+      {/* BASEMAP */}
       <div className="absolute top-[120px] right-2 md:right-6 z-[1] flex flex-col items-end">
         <button onClick={() => setIsBaseMapOpen(!isBaseMapOpen)}
           className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl border border-gray-200 dark:border-white/10 p-2.5 md:p-3 rounded-xl md:rounded-2xl shadow-xl flex items-center gap-2 md:gap-3 hover:scale-105 transition-all">
@@ -701,16 +527,16 @@ const Mapping2D = () => {
             <span className="text-[9px] md:text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none">Basemap</span>
             <span className="text-[10px] md:text-xs font-bold text-gray-900 dark:text-white uppercase italic">{activeBasemap.name}</span>
           </div>
-          <div className="bg-blue-600 p-1.5 md:p-2 rounded-lg md:rounded-xl text-white shadow-lg shadow-blue-500/30"><MapIcon size={18} /></div>
+          <div className="bg-blue-600 p-1.5 md:p-2 rounded-lg md:rounded-xl text-white shadow-lg shadow-blue-500/30"><MapIcon size={18}/></div>
         </button>
         <AnimatePresence>
           {isBaseMapOpen && (
-            <motion.div initial={{ opacity:0, y:-10 }} animate={{ opacity:1, y:10 }} exit={{ opacity:0, y:-10 }}
+            <motion.div initial={{ opacity:0,y:-10 }} animate={{ opacity:1,y:10 }} exit={{ opacity:0,y:-10 }}
               className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl border border-gray-200 dark:border-white/10 p-3 md:p-4 rounded-[1.5rem] md:rounded-[2rem] shadow-2xl w-40 md:w-48 flex flex-col gap-2 md:gap-3 mt-2">
               {baseMaps.map(map => (
                 <button key={map.id} onClick={() => { setActiveBasemap(map); setIsBaseMapOpen(false); }}
-                  className={`relative overflow-hidden rounded-xl md:rounded-2xl h-12 md:h-16 border-2 transition-all ${activeBasemap.id===map.id ? 'border-blue-500' : 'border-transparent'}`}>
-                  <img src={map.thumbnail} className="absolute inset-0 w-full h-full object-cover opacity-60" alt={map.name} />
+                  className={`relative overflow-hidden rounded-xl md:rounded-2xl h-12 md:h-16 border-2 transition-all ${activeBasemap.id===map.id?'border-blue-500':'border-transparent'}`}>
+                  <img src={map.thumbnail} className="absolute inset-0 w-full h-full object-cover opacity-60" alt={map.name}/>
                   <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
                     <span className="text-[9px] md:text-[10px] font-black text-white uppercase">{map.name}</span>
                   </div>
@@ -721,29 +547,27 @@ const Mapping2D = () => {
         </AnimatePresence>
       </div>
 
-      {/* TOGGLE BUTTON */}
-      <div className="absolute top-[120px] z-[10] flex flex-col justify-center h-[calc(100vh-160px)] pointer-events-none transition-all duration-500"
-        style={{ left: toggleLeft }}>
+      {/* TOGGLE */}
+      <div className="absolute top-[120px] z-[10] flex flex-col justify-center h-[calc(100vh-160px)] pointer-events-none transition-all duration-500" style={{ left: toggleLeft }}>
         <button onClick={() => setIsPanelOpen(!isPanelOpen)}
           className="w-10 h-20 md:h-24 bg-blue-600 hover:bg-blue-700 rounded-2xl flex items-center justify-center text-white shadow-xl transition-all active:scale-95 pointer-events-auto"
-          aria-label={isPanelOpen ? "Close panel" : "Open panel"}>
-          {isPanelOpen ? <ChevronLeft size={22} /> : <ChevronRight size={22} />}
+          aria-label={isPanelOpen?"Close panel":"Open panel"}>
+          {isPanelOpen ? <ChevronLeft size={22}/> : <ChevronRight size={22}/>}
         </button>
       </div>
 
       {/* SIDE PANEL */}
-      <motion.div animate={{ x: isPanelOpen ? 0 : -(panelW + 20) }}
-        transition={{ type: "spring", stiffness: 260, damping: 25 }}
+      <motion.div animate={{ x: isPanelOpen?0:-(panelW+20) }} transition={{ type:"spring", stiffness:260, damping:25 }}
         style={{ width: panelW, left: panelLeft }}
         className="absolute top-[120px] bottom-10 z-[1] pointer-events-none h-[calc(100vh-160px)]">
         <div className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-[2rem] md:rounded-[2.5rem] shadow-2xl p-4 md:p-5 lg:p-6 flex flex-col pointer-events-auto overflow-hidden h-full">
           <div className="mb-4 shrink-0">
             <h2 className="text-lg md:text-xl lg:text-2xl font-black text-gray-900 dark:text-white tracking-tighter uppercase flex items-center gap-2 md:gap-3">
-              <Layers className="text-blue-600" size={20} /> 2D <span className="text-blue-600">Data</span>
+              <Layers className="text-blue-600" size={20}/> 2D <span className="text-blue-600">Data</span>
             </h2>
             <p className="text-[9px] text-gray-400 mt-1.5 flex items-center gap-1">
-              <MousePointer2 size={9} className="text-blue-400" />
-              Hover on DEM layer to inspect depth value
+              <MousePointer2 size={9} className="text-blue-400"/>
+              Hover / tap DEM to inspect depth value
             </p>
           </div>
           <div className="flex-1 space-y-3 md:space-y-4 lg:space-y-5 overflow-y-auto pr-1 custom-scrollbar">
@@ -751,8 +575,8 @@ const Mapping2D = () => {
               <div key={group.groupId} className="space-y-2">
                 <div className="flex items-center gap-2 px-1">
                   <button onClick={() => toggleGroup(group.groupId)}
-                    className={`p-1.5 rounded-lg transition-all ${activeGroups[group.groupId] ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600' : 'bg-gray-100 dark:bg-white/5 text-gray-400'}`}>
-                    {activeGroups[group.groupId] ? <Eye size={14} /> : <EyeOff size={14} />}
+                    className={`p-1.5 rounded-lg transition-all ${activeGroups[group.groupId]?'bg-blue-100 dark:bg-blue-900/30 text-blue-600':'bg-gray-100 dark:bg-white/5 text-gray-400'}`}>
+                    {activeGroups[group.groupId]?<Eye size={14}/>:<EyeOff size={14}/>}
                   </button>
                   <h3 className="text-[10px] md:text-[11px] font-black uppercase tracking-widest text-gray-800 dark:text-gray-200 flex items-center gap-1.5">
                     {group.icon} {group.title}
@@ -764,35 +588,31 @@ const Mapping2D = () => {
                       <div className="p-2.5 flex items-center justify-between">
                         <div className="flex items-center gap-2">
                           <button onClick={() => toggleSubLayer(layer.id)}
-                            className={`p-1.5 rounded-lg transition-all ${activeSubLayers[layer.id] ? 'bg-gray-800 dark:bg-gray-100 text-white dark:text-gray-900 shadow-md' : 'bg-gray-200 dark:bg-white/10 text-gray-400'}`}>
-                            {activeSubLayers[layer.id] ? <Eye size={12} /> : <EyeOff size={12} />}
+                            className={`p-1.5 rounded-lg transition-all ${activeSubLayers[layer.id]?'bg-gray-800 dark:bg-gray-100 text-white dark:text-gray-900 shadow-md':'bg-gray-200 dark:bg-white/10 text-gray-400'}`}>
+                            {activeSubLayers[layer.id]?<Eye size={12}/>:<EyeOff size={12}/>}
                           </button>
                           <div>
                             <h4 className="text-[9px] md:text-[10px] font-bold text-gray-700 dark:text-gray-300 uppercase tracking-tight flex items-center gap-1">
                               {layer.title}
-                              {(layer as any).isDummy && <span className="text-[7px] bg-purple-100 text-purple-600 px-1 rounded-sm">Soon</span>}
+                              {(layer as any).isDummy&&<span className="text-[7px] bg-purple-100 text-purple-600 px-1 rounded-sm">Soon</span>}
                             </h4>
                             <div className="flex items-center gap-1.5 mt-0.5">
-                              {(layer as any).isRaster ? (
-                                <div className="w-4 h-2 rounded-sm" style={{ background: 'linear-gradient(to right, #1e3a5f, #3b82f6, #10b981, #fbbf24)' }} />
-                              ) : (
-                                <div className="w-4 h-0.5 rounded-full" style={{ backgroundColor: layer.color }} />
-                              )}
+                              {(layer as any).isRaster
+                                ?<div className="w-4 h-2 rounded-sm" style={{ background:'linear-gradient(to right,#1e3a5f,#3b82f6,#10b981,#fbbf24)' }}/>
+                                :<div className="w-4 h-0.5 rounded-full" style={{ backgroundColor:layer.color }}/>}
                               <span className="text-[7px] text-gray-400 font-bold uppercase">{layer.project}</span>
                             </div>
                           </div>
                         </div>
-                        <button onClick={() => setOpenDesc(openDesc === layer.id ? null : layer.id)} className="p-1 text-gray-400 hover:text-blue-500">
-                          <Info size={12} />
+                        <button onClick={() => setOpenDesc(openDesc===layer.id?null:layer.id)} className="p-1 text-gray-400 hover:text-blue-500">
+                          <Info size={12}/>
                         </button>
                       </div>
                       <AnimatePresence>
-                        {openDesc === layer.id && (
-                          <motion.div initial={{ height:0, opacity:0 }} animate={{ height:"auto", opacity:1 }} exit={{ height:0, opacity:0 }}
+                        {openDesc===layer.id&&(
+                          <motion.div initial={{ height:0,opacity:0 }} animate={{ height:"auto",opacity:1 }} exit={{ height:0,opacity:0 }}
                             className="px-3 pb-3 text-[9px] text-gray-500 italic border-t border-gray-100 dark:border-white/5 pt-2 bg-white/50 dark:bg-black/20">
-                            {(layer as any).isRaster
-                              ? `Format: GeoTIFF RGB. Hover to inspect depth — ${layer.title}.`
-                              : "Format: WGS84 GeoJSON. Right-click to focus."}
+                            {(layer as any).isRaster?`RGB visualization + single-band depth query — ${layer.title}.`:"Format: WGS84 GeoJSON. Right-click to focus."}
                           </motion.div>
                         )}
                       </AnimatePresence>
@@ -806,11 +626,10 @@ const Mapping2D = () => {
       </motion.div>
 
       {/* LEGEND DESKTOP */}
-      <motion.div initial={{ y:20, opacity:0 }} animate={{ y:0, opacity:1 }}
-        className="hidden md:block absolute bottom-10 right-6 z-[1] pointer-events-none">
+      <motion.div initial={{ y:20,opacity:0 }} animate={{ y:0,opacity:1 }} className="hidden md:block absolute bottom-10 right-6 z-[1] pointer-events-none">
         <div className="bg-white/90 dark:bg-gray-900/95 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-[2rem] shadow-2xl p-5 lg:p-6 w-56 lg:w-64 pointer-events-auto">
           <h5 className="text-[10px] font-black text-gray-400 uppercase mb-4 tracking-[0.2em] flex items-center gap-2 border-b border-gray-200 dark:border-white/10 pb-3">
-            <List size={13} className="text-blue-600" /> Map Legend
+            <List size={13} className="text-blue-600"/> Map Legend
           </h5>
           <div className="space-y-4 max-h-[320px] overflow-y-auto pr-1 custom-scrollbar">
             <AnimatePresence mode="popLayout">
@@ -823,16 +642,12 @@ const Mapping2D = () => {
                     {subs.map(cfg => (
                       <div key={`leg-${cfg.id}`} className="flex items-center justify-between group pl-2">
                         <div className="flex items-center gap-2.5">
-                          {(cfg as any).isPolygon ? (
-                            <div className="w-3 h-3 rounded-sm border-2" style={{ borderColor: cfg.color, backgroundColor: `${cfg.color}30` }} />
-                          ) : (cfg as any).isRaster ? (
-                            <div className="w-3 h-3 rounded-sm bg-gradient-to-br from-blue-900 to-yellow-200" />
-                          ) : (
-                            <div className="w-5 h-1 rounded-full" style={{ backgroundColor: cfg.color, boxShadow: `0 0 6px ${cfg.color}80` }} />
-                          )}
+                          {(cfg as any).isPolygon?<div className="w-3 h-3 rounded-sm border-2" style={{ borderColor:cfg.color, backgroundColor:`${cfg.color}30` }}/>
+                          :(cfg as any).isRaster?<div className="w-3 h-3 rounded-sm bg-gradient-to-br from-blue-900 to-yellow-200"/>
+                          :<div className="w-5 h-1 rounded-full" style={{ backgroundColor:cfg.color, boxShadow:`0 0 6px ${cfg.color}80` }}/>}
                           <span className="text-[9px] lg:text-[10px] text-gray-700 dark:text-gray-300 font-bold uppercase tracking-tight">{cfg.title}</span>
                         </div>
-                        <MousePointer2 size={9} className="text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity" />
+                        <MousePointer2 size={9} className="text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity"/>
                       </div>
                     ))}
                   </motion.div>
@@ -846,19 +661,16 @@ const Mapping2D = () => {
       {/* LEGEND MOBILE */}
       <div className="md:hidden absolute bottom-3 right-2 z-[1] pointer-events-auto">
         <button onClick={() => setIsLegendOpen(!isLegendOpen)}
-          className={`flex items-center gap-1.5 px-3 py-2 rounded-xl shadow-lg border transition-all text-[10px] font-black uppercase tracking-wider ${
-            isLegendOpen ? 'bg-blue-600 text-white border-blue-700' : 'bg-white/95 dark:bg-gray-900/95 text-gray-700 dark:text-white border-gray-200 dark:border-white/10 backdrop-blur-xl'
-          }`}>
-          <List size={12} /> Legend
-          <ChevronRight size={11} className={`transition-transform ${isLegendOpen ? 'rotate-90' : ''}`} />
+          className={`flex items-center gap-1.5 px-3 py-2 rounded-xl shadow-lg border transition-all text-[10px] font-black uppercase tracking-wider ${isLegendOpen?'bg-blue-600 text-white border-blue-700':'bg-white/95 dark:bg-gray-900/95 text-gray-700 dark:text-white border-gray-200 dark:border-white/10 backdrop-blur-xl'}`}>
+          <List size={12}/> Legend
+          <ChevronRight size={11} className={`transition-transform ${isLegendOpen?'rotate-90':''}`}/>
         </button>
         <AnimatePresence>
-          {isLegendOpen && (
-            <motion.div initial={{ opacity:0, y:8, scale:.95 }} animate={{ opacity:1, y:0, scale:1 }} exit={{ opacity:0, y:8, scale:.95 }}
-              transition={{ duration:.2 }}
+          {isLegendOpen&&(
+            <motion.div initial={{ opacity:0,y:8,scale:.95 }} animate={{ opacity:1,y:0,scale:1 }} exit={{ opacity:0,y:8,scale:.95 }} transition={{ duration:.2 }}
               className="absolute bottom-full right-0 mb-2 w-52 bg-white/97 dark:bg-gray-900/97 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-2xl shadow-2xl overflow-hidden">
               <div className="px-3 py-2 border-b border-gray-100 dark:border-white/10 flex items-center gap-2">
-                <div className="w-1.5 h-4 bg-blue-600 rounded-full" />
+                <div className="w-1.5 h-4 bg-blue-600 rounded-full"/>
                 <span className="text-[10px] font-black uppercase tracking-widest text-gray-600 dark:text-gray-300">Map Legend</span>
               </div>
               <div className="p-2.5 space-y-3 max-h-64 overflow-y-auto">
@@ -868,21 +680,17 @@ const Mapping2D = () => {
                   return (
                     <div key={group.groupId}>
                       <div className="flex items-center gap-1.5 mb-1.5 px-1">
-                        <div className="h-px flex-1 bg-gray-100 dark:bg-white/10" />
+                        <div className="h-px flex-1 bg-gray-100 dark:bg-white/10"/>
                         <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest whitespace-nowrap">{group.title}</span>
-                        <div className="h-px flex-1 bg-gray-100 dark:bg-white/10" />
+                        <div className="h-px flex-1 bg-gray-100 dark:bg-white/10"/>
                       </div>
                       <div className="space-y-1">
                         {subs.map(cfg => (
                           <div key={cfg.id} className="flex items-center gap-2 px-1 py-0.5 rounded-lg hover:bg-gray-50 dark:hover:bg-white/5 transition-colors">
                             <div className="flex-shrink-0 w-8 flex items-center justify-center">
-                              {(cfg as any).isPolygon ? (
-                                <div className="w-4 h-4 rounded border-2" style={{ borderColor: cfg.color, backgroundColor: `${cfg.color}25` }} />
-                              ) : (cfg as any).isRaster ? (
-                                <div className="w-4 h-4 rounded" style={{ background: 'linear-gradient(135deg,#1e3a5f,#3b82f6,#10b981,#fbbf24)' }} />
-                              ) : (
-                                <div className="w-5 h-[3px] rounded-full" style={{ backgroundColor: cfg.color, boxShadow: `0 0 6px ${cfg.color}` }} />
-                              )}
+                              {(cfg as any).isPolygon?<div className="w-4 h-4 rounded border-2" style={{ borderColor:cfg.color, backgroundColor:`${cfg.color}25` }}/>
+                              :(cfg as any).isRaster?<div className="w-4 h-4 rounded" style={{ background:'linear-gradient(135deg,#1e3a5f,#3b82f6,#10b981,#fbbf24)' }}/>
+                              :<div className="w-5 h-[3px] rounded-full" style={{ backgroundColor:cfg.color, boxShadow:`0 0 6px ${cfg.color}` }}/>}
                             </div>
                             <span className="text-[9px] text-gray-700 dark:text-gray-300 font-bold uppercase tracking-tight leading-tight">{cfg.title}</span>
                           </div>
