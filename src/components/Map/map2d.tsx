@@ -11,7 +11,6 @@ import {
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
-// ✅ FIX 2: georaster-layer-for-leaflet butuh L tersedia di window global
 if (typeof window !== 'undefined') {
   (window as any).L = L;
 }
@@ -39,18 +38,57 @@ const AutoFitBounds = ({ geoData }: { geoData: Record<string, any> }) => {
   return null;
 };
 
-const GeoTIFFLayer = ({ url, isVisible }: { url: string; isVisible: boolean }) => {
+// ---------------------------------------------------------------------------
+// ✅ GeoTIFFLayer dengan hover tooltip — RGB visual + singleband Z value
+// ---------------------------------------------------------------------------
+const GeoTIFFLayer = ({ url, isVisible, title }: {
+  url: string;
+  isVisible: boolean;
+  title: string;  // ← tambah prop title untuk label tooltip
+}) => {
   const { useMap: useMapLeaflet } = require("react-leaflet");
   const map = useMapLeaflet();
-  const layerRef = useRef<any>(null);
+  const layerRef     = useRef<any>(null);
+  const georasterRef = useRef<any>(null); // ✅ simpan georaster untuk query pixel
+  const tooltipRef   = useRef<HTMLDivElement | null>(null);
+
+  // ✅ Buat tooltip DOM element — mount sekali, hidup selama komponen ada
+  useEffect(() => {
+    const div = document.createElement("div");
+    div.style.cssText = `
+      position: fixed;
+      pointer-events: none;
+      z-index: 99999;
+      background: rgba(8, 15, 30, 0.93);
+      border: 1px solid rgba(255,255,255,0.12);
+      color: white;
+      padding: 10px 14px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-family: ui-monospace, monospace;
+      font-weight: 600;
+      display: none;
+      min-width: 160px;
+      line-height: 1.7;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+    `;
+    document.body.appendChild(div);
+    tooltipRef.current = div;
+    return () => {
+      if (div.parentNode) document.body.removeChild(div);
+    };
+  }, []);
 
   useEffect(() => {
-    // ✅ FIX 1: null-safe — jangan panggil map.removeLayer kalau map belum ada
     if (!isVisible) {
       if (layerRef.current && map) {
+        // Cleanup event listeners dulu
+        layerRef.current._cleanupEvents?.();
         map.removeLayer(layerRef.current);
         layerRef.current = null;
+        georasterRef.current = null;
       }
+      if (tooltipRef.current) tooltipRef.current.style.display = "none";
       return;
     }
 
@@ -73,9 +111,10 @@ const GeoTIFFLayer = ({ url, isVisible }: { url: string; isVisible: boolean }) =
         if (!isMounted) return;
 
         const gr = await parseGeoraster(buf);
-        const mn = gr.mins[0];
-        const mx = gr.maxs[0];
-        // ✅ FIX 3: guard division by zero ketika mn === mx
+        georasterRef.current = gr; // ✅ simpan untuk query pixel nanti
+
+        const mn    = gr.mins[0];
+        const mx    = gr.maxs[0];
         const range = (mx - mn) || 1;
 
         const layer = new GeoRasterLayer({
@@ -83,18 +122,11 @@ const GeoTIFFLayer = ({ url, isVisible }: { url: string; isVisible: boolean }) =
           opacity: 0.9,
           resolution: 256,
           pixelValuesToColorFn: (v: any) => {
-            if (
-              v[0] === gr.noDataValue ||
-              v[0] === undefined ||
-              isNaN(v[0]) ||
-              v[0] === 0
-            ) return null;
-
-            // File RGB (3 band)
+            if (v[0] === gr.noDataValue || v[0] === undefined || isNaN(v[0]) || v[0] === 0) return null;
+            // RGB file (3 band) → render warna asli
             if (v.length >= 3)
               return `rgb(${Math.round(v[0])},${Math.round(v[1])},${Math.round(v[2])})`;
-
-            // File single-band — colormap biru→hijau→kuning→merah
+            // Single-band → colormap
             const p = Math.max(0, Math.min(1, (v[0] - mn) / range));
             let r = 0, g = 0, b = 0;
             if      (p < .25) { r = 0;                        g = Math.round(4*p*255);           b = 255; }
@@ -109,10 +141,134 @@ const GeoTIFFLayer = ({ url, isVisible }: { url: string; isVisible: boolean }) =
           layer.addTo(map);
           layerRef.current = layer;
           const bounds = layer.getBounds();
-          if (bounds && bounds.isValid()) {
-            map.fitBounds(bounds, { padding: [50, 50], maxZoom: 20 });
-          }
+          if (bounds?.isValid()) map.fitBounds(bounds, { padding: [50, 50], maxZoom: 20 });
         }
+
+        // ── Mouse move → baca pixel & tampilkan tooltip ─────────────────
+        const onMouseMove = (e: L.LeafletMouseEvent) => {
+          const gr      = georasterRef.current;
+          const tooltip = tooltipRef.current;
+          if (!gr || !tooltip || !layerRef.current) return;
+
+          const { lat, lng } = e.latlng;
+
+          // Cek apakah kursor dalam bounds raster
+          const bounds = layerRef.current.getBounds?.();
+          if (bounds && !bounds.contains([lat, lng])) {
+            tooltip.style.display = "none";
+            return;
+          }
+
+          // Hitung index pixel dari koordinat lat/lng
+          const xIndex = Math.floor((lng - gr.xmin) / gr.pixelWidth);
+          const yIndex = Math.floor((gr.ymax - lat)  / gr.pixelHeight);
+
+          if (xIndex < 0 || yIndex < 0 || xIndex >= gr.width || yIndex >= gr.height) {
+            tooltip.style.display = "none";
+            return;
+          }
+
+          try {
+            // ✅ Band 1 → nilai Z (elevasi/kedalaman)
+            const zValue: number = gr.values[0]?.[yIndex]?.[xIndex];
+
+            const isNoData =
+              zValue === gr.noDataValue ||
+              zValue === undefined ||
+              isNaN(zValue) ||
+              zValue === 0;
+
+            if (isNoData) {
+              tooltip.style.display = "none";
+              return;
+            }
+
+            // ✅ RGB dari ketiga band untuk swatch warna
+            const rVal = Math.round(gr.values[0]?.[yIndex]?.[xIndex] ?? 0);
+            const gVal = Math.round(gr.values[1]?.[yIndex]?.[xIndex] ?? 0);
+            const bVal = Math.round(gr.values[2]?.[yIndex]?.[xIndex] ?? 0);
+
+            // Tentukan label Z (negatif = kedalaman, positif = elevasi)
+            const zLabel  = zValue < 0 ? "Depth" : "Elevation";
+            const zSign   = zValue < 0 ? "" : "+";
+            const zColor  = zValue < 0 ? "#60a5fa" : "#34d399";
+
+            tooltip.innerHTML = `
+              <div style="
+                color: #94a3b8;
+                font-size: 9px;
+                letter-spacing: 0.1em;
+                text-transform: uppercase;
+                margin-bottom: 6px;
+                border-bottom: 1px solid rgba(255,255,255,0.08);
+                padding-bottom: 5px;
+              ">${title}</div>
+
+              <div style="margin-bottom: 8px;">
+                <div style="color: #64748b; font-size: 9px; margin-bottom: 1px;">${zLabel}</div>
+                <div style="font-size: 16px; font-weight: 900; color: ${zColor}; letter-spacing: -0.02em;">
+                  ${zSign}${zValue.toFixed(3)}
+                  <span style="font-size: 10px; font-weight: 600; color: #64748b; margin-left: 2px;">m</span>
+                </div>
+              </div>
+
+              <div style="
+                display: flex;
+                align-items: center;
+                gap: 7px;
+                padding-top: 6px;
+                border-top: 1px solid rgba(255,255,255,0.07);
+                margin-bottom: 6px;
+              ">
+                <div style="
+                  width: 16px; height: 16px; border-radius: 5px; flex-shrink: 0;
+                  background: rgb(${rVal},${gVal},${bVal});
+                  border: 1px solid rgba(255,255,255,0.2);
+                  box-shadow: 0 0 6px rgba(${rVal},${gVal},${bVal},0.5);
+                "></div>
+                <span style="color: #475569; font-size: 9px;">
+                  rgb(${rVal},&nbsp;${gVal},&nbsp;${bVal})
+                </span>
+              </div>
+
+              <div style="color: #334155; font-size: 8px; letter-spacing: 0.03em;">
+                ${lat.toFixed(6)}°,&nbsp;${lng.toFixed(6)}°
+              </div>
+            `;
+
+            tooltip.style.display = "block";
+
+            // Posisi tooltip — ikuti kursor, offset agar tidak tertutup
+            const mx = e.originalEvent.clientX;
+            const my = e.originalEvent.clientY;
+            const tw = 180; // perkiraan lebar tooltip
+            const th = 140; // perkiraan tinggi tooltip
+            const vw = window.innerWidth;
+            const vh = window.innerHeight;
+
+            tooltip.style.left = (mx + 16 + tw > vw ? mx - tw - 8 : mx + 16) + "px";
+            tooltip.style.top  = (my + th > vh ? my - th - 8 : my + 8) + "px";
+
+          } catch {
+            tooltip.style.display = "none";
+          }
+        };
+
+        const onMouseOut = () => {
+          if (tooltipRef.current) tooltipRef.current.style.display = "none";
+        };
+
+        if (isMounted) {
+          map.on("mousemove", onMouseMove);
+          map.on("mouseout",  onMouseOut);
+
+          // Simpan cleanup function di layer object
+          layerRef.current._cleanupEvents = () => {
+            map.off("mousemove", onMouseMove);
+            map.off("mouseout",  onMouseOut);
+          };
+        }
+
       } catch (e) {
         console.error("GeoTIFF error:", e);
       }
@@ -122,16 +278,22 @@ const GeoTIFFLayer = ({ url, isVisible }: { url: string; isVisible: boolean }) =
 
     return () => {
       isMounted = false;
-      if (layerRef.current && map) {
-        map.removeLayer(layerRef.current);
+      if (layerRef.current) {
+        layerRef.current._cleanupEvents?.();
+        if (map) map.removeLayer(layerRef.current);
         layerRef.current = null;
       }
+      georasterRef.current = null;
+      if (tooltipRef.current) tooltipRef.current.style.display = "none";
     };
-  }, [url, map, isVisible]);
+  }, [url, map, isVisible, title]);
 
   return null;
 };
 
+// ---------------------------------------------------------------------------
+// LAYER GROUPS
+// ---------------------------------------------------------------------------
 const layerGroups = [
   {
     groupId: "area", title: "Area Boundaries",
@@ -159,24 +321,27 @@ const layerGroups = [
     groupId: "dem", title: "Digital Elevation Model",
     icon: <ImageIcon size={18} className="text-purple-500" />,
     subLayers: [
-      { id: "dem_tabularasa",     filePath: "/data/dem/DEM_Tabularasa_RGB_1m_WGS84.tif",     title: "DEM Tabularasa Shipwreck",            project: "Site 1",  color: "#8b5cf6", dash: "0", isDummy: false, isRaster: true },
-      { id: "dem_poso",           filePath: "/data/dem/DEM_Poso_RGB_1m_WGS84.tif",           title: "DEM Poso Shipwreck",    project: "Site 2",  color: "#ec4899", dash: "0", isDummy: false, isRaster: true },
-      { id: "dem_perairandangkal",filePath: "/data/dem/DEM_PerairanDangkal_RGB_1m_WGS84.tif",    title: "DEM Perairan Dangkal",  project: "Site 3",  color: "#06b6d4", dash: "0", isDummy: false, isRaster: true },
-      { id: "dem_pesisirpanggang",filePath: "/data/dem/DEM_PesisirPanggangRidge_RGB_1m_WGS84.tif",    title: "DEM Pesisir Panggang",  project: "Site 4",  color: "#f97316", dash: "0", isDummy: false, isRaster: true },
-      { id: "dem_kanalpramuka",          filePath: "/data/dem/DEM_KanalPramuka_RGB_1m.tif",                       title: "DEM Kanal Pramuka",            project: "Site 5",  color: "#22c55e", dash: "0", isDummy: false, isRaster: true },
-      { id: "dem_pesisirpramuka",          filePath: "/data/dem/DEM_PesisirPramuka_ProjectALB_RGB_0.5m_WGS84.tif",                       title: "DEM Pesisir Pramuka",            project: "Site 6",  color: "#eab308", dash: "0", isDummy: false, isRaster: true },
+      { id: "dem_tabularasa",      filePath: "/data/dem/DEM_Tabularasa_RGB_1m_WGS84.tif",              title: "DEM Tabularasa Shipwreck", project: "Site 1", color: "#8b5cf6", dash: "0", isDummy: false, isRaster: true },
+      { id: "dem_poso",            filePath: "/data/dem/DEM_Poso_RGB_1m_WGS84.tif",                    title: "DEM Poso Shipwreck",       project: "Site 2", color: "#ec4899", dash: "0", isDummy: false, isRaster: true },
+      { id: "dem_perairandangkal", filePath: "/data/dem/DEM_PerairanDangkal_RGB_1m_WGS84.tif",         title: "DEM Perairan Dangkal",     project: "Site 3", color: "#06b6d4", dash: "0", isDummy: false, isRaster: true },
+      { id: "dem_pesisirpanggang", filePath: "/data/dem/DEM_PesisirPanggangRidge_RGB_1m_WGS84.tif",   title: "DEM Pesisir Panggang",     project: "Site 4", color: "#f97316", dash: "0", isDummy: false, isRaster: true },
+      { id: "dem_kanalpramuka",    filePath: "/data/dem/DEM_KanalPramuka_RGB_1m.tif",                  title: "DEM Kanal Pramuka",        project: "Site 5", color: "#22c55e", dash: "0", isDummy: false, isRaster: true },
+      { id: "dem_pesisirpramuka",  filePath: "/data/dem/DEM_PesisirPramuka_ProjectALB_RGB_0.5m_WGS84.tif", title: "DEM Pesisir Pramuka", project: "Site 6", color: "#eab308", dash: "0", isDummy: false, isRaster: true },
     ]
   }
 ];
 
 const baseMaps = [
-  { id: 'osm',       name: 'Open Street Map', url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',                                                    thumbnail: 'https://a.tile.openstreetmap.org/0/0/0.png' },
-  { id: 'satellite', name: 'Satellite',       url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',         thumbnail: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/10/546/388' },
-  { id: 'dark',      name: 'Esri Dark',       url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',                                         thumbnail: 'https://a.basemaps.cartocdn.com/dark_all/0/0/0.png' },
+  { id: 'osm',       name: 'Open Street Map', url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',                                                thumbnail: 'https://a.tile.openstreetmap.org/0/0/0.png' },
+  { id: 'satellite', name: 'Satellite',       url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',     thumbnail: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/10/546/388' },
+  { id: 'dark',      name: 'Esri Dark',       url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',                                     thumbnail: 'https://a.basemaps.cartocdn.com/dark_all/0/0/0.png' },
 ];
 
 const PANEL_W = { mobile: 280, tablet: 300, desktop: 360 };
 
+// ---------------------------------------------------------------------------
+// MAIN COMPONENT
+// ---------------------------------------------------------------------------
 const Mapping2D = () => {
   const [mounted,       setMounted]       = useState(false);
   const [isPanelOpen,   setIsPanelOpen]   = useState(false);
@@ -186,10 +351,9 @@ const Mapping2D = () => {
   const [activeBasemap, setActiveBasemap] = useState(baseMaps[1]);
   const [geoData,       setGeoData]       = useState<Record<string, any>>({});
 
-  const [winWidth, setWinWidth] = useState(
-    typeof window !== 'undefined' ? window.innerWidth : 1024
-  );
+  const [winWidth, setWinWidth] = useState(1024);
   useEffect(() => {
+    setWinWidth(window.innerWidth);
     const onResize = () => setWinWidth(window.innerWidth);
     window.addEventListener('resize', onResize);
     return () => window.removeEventListener('resize', onResize);
@@ -263,6 +427,7 @@ const Mapping2D = () => {
           <TileLayer url={activeBasemap.url} maxZoom={24} maxNativeZoom={19} />
           <AutoFitBounds geoData={geoData} />
 
+          {/* GeoJSON vector layers */}
           {layerGroups.flatMap(g => g.subLayers).map(config => {
             // @ts-ignore
             if (config.isRaster) return null;
@@ -299,6 +464,7 @@ const Mapping2D = () => {
             );
           })}
 
+          {/* ✅ GeoTIFF raster layers — sekarang dengan prop title untuk tooltip */}
           {layerGroups.flatMap(g => g.subLayers).map(config => {
             // @ts-ignore
             if (!config.isRaster) return null;
@@ -307,6 +473,7 @@ const Mapping2D = () => {
                 key={`raster-${config.id}`}
                 url={config.filePath}
                 isVisible={activeSubLayers[config.id]}
+                title={config.title}  // ✅ pass title ke tooltip
               />
             );
           })}
@@ -378,6 +545,11 @@ const Mapping2D = () => {
             <h2 className="text-lg md:text-xl lg:text-2xl font-black text-gray-900 dark:text-white tracking-tighter uppercase flex items-center gap-2 md:gap-3">
               <Layers className="text-blue-600" size={20} /> 2D <span className="text-blue-600">Data</span>
             </h2>
+            {/* ✅ Hint tooltip untuk user */}
+            <p className="text-[9px] text-gray-400 mt-1.5 flex items-center gap-1">
+              <MousePointer2 size={9} className="text-blue-400" />
+              Hover on DEM layer to inspect Z value
+            </p>
           </div>
 
           <div className="flex-1 space-y-3 md:space-y-4 lg:space-y-5 overflow-y-auto pr-1 custom-scrollbar">
@@ -437,7 +609,7 @@ const Mapping2D = () => {
                             className="px-3 pb-3 text-[9px] text-gray-500 italic border-t border-gray-100 dark:border-white/5 pt-2 bg-white/50 dark:bg-black/20"
                           >
                             {(layer as any).isRaster
-                              ? `Format: GeoTIFF. Represents seabed elevation model — ${layer.title}.`
+                              ? `Format: GeoTIFF RGB. Hover to inspect Z value — ${layer.title}.`
                               : "Format: WGS84 GeoJSON. Right-click to focus."}
                           </motion.div>
                         )}
