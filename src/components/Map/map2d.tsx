@@ -39,20 +39,27 @@ const AutoFitBounds = ({ geoData }: { geoData: Record<string, any> }) => {
 };
 
 // ---------------------------------------------------------------------------
-// ✅ GeoTIFFLayer dengan hover tooltip — RGB visual + singleband Z value
+// ✅ GeoTIFFLayer — RGB untuk render visual, elevPath untuk query Z value
 // ---------------------------------------------------------------------------
-const GeoTIFFLayer = ({ url, isVisible, title }: {
-  url: string;
+const GeoTIFFLayer = ({ url, elevUrl, isVisible, title }: {
+  url: string;       // file RGB untuk render warna di peta
+  elevUrl?: string;  // file single-band untuk query nilai Z (opsional)
   isVisible: boolean;
-  title: string;  // ← tambah prop title untuk label tooltip
+  title: string;
 }) => {
   const { useMap: useMapLeaflet } = require("react-leaflet");
-  const map = useMapLeaflet();
+  const map          = useMapLeaflet();
   const layerRef     = useRef<any>(null);
-  const georasterRef = useRef<any>(null); // ✅ simpan georaster untuk query pixel
+  const georasterRef = useRef<any>(null); // RGB georaster (untuk render)
+  const elevRef      = useRef<any>(null); // Single-band georaster (untuk Z value)
   const tooltipRef   = useRef<HTMLDivElement | null>(null);
 
-  // ✅ Buat tooltip DOM element — mount sekali, hidup selama komponen ada
+  // Deteksi touch device
+  const isTouchDevice = () =>
+    typeof window !== 'undefined' &&
+    ('ontouchstart' in window || navigator.maxTouchPoints > 0);
+
+  // Buat tooltip DOM element
   useEffect(() => {
     const div = document.createElement("div");
     div.style.cssText = `
@@ -68,7 +75,7 @@ const GeoTIFFLayer = ({ url, isVisible, title }: {
       font-family: ui-monospace, monospace;
       font-weight: 600;
       display: none;
-      min-width: 160px;
+      min-width: 170px;
       line-height: 1.7;
       box-shadow: 0 8px 32px rgba(0,0,0,0.4);
     `;
@@ -82,11 +89,11 @@ const GeoTIFFLayer = ({ url, isVisible, title }: {
   useEffect(() => {
     if (!isVisible) {
       if (layerRef.current && map) {
-        // Cleanup event listeners dulu
         layerRef.current._cleanupEvents?.();
         map.removeLayer(layerRef.current);
         layerRef.current = null;
         georasterRef.current = null;
+        elevRef.current = null;
       }
       if (tooltipRef.current) tooltipRef.current.style.display = "none";
       return;
@@ -104,18 +111,31 @@ const GeoTIFFLayer = ({ url, isVisible, title }: {
         // @ts-ignore
         const GeoRasterLayer = (await import('georaster-layer-for-leaflet')).default;
 
+        // ── Load RGB raster untuk render visual ─────────────────────────
         const res = await fetch(url);
         if (!res.ok) throw new Error(`HTTP ${res.status} — ${url}`);
-
         const buf = await res.arrayBuffer();
         if (!isMounted) return;
 
         const gr = await parseGeoraster(buf);
-        georasterRef.current = gr; // ✅ simpan untuk query pixel nanti
+        georasterRef.current = gr;
 
-        const mn    = gr.mins[0];
-        const mx    = gr.maxs[0];
-        const range = (mx - mn) || 1;
+        // ── Load single-band elevation raster untuk query Z (kalau ada) ─
+        if (elevUrl) {
+          try {
+            const resElev = await fetch(elevUrl);
+            if (resElev.ok) {
+              const bufElev = await resElev.arrayBuffer();
+              if (isMounted) {
+                elevRef.current = await parseGeoraster(bufElev);
+              }
+            } else {
+              console.warn(`Elevation file not found: ${elevUrl} — Z value will show N/A`);
+            }
+          } catch {
+            console.warn(`Could not load elevation file: ${elevUrl}`);
+          }
+        }
 
         const layer = new GeoRasterLayer({
           georaster: gr,
@@ -123,10 +143,11 @@ const GeoTIFFLayer = ({ url, isVisible, title }: {
           resolution: 256,
           pixelValuesToColorFn: (v: any) => {
             if (v[0] === gr.noDataValue || v[0] === undefined || isNaN(v[0]) || v[0] === 0) return null;
-            // RGB file (3 band) → render warna asli
             if (v.length >= 3)
               return `rgb(${Math.round(v[0])},${Math.round(v[1])},${Math.round(v[2])})`;
-            // Single-band → colormap
+            const mn = gr.mins[0];
+            const mx = gr.maxs[0];
+            const range = (mx - mn) || 1;
             const p = Math.max(0, Math.min(1, (v[0] - mn) / range));
             let r = 0, g = 0, b = 0;
             if      (p < .25) { r = 0;                        g = Math.round(4*p*255);           b = 255; }
@@ -144,129 +165,196 @@ const GeoTIFFLayer = ({ url, isVisible, title }: {
           if (bounds?.isValid()) map.fitBounds(bounds, { padding: [50, 50], maxZoom: 20 });
         }
 
-        // ── Mouse move → baca pixel & tampilkan tooltip ─────────────────
-        const onMouseMove = (e: L.LeafletMouseEvent) => {
-          const gr      = georasterRef.current;
+        // ── Helper: baca pixel dari georaster ───────────────────────────
+        const readPixel = (graster: any, lat: number, lng: number) => {
+          const xIdx = Math.floor((lng - graster.xmin) / graster.pixelWidth);
+          const yIdx = Math.floor((graster.ymax - lat) / graster.pixelHeight);
+          if (xIdx < 0 || yIdx < 0 || xIdx >= graster.width || yIdx >= graster.height)
+            return null;
+          return { xIdx, yIdx };
+        };
+
+        // ── Helper: buat HTML tooltip ────────────────────────────────────
+        const buildTooltipHtml = (
+          lat: number, lng: number,
+          zValue: number | null,
+          rVal: number, gVal: number, bVal: number,
+          isMobile: boolean
+        ) => {
+          const hasZ    = zValue !== null;
+          const zLabel  = hasZ ? (zValue! < 0 ? "Depth" : "Elevation") : "Z Value";
+          const zColor  = hasZ ? (zValue! < 0 ? "#60a5fa" : "#34d399") : "#94a3b8";
+          const zText   = hasZ
+            ? `${zValue! < 0 ? "" : "+"}${zValue!.toFixed(3)} <span style="font-size:10px;color:#64748b">m</span>`
+            : `<span style="font-size:11px;color:#64748b">N/A — elevation file not loaded</span>`;
+
+          if (isMobile) {
+            // Bottom sheet style untuk mobile
+            return `
+              <div style="width:40px;height:4px;border-radius:2px;background:rgba(255,255,255,0.2);margin:0 auto 14px;"></div>
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+                <div style="color:#94a3b8;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;">${title}</div>
+                <button id="close-dem-tooltip" style="background:rgba(255,255,255,0.1);border:none;color:white;width:24px;height:24px;border-radius:50%;cursor:pointer;font-size:16px;line-height:24px;text-align:center;">×</button>
+              </div>
+              <div style="display:flex;align-items:center;gap:16px;margin-bottom:12px;">
+                <div>
+                  <div style="color:#64748b;font-size:9px;margin-bottom:2px;">${zLabel}</div>
+                  <div style="font-size:26px;font-weight:900;color:${zColor};letter-spacing:-0.03em;line-height:1;">${zText}</div>
+                </div>
+                <div style="margin-left:auto;text-align:right;">
+                  <div style="width:36px;height:36px;border-radius:10px;background:rgb(${rVal},${gVal},${bVal});border:1px solid rgba(255,255,255,0.2);margin-bottom:4px;margin-left:auto;box-shadow:0 0 12px rgba(${rVal},${gVal},${bVal},0.4);"></div>
+                  <div style="color:#475569;font-size:9px;">rgb(${rVal},${gVal},${bVal})</div>
+                </div>
+              </div>
+              <div style="padding-top:10px;border-top:1px solid rgba(255,255,255,0.07);color:#334155;font-size:9px;">
+                ${lat.toFixed(6)}°, ${lng.toFixed(6)}°
+              </div>
+            `;
+          }
+
+          // Desktop tooltip
+          return `
+            <div style="color:#94a3b8;font-size:9px;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:6px;border-bottom:1px solid rgba(255,255,255,0.08);padding-bottom:5px;">${title}</div>
+            <div style="margin-bottom:8px;">
+              <div style="color:#64748b;font-size:9px;margin-bottom:1px;">${zLabel}</div>
+              <div style="font-size:16px;font-weight:900;color:${zColor};letter-spacing:-0.02em;">${zText}</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:7px;padding-top:6px;border-top:1px solid rgba(255,255,255,0.07);margin-bottom:6px;">
+              <div style="width:16px;height:16px;border-radius:5px;flex-shrink:0;background:rgb(${rVal},${gVal},${bVal});border:1px solid rgba(255,255,255,0.2);box-shadow:0 0 6px rgba(${rVal},${gVal},${bVal},0.5);"></div>
+              <span style="color:#475569;font-size:9px;">rgb(${rVal},&nbsp;${gVal},&nbsp;${bVal})</span>
+            </div>
+            <div style="color:#334155;font-size:8px;letter-spacing:0.03em;">${lat.toFixed(6)}°,&nbsp;${lng.toFixed(6)}°</div>
+          `;
+        };
+
+        // ── Helper: proses koordinat → nilai pixel ───────────────────────
+        const processCoord = (lat: number, lng: number, isMobile: boolean) => {
+          const grRGB   = georasterRef.current;
+          const grElev  = elevRef.current;
           const tooltip = tooltipRef.current;
-          if (!gr || !tooltip || !layerRef.current) return;
+          if (!grRGB || !tooltip) return;
 
-          const { lat, lng } = e.latlng;
-
-          // Cek apakah kursor dalam bounds raster
-          const bounds = layerRef.current.getBounds?.();
+          // Cek bounds dari RGB layer
+          const bounds = layerRef.current?.getBounds?.();
           if (bounds && !bounds.contains([lat, lng])) {
             tooltip.style.display = "none";
             return;
           }
 
-          // Hitung index pixel dari koordinat lat/lng
-          const xIndex = Math.floor((lng - gr.xmin) / gr.pixelWidth);
-          const yIndex = Math.floor((gr.ymax - lat)  / gr.pixelHeight);
+          // Baca RGB dari file visual
+          const rgbPx = readPixel(grRGB, lat, lng);
+          if (!rgbPx) { tooltip.style.display = "none"; return; }
 
-          if (xIndex < 0 || yIndex < 0 || xIndex >= gr.width || yIndex >= gr.height) {
+          const rVal = Math.round(grRGB.values[0]?.[rgbPx.yIdx]?.[rgbPx.xIdx] ?? 0);
+          const gVal = Math.round(grRGB.values[1]?.[rgbPx.yIdx]?.[rgbPx.xIdx] ?? 0);
+          const bVal = Math.round(grRGB.values[2]?.[rgbPx.yIdx]?.[rgbPx.xIdx] ?? 0);
+
+          // Kalau pixel noData (semua 0), jangan tampilkan
+          if (rVal === 0 && gVal === 0 && bVal === 0) {
             tooltip.style.display = "none";
             return;
           }
 
-          try {
-            // ✅ Band 1 → nilai Z (elevasi/kedalaman)
-            const zValue: number = gr.values[0]?.[yIndex]?.[xIndex];
-
-            const isNoData =
-              zValue === gr.noDataValue ||
-              zValue === undefined ||
-              isNaN(zValue) ||
-              zValue === 0;
-
-            if (isNoData) {
-              tooltip.style.display = "none";
-              return;
+          // Baca Z dari file elevation (single-band) kalau ada
+          let zValue: number | null = null;
+          if (grElev) {
+            const elevPx = readPixel(grElev, lat, lng);
+            if (elevPx) {
+              const raw = grElev.values[0]?.[elevPx.yIdx]?.[elevPx.xIdx];
+              if (
+                raw !== undefined &&
+                raw !== grElev.noDataValue &&
+                !isNaN(raw) &&
+                raw !== 0
+              ) {
+                zValue = raw;
+              }
             }
-
-            // ✅ RGB dari ketiga band untuk swatch warna
-            const rVal = Math.round(gr.values[0]?.[yIndex]?.[xIndex] ?? 0);
-            const gVal = Math.round(gr.values[1]?.[yIndex]?.[xIndex] ?? 0);
-            const bVal = Math.round(gr.values[2]?.[yIndex]?.[xIndex] ?? 0);
-
-            // Tentukan label Z (negatif = kedalaman, positif = elevasi)
-            const zLabel  = zValue < 0 ? "Depth" : "Elevation";
-            const zSign   = zValue < 0 ? "" : "+";
-            const zColor  = zValue < 0 ? "#60a5fa" : "#34d399";
-
-            tooltip.innerHTML = `
-              <div style="
-                color: #94a3b8;
-                font-size: 9px;
-                letter-spacing: 0.1em;
-                text-transform: uppercase;
-                margin-bottom: 6px;
-                border-bottom: 1px solid rgba(255,255,255,0.08);
-                padding-bottom: 5px;
-              ">${title}</div>
-
-              <div style="margin-bottom: 8px;">
-                <div style="color: #64748b; font-size: 9px; margin-bottom: 1px;">${zLabel}</div>
-                <div style="font-size: 16px; font-weight: 900; color: ${zColor}; letter-spacing: -0.02em;">
-                  ${zSign}${zValue.toFixed(3)}
-                  <span style="font-size: 10px; font-weight: 600; color: #64748b; margin-left: 2px;">m</span>
-                </div>
-              </div>
-
-              <div style="
-                display: flex;
-                align-items: center;
-                gap: 7px;
-                padding-top: 6px;
-                border-top: 1px solid rgba(255,255,255,0.07);
-                margin-bottom: 6px;
-              ">
-                <div style="
-                  width: 16px; height: 16px; border-radius: 5px; flex-shrink: 0;
-                  background: rgb(${rVal},${gVal},${bVal});
-                  border: 1px solid rgba(255,255,255,0.2);
-                  box-shadow: 0 0 6px rgba(${rVal},${gVal},${bVal},0.5);
-                "></div>
-                <span style="color: #475569; font-size: 9px;">
-                  rgb(${rVal},&nbsp;${gVal},&nbsp;${bVal})
-                </span>
-              </div>
-
-              <div style="color: #334155; font-size: 8px; letter-spacing: 0.03em;">
-                ${lat.toFixed(6)}°,&nbsp;${lng.toFixed(6)}°
-              </div>
-            `;
-
-            tooltip.style.display = "block";
-
-            // Posisi tooltip — ikuti kursor, offset agar tidak tertutup
-            const mx = e.originalEvent.clientX;
-            const my = e.originalEvent.clientY;
-            const tw = 180; // perkiraan lebar tooltip
-            const th = 140; // perkiraan tinggi tooltip
-            const vw = window.innerWidth;
-            const vh = window.innerHeight;
-
-            tooltip.style.left = (mx + 16 + tw > vw ? mx - tw - 8 : mx + 16) + "px";
-            tooltip.style.top  = (my + th > vh ? my - th - 8 : my + 8) + "px";
-
-          } catch {
-            tooltip.style.display = "none";
           }
+
+          tooltip.innerHTML = buildTooltipHtml(lat, lng, zValue, rVal, gVal, bVal, isMobile);
+          tooltip.style.display = "block";
         };
 
-        const onMouseOut = () => {
-          if (tooltipRef.current) tooltipRef.current.style.display = "none";
-        };
+        // ── DESKTOP: mousemove tooltip ───────────────────────────────────
+        if (!isTouchDevice()) {
+          const onMouseMove = (e: L.LeafletMouseEvent) => {
+            const tooltip = tooltipRef.current;
+            if (!tooltip) return;
 
-        if (isMounted) {
-          map.on("mousemove", onMouseMove);
-          map.on("mouseout",  onMouseOut);
+            processCoord(e.latlng.lat, e.latlng.lng, false);
 
-          // Simpan cleanup function di layer object
-          layerRef.current._cleanupEvents = () => {
-            map.off("mousemove", onMouseMove);
-            map.off("mouseout",  onMouseOut);
+            if (tooltip.style.display === "block") {
+              const cx = e.originalEvent.clientX;
+              const cy = e.originalEvent.clientY;
+              const tw = 185;
+              const th = 145;
+              tooltip.style.left = (cx + 16 + tw > window.innerWidth  ? cx - tw - 8 : cx + 16) + "px";
+              tooltip.style.top  = (cy + th      > window.innerHeight ? cy - th - 8 : cy + 8)  + "px";
+            }
           };
+
+          const onMouseOut = () => {
+            if (tooltipRef.current) tooltipRef.current.style.display = "none";
+          };
+
+          if (isMounted) {
+            map.on("mousemove", onMouseMove);
+            map.on("mouseout",  onMouseOut);
+            layerRef.current._cleanupEvents = () => {
+              map.off("mousemove", onMouseMove);
+              map.off("mouseout",  onMouseOut);
+            };
+          }
+        }
+
+        // ── MOBILE/TABLET: tap → bottom sheet ───────────────────────────
+        if (isTouchDevice()) {
+          const onTap = (e: L.LeafletMouseEvent) => {
+            const tooltip = tooltipRef.current;
+            if (!tooltip) return;
+
+            processCoord(e.latlng.lat, e.latlng.lng, true);
+
+            if (tooltip.style.display === "block") {
+              // Override style ke bottom sheet
+              tooltip.style.cssText = `
+                position: fixed;
+                pointer-events: auto;
+                z-index: 99999;
+                background: rgba(8, 15, 30, 0.96);
+                border: 1px solid rgba(255,255,255,0.12);
+                border-bottom: none;
+                color: white;
+                padding: 16px 20px 24px;
+                border-radius: 20px 20px 0 0;
+                font-size: 12px;
+                font-family: ui-monospace, monospace;
+                font-weight: 600;
+                display: block;
+                width: 100%;
+                left: 0;
+                bottom: 0;
+                right: 0;
+                line-height: 1.7;
+                box-shadow: 0 -8px 32px rgba(0,0,0,0.5);
+              `;
+
+              // Tombol close
+              setTimeout(() => {
+                document.getElementById('close-dem-tooltip')?.addEventListener('click', () => {
+                  if (tooltipRef.current) tooltipRef.current.style.display = "none";
+                }, { once: true });
+              }, 50);
+            }
+          };
+
+          if (isMounted) {
+            map.on("click", onTap);
+            layerRef.current._cleanupEvents = () => {
+              map.off("click", onTap);
+            };
+          }
         }
 
       } catch (e) {
@@ -284,15 +372,18 @@ const GeoTIFFLayer = ({ url, isVisible, title }: {
         layerRef.current = null;
       }
       georasterRef.current = null;
+      elevRef.current = null;
       if (tooltipRef.current) tooltipRef.current.style.display = "none";
     };
-  }, [url, map, isVisible, title]);
+  }, [url, elevUrl, map, isVisible, title]);
 
   return null;
 };
 
 // ---------------------------------------------------------------------------
 // LAYER GROUPS
+// ✅ Setiap DEM punya filePath (RGB visual) + elevPath (single-band elevation)
+// Ganti elevPath dengan nama file asli setelah export dari QGIS/ArcGIS
 // ---------------------------------------------------------------------------
 const layerGroups = [
   {
@@ -321,20 +412,62 @@ const layerGroups = [
     groupId: "dem", title: "Digital Elevation Model",
     icon: <ImageIcon size={18} className="text-purple-500" />,
     subLayers: [
-      { id: "dem_tabularasa",      filePath: "/data/dem/DEM_Tabularasa_RGB_1m_WGS84.tif",              title: "DEM Tabularasa Shipwreck", project: "Site 1", color: "#8b5cf6", dash: "0", isDummy: false, isRaster: true },
-      { id: "dem_poso",            filePath: "/data/dem/DEM_Poso_RGB_1m_WGS84.tif",                    title: "DEM Poso Shipwreck",       project: "Site 2", color: "#ec4899", dash: "0", isDummy: false, isRaster: true },
-      { id: "dem_perairandangkal", filePath: "/data/dem/DEM_PerairanDangkal_RGB_1m_WGS84.tif",         title: "DEM Perairan Dangkal",     project: "Site 3", color: "#06b6d4", dash: "0", isDummy: false, isRaster: true },
-      { id: "dem_pesisirpanggang", filePath: "/data/dem/DEM_PesisirPanggangRidge_RGB_1m_WGS84.tif",   title: "DEM Pesisir Panggang",     project: "Site 4", color: "#f97316", dash: "0", isDummy: false, isRaster: true },
-      { id: "dem_kanalpramuka",    filePath: "/data/dem/DEM_KanalPramuka_RGB_1m.tif",                  title: "DEM Kanal Pramuka",        project: "Site 5", color: "#22c55e", dash: "0", isDummy: false, isRaster: true },
-      { id: "dem_pesisirpramuka",  filePath: "/data/dem/DEM_PesisirPramuka_ProjectALB_RGB_0.5m_WGS84.tif", title: "DEM Pesisir Pramuka", project: "Site 6", color: "#eab308", dash: "0", isDummy: false, isRaster: true },
+      {
+        id: "dem_tabularasa",
+        filePath: "/data/dem/DEM_Tabularasa_RGB_1m_WGS84.tif",
+        // TODO: ganti dengan nama file elevation asli setelah export dari QGIS
+        elevPath: "/data/dem/elev/DEM_Tabularasa_elev_1m_WGS84.tif",
+        title: "DEM Tabularasa Shipwreck", project: "Site 1",
+        color: "#8b5cf6", dash: "0", isDummy: false, isRaster: true,
+      },
+      {
+        id: "dem_poso",
+        filePath: "/data/dem/DEM_Poso_RGB_1m_WGS84.tif",
+        // TODO: ganti dengan nama file elevation asli
+        elevPath: "/data/dem/elev/DEM_Poso_elev_1m_WGS84.tif",
+        title: "DEM Poso Shipwreck", project: "Site 2",
+        color: "#ec4899", dash: "0", isDummy: false, isRaster: true,
+      },
+      {
+        id: "dem_perairandangkal",
+        filePath: "/data/dem/DEM_PerairanDangkal_RGB_1m_WGS84.tif",
+        // TODO: ganti dengan nama file elevation asli
+        elevPath: "/data/dem/elev/DEM_PerairanDangkal_elev_1m_WGS84.tif",
+        title: "DEM Perairan Dangkal", project: "Site 3",
+        color: "#06b6d4", dash: "0", isDummy: false, isRaster: true,
+      },
+      {
+        id: "dem_pesisirpanggang",
+        filePath: "/data/dem/DEM_PesisirPanggangRidge_RGB_1m_WGS84.tif",
+        // TODO: ganti dengan nama file elevation asli
+        elevPath: "/data/dem/elev/DEM_PesisirPanggang_elev_1m_WGS84.tif",
+        title: "DEM Pesisir Panggang", project: "Site 4",
+        color: "#f97316", dash: "0", isDummy: false, isRaster: true,
+      },
+      {
+        id: "dem_kanalpramuka",
+        filePath: "/data/dem/DEM_KanalPramuka_RGB_1m.tif",
+        // TODO: ganti dengan nama file elevation asli
+        elevPath: "/data/dem/elev/DEM_KanalPramuka_elev_1m.tif",
+        title: "DEM Kanal Pramuka", project: "Site 5",
+        color: "#22c55e", dash: "0", isDummy: false, isRaster: true,
+      },
+      {
+        id: "dem_pesisirpramuka",
+        filePath: "/data/dem/DEM_PesisirPramuka_ProjectALB_RGB_0.5m_WGS84.tif",
+        // TODO: ganti dengan nama file elevation asli
+        elevPath: "/data/dem/elev/DEM_PesisirPramuka_elev_0.5m_WGS84.tif",
+        title: "DEM Pesisir Pramuka", project: "Site 6",
+        color: "#eab308", dash: "0", isDummy: false, isRaster: true,
+      },
     ]
   }
 ];
 
 const baseMaps = [
-  { id: 'osm',       name: 'Open Street Map', url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',                                                thumbnail: 'https://a.tile.openstreetmap.org/0/0/0.png' },
-  { id: 'satellite', name: 'Satellite',       url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',     thumbnail: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/10/546/388' },
-  { id: 'dark',      name: 'Esri Dark',       url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',                                     thumbnail: 'https://a.basemaps.cartocdn.com/dark_all/0/0/0.png' },
+  { id: 'osm',       name: 'Open Street Map', url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',                                            thumbnail: 'https://a.tile.openstreetmap.org/0/0/0.png' },
+  { id: 'satellite', name: 'Satellite',       url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', thumbnail: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/10/546/388' },
+  { id: 'dark',      name: 'Esri Dark',       url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',                                thumbnail: 'https://a.basemaps.cartocdn.com/dark_all/0/0/0.png' },
 ];
 
 const PANEL_W = { mobile: 280, tablet: 300, desktop: 360 };
@@ -427,7 +560,6 @@ const Mapping2D = () => {
           <TileLayer url={activeBasemap.url} maxZoom={24} maxNativeZoom={19} />
           <AutoFitBounds geoData={geoData} />
 
-          {/* GeoJSON vector layers */}
           {layerGroups.flatMap(g => g.subLayers).map(config => {
             // @ts-ignore
             if (config.isRaster) return null;
@@ -464,7 +596,7 @@ const Mapping2D = () => {
             );
           })}
 
-          {/* ✅ GeoTIFF raster layers — sekarang dengan prop title untuk tooltip */}
+          {/* ✅ GeoTIFF — pass elevPath untuk Z value dari single band */}
           {layerGroups.flatMap(g => g.subLayers).map(config => {
             // @ts-ignore
             if (!config.isRaster) return null;
@@ -472,8 +604,9 @@ const Mapping2D = () => {
               <GeoTIFFLayer
                 key={`raster-${config.id}`}
                 url={config.filePath}
+                elevUrl={(config as any).elevPath}  // ✅ file single-band untuk Z
                 isVisible={activeSubLayers[config.id]}
-                title={config.title}  // ✅ pass title ke tooltip
+                title={config.title}
               />
             );
           })}
@@ -545,10 +678,9 @@ const Mapping2D = () => {
             <h2 className="text-lg md:text-xl lg:text-2xl font-black text-gray-900 dark:text-white tracking-tighter uppercase flex items-center gap-2 md:gap-3">
               <Layers className="text-blue-600" size={20} /> 2D <span className="text-blue-600">Data</span>
             </h2>
-            {/* ✅ Hint tooltip untuk user */}
             <p className="text-[9px] text-gray-400 mt-1.5 flex items-center gap-1">
               <MousePointer2 size={9} className="text-blue-400" />
-              Hover on DEM layer to inspect Z value
+              Hover / tap DEM to inspect depth value
             </p>
           </div>
 
@@ -609,7 +741,7 @@ const Mapping2D = () => {
                             className="px-3 pb-3 text-[9px] text-gray-500 italic border-t border-gray-100 dark:border-white/5 pt-2 bg-white/50 dark:bg-black/20"
                           >
                             {(layer as any).isRaster
-                              ? `Format: GeoTIFF RGB. Hover to inspect Z value — ${layer.title}.`
+                              ? `RGB visualization + single-band depth query — ${layer.title}.`
                               : "Format: WGS84 GeoJSON. Right-click to focus."}
                           </motion.div>
                         )}
