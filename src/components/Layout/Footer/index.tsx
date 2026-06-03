@@ -118,12 +118,12 @@ const Footer: FC = () => {
               <span>Pramuka Island, Kepulauan Seribu, DKI Jakarta</span>
             </div>
 
-            {/* YouTube CTA */}
+            {/* YouTube CTA 
             <Link
               href="https://www.youtube.com/watch?v=YOUR_VIDEO_ID"
               target="_blank"
               className="inline-flex items-center gap-3 self-start bg-[#FF0000]/10 hover:bg-[#FF0000]/20 border border-[#FF0000]/25 hover:border-[#FF0000]/50 px-4 sm:px-5 py-3 rounded-2xl transition-all duration-300 group w-full sm:w-auto"
-            >
+            > 
               <div className="bg-[#FF0000] p-1.5 rounded-lg group-hover:scale-110 transition-transform flex-shrink-0">
                 <Youtube size={16} color="white" fill="white" />
               </div>
@@ -132,8 +132,9 @@ const Footer: FC = () => {
                 <p className="text-white/40 text-[10px] font-medium">WebGIS Storymap Tutorial</p>
               </div>
               <ArrowUpRight size={14} className="text-white/30 group-hover:text-white/70 ml-auto flex-shrink-0 transition-colors" />
-            </Link>
-          </motion.div>
+            </Link> */}
+          </motion.div> 
+          
 
           {/* Navigation Column */}
           <motion.div
