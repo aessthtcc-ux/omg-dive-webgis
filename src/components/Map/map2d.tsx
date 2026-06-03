@@ -194,7 +194,7 @@ const GeoTIFFLayer = ({ url, elevUrl, isVisible, title }: {
               <div style="padding:10px 11px 9px;">
                 <!-- Z label -->
                 <div style="color:rgba(255,255,255,0.25);font-size:7.5px;font-weight:800;letter-spacing:0.14em;text-transform:uppercase;margin-bottom:2px;">
-                  ${hasZ ? (isD ? "DEPTH" : "ELEVATION") : "Z VALUE"}
+                  ${hasZ ? (isD ? "DEPTH" : "DEPTH") : "Z VALUE"}
                 </div>
                 <!-- Z value -->
                 <div style="display:flex;align-items:baseline;gap:3px;margin-bottom:${isD?'7px':'10px'};">
@@ -291,57 +291,32 @@ const GeoTIFFLayer = ({ url, elevUrl, isVisible, title }: {
           if (tooltipRef.current) tooltipRef.current.style.display = "none";
         };
 
-        // ── MOBILE/TABLET: touchmove continuous + tap toggle ────────────
-        // Saat jari sliding → tooltip terus update ikut jari
-        // Saat jari angkat (touchend) → tooltip tetap tampil 3 detik
-        // Tap di area kosong (bukan raster) → tooltip hilang
+        // ── MOBILE/TABLET: tap → melayang di dekat titik tap ────────────
+        // Toggle: tap pertama = tampil, tap lagi = hilang
+        // Auto-hide setelah 4 detik
         let hideTimer: ReturnType<typeof setTimeout> | null = null;
-        let isTouching = false;
 
-        const mapContainer = map.getContainer();
+        const onTap = (e: L.LeafletMouseEvent) => {
+          if (hideTimer) clearTimeout(hideTimer);
+          const tip = tooltipRef.current;
+          if (!tip) return;
 
-        const onTouchMove = (e: TouchEvent) => {
-          if (!isTouching) return;
-          if (hideTimer) { clearTimeout(hideTimer); hideTimer = null; }
+          // Toggle off kalau sudah tampil
+          if (tip.style.display === "block") {
+            tip.style.display = "none";
+            return;
+          }
 
-          const touch = e.touches[0];
-          if (!touch) return;
-
-          // Convert touch clientX/Y ke latlng via Leaflet
-          const rect = mapContainer.getBoundingClientRect();
-          const point = L.point(
-            touch.clientX - rect.left,
-            touch.clientY - rect.top
+          processAndShow(
+            e.latlng.lat, e.latlng.lng,
+            e.originalEvent.clientX, e.originalEvent.clientY
           );
-          const latlng = map.containerPointToLatLng(point);
 
-          processAndShow(latlng.lat, latlng.lng, touch.clientX, touch.clientY);
-        };
-
-        const onTouchStart = (e: TouchEvent) => {
-          isTouching = true;
-          if (hideTimer) { clearTimeout(hideTimer); hideTimer = null; }
-
-          const touch = e.touches[0];
-          if (!touch) return;
-
-          const rect = mapContainer.getBoundingClientRect();
-          const point = L.point(
-            touch.clientX - rect.left,
-            touch.clientY - rect.top
-          );
-          const latlng = map.containerPointToLatLng(point);
-
-          processAndShow(latlng.lat, latlng.lng, touch.clientX, touch.clientY);
-        };
-
-        const onTouchEnd = () => {
-          isTouching = false;
-          // Tooltip tetap tampil 3 detik setelah jari diangkat
-          if (tooltipRef.current?.style.display === "block") {
+          // Auto-hide setelah 4 detik
+          if (tip.style.display === "block") {
             hideTimer = setTimeout(() => {
               if (tooltipRef.current) tooltipRef.current.style.display = "none";
-            }, 3000);
+            }, 4000);
           }
         };
 
@@ -350,18 +325,9 @@ const GeoTIFFLayer = ({ url, elevUrl, isVisible, title }: {
             ('ontouchstart' in window || navigator.maxTouchPoints > 0);
 
           if (isTouch) {
-            // Pakai native touch events langsung di map container
-            // lebih responsive dari Leaflet click event
-            mapContainer.addEventListener('touchstart',  onTouchStart, { passive: true });
-            mapContainer.addEventListener('touchmove',   onTouchMove,  { passive: true });
-            mapContainer.addEventListener('touchend',    onTouchEnd,   { passive: true });
-            mapContainer.addEventListener('touchcancel', onTouchEnd,   { passive: true });
-
+            map.on("click", onTap);
             layerRef.current._cleanupEvents = () => {
-              mapContainer.removeEventListener('touchstart',  onTouchStart);
-              mapContainer.removeEventListener('touchmove',   onTouchMove);
-              mapContainer.removeEventListener('touchend',    onTouchEnd);
-              mapContainer.removeEventListener('touchcancel', onTouchEnd);
+              map.off("click", onTap);
               if (hideTimer) clearTimeout(hideTimer);
             };
           } else {
