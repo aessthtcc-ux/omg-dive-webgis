@@ -598,7 +598,12 @@ const DiveEnvironmentProfile = () => {
                     : "bg-white/15 text-white hover:bg-white/25 border border-white/20"
                 }`}>
                 {s.icon}
-                <span>{s.label}</span>
+                <span className="hidden sm:inline">{s.label}</span>
+                <span className="sm:hidden">{
+                  s.label === "West Monsoon" ? "West" :
+                  s.label === "East Monsoon" ? "East" :
+                  "Trans"
+                }</span>
               </button>
             ))}
           </div>
