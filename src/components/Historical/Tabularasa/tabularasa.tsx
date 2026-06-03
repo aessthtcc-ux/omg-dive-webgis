@@ -37,7 +37,7 @@ const Tabularasa = () => {
                 className={`flex-1 md:flex-none px-4 md:px-8 py-2 md:py-3 rounded-lg md:rounded-xl text-sm md:text-base font-bold transition-colors ${
                   activeWreck === tab ? "bg-primary text-white shadow-md" : "hover:bg-primary/10 text-gray-500"
                 }`}>
-                {tab === "tabularasa" ? "Tabularasa" : "Poso Wreck"}
+                {tab === "tabularasa" ? "Tabularasa Wreck" : "Poso Wreck"}
               </button>
             ))}
           </div>

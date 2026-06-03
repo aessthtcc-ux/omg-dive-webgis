@@ -188,13 +188,10 @@ const MapContent = () => {
             <Popup>
               <div className="p-3">
                 <div className="font-bold text-xs text-gray-800 border-b border-gray-100 pb-1.5 mb-1.5">
-                  Pulau Pramuka Base
+                  Pulau Pramuka 
                 </div>
                 <div className="text-[10px] font-mono text-gray-500 mb-1">
                   {posPulauPramuka[0]}, {posPulauPramuka[1]}
-                </div>
-                <div className="text-[10px] text-blue-500 font-medium italic">
-                  Klik untuk melacak bangkai kapal
                 </div>
               </div>
             </Popup>
