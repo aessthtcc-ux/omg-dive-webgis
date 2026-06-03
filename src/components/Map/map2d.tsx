@@ -291,32 +291,57 @@ const GeoTIFFLayer = ({ url, elevUrl, isVisible, title }: {
           if (tooltipRef.current) tooltipRef.current.style.display = "none";
         };
 
-        // ── MOBILE/TABLET: tap → melayang di dekat titik tap ────────────
-        // Toggle: tap pertama = tampil, tap lagi = hilang
-        // Auto-hide setelah 4 detik
+        // ── MOBILE/TABLET: touchmove continuous + tap toggle ────────────
+        // Saat jari sliding → tooltip terus update ikut jari
+        // Saat jari angkat (touchend) → tooltip tetap tampil 3 detik
+        // Tap di area kosong (bukan raster) → tooltip hilang
         let hideTimer: ReturnType<typeof setTimeout> | null = null;
+        let isTouching = false;
 
-        const onTap = (e: L.LeafletMouseEvent) => {
-          if (hideTimer) clearTimeout(hideTimer);
-          const tip = tooltipRef.current;
-          if (!tip) return;
+        const mapContainer = map.getContainer();
 
-          // Toggle off kalau sudah tampil
-          if (tip.style.display === "block") {
-            tip.style.display = "none";
-            return;
-          }
+        const onTouchMove = (e: TouchEvent) => {
+          if (!isTouching) return;
+          if (hideTimer) { clearTimeout(hideTimer); hideTimer = null; }
 
-          processAndShow(
-            e.latlng.lat, e.latlng.lng,
-            e.originalEvent.clientX, e.originalEvent.clientY
+          const touch = e.touches[0];
+          if (!touch) return;
+
+          // Convert touch clientX/Y ke latlng via Leaflet
+          const rect = mapContainer.getBoundingClientRect();
+          const point = L.point(
+            touch.clientX - rect.left,
+            touch.clientY - rect.top
           );
+          const latlng = map.containerPointToLatLng(point);
 
-          // Auto-hide setelah 4 detik
-          if (tip.style.display === "block") {
+          processAndShow(latlng.lat, latlng.lng, touch.clientX, touch.clientY);
+        };
+
+        const onTouchStart = (e: TouchEvent) => {
+          isTouching = true;
+          if (hideTimer) { clearTimeout(hideTimer); hideTimer = null; }
+
+          const touch = e.touches[0];
+          if (!touch) return;
+
+          const rect = mapContainer.getBoundingClientRect();
+          const point = L.point(
+            touch.clientX - rect.left,
+            touch.clientY - rect.top
+          );
+          const latlng = map.containerPointToLatLng(point);
+
+          processAndShow(latlng.lat, latlng.lng, touch.clientX, touch.clientY);
+        };
+
+        const onTouchEnd = () => {
+          isTouching = false;
+          // Tooltip tetap tampil 3 detik setelah jari diangkat
+          if (tooltipRef.current?.style.display === "block") {
             hideTimer = setTimeout(() => {
               if (tooltipRef.current) tooltipRef.current.style.display = "none";
-            }, 4000);
+            }, 3000);
           }
         };
 
@@ -325,9 +350,18 @@ const GeoTIFFLayer = ({ url, elevUrl, isVisible, title }: {
             ('ontouchstart' in window || navigator.maxTouchPoints > 0);
 
           if (isTouch) {
-            map.on("click", onTap);
+            // Pakai native touch events langsung di map container
+            // lebih responsive dari Leaflet click event
+            mapContainer.addEventListener('touchstart',  onTouchStart, { passive: true });
+            mapContainer.addEventListener('touchmove',   onTouchMove,  { passive: true });
+            mapContainer.addEventListener('touchend',    onTouchEnd,   { passive: true });
+            mapContainer.addEventListener('touchcancel', onTouchEnd,   { passive: true });
+
             layerRef.current._cleanupEvents = () => {
-              map.off("click", onTap);
+              mapContainer.removeEventListener('touchstart',  onTouchStart);
+              mapContainer.removeEventListener('touchmove',   onTouchMove);
+              mapContainer.removeEventListener('touchend',    onTouchEnd);
+              mapContainer.removeEventListener('touchcancel', onTouchEnd);
               if (hideTimer) clearTimeout(hideTimer);
             };
           } else {
