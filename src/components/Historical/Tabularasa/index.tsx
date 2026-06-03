@@ -310,4 +310,4 @@ const WildlifeSightings = () => {
   );
 };
 
-export default WildlifeSightings;
+export default WildlifeSightings;/*  */
