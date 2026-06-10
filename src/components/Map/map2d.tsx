@@ -21,6 +21,7 @@ const GeoJSON      = dynamic(() => import("react-leaflet").then((mod) => mod.Geo
 const ZoomControl  = dynamic(() => import("react-leaflet").then((mod) => mod.ZoomControl),  { ssr: false });
 const Marker       = dynamic(() => import("react-leaflet").then((mod) => mod.Marker),       { ssr: false });
 const Popup        = dynamic(() => import("react-leaflet").then((mod) => mod.Popup),        { ssr: false });
+const Pane         = dynamic(() => import("react-leaflet").then((mod) => mod.Pane),         { ssr: false });
 
 const AutoFitBounds = ({ geoData }: { geoData: Record<string, any> }) => {
   const { useMap: useMapLeaflet } = require("react-leaflet");
@@ -418,8 +419,8 @@ const layerGroups = [
     groupId: "kontur", title: "Contour Lines",
     icon: <Activity size={18} className="text-teal-400" />,
     subLayers: [
-      { id: "kontur_tabularasa", filePath: "/data/kontur/kontur_tabularasa.geojson", title: "Kontur Tabularasa", project: "Site 1", color: "#2dd4bf", dash: "4, 3" },
-      { id: "kontur_poso",       filePath: "/data/kontur/kontur_poso.geojson",       title: "Kontur Poso",       project: "Site 2", color: "#fb923c", dash: "4, 3" },
+      { id: "kontur_tabularasa", filePath: "/data/kontur/Kontur_Tabularasa_Interval_1m.geojson", title: "Kontur Tabularasa", project: "Site 1", color: "#2dd4bf", dash: "4, 3" },
+      { id: "kontur_poso",       filePath: "/data/kontur/Kontur_Poso_Interval_1m.geojson",       title: "Kontur Poso",       project: "Site 2", color: "#fb923c", dash: "4, 3" },
     ]
   },
   {
@@ -570,90 +571,7 @@ const Mapping2D = () => {
           <TileLayer url={activeBasemap.url} maxZoom={24} maxNativeZoom={19} />
           <AutoFitBounds geoData={geoData} />
 
-          {/* Pin markers Tabularasa & Poso */}
-          <PinMarkers />
-
-          {/* GeoJSON vector layers */}
-          {layerGroups.flatMap(g => g.subLayers).map(config => {
-            // @ts-ignore
-            if (config.isRaster) return null;
-            const data = geoData[config.id];
-            // @ts-ignore
-            if (!activeSubLayers[config.id] || !data?.type || config.isDummy) return null;
-
-            // @ts-ignore
-            const isKonturLayer = config.groupId === "kontur" ||
-              ["kontur_tabularasa", "kontur_poso"].includes(config.id);
-
-            // Style function per-feature (hanya untuk kontur, lainnya pakai objek statis)
-            const styleFn = isKonturLayer
-              ? (feature: any) => {
-                  const elev: number = feature?.properties?.ELEV ?? 0;
-                  const isIndex = Math.round(Math.abs(elev)) % 5 === 0;
-                  return {
-                    color:       config.color,
-                    weight:      isIndex ? 2.5 : 0.8,
-                    opacity:     isIndex ? 1   : 0.45,
-                    dashArray:   isIndex ? "0" : "0",
-                    fillOpacity: 0,
-                  };
-                }
-              : {
-                  color:       config.color,
-                  weight:      (config as any).isPolygon ? 2 : 4,
-                  opacity:     0.9,
-                  dashArray:   config.dash,
-                  fillColor:   config.color,
-                  fillOpacity: (config as any).isPolygon ? 0.15 : 0,
-                };
-
-            return (
-              <GeoJSON
-                key={`geojson-${config.id}-${data.features?.length||0}`}
-                data={data}
-                style={styleFn as any}
-                eventHandlers={{ contextmenu: e => { const l=e.target; if(l._map) l._map.flyToBounds(l.getBounds(),{padding:[100,100],duration:1.5,maxZoom:20}); }}}
-                onEachFeature={(feature, layer: any) => {
-                  if ((config as any).isPolygon) {
-                    const c = layer.getBounds().getCenter();
-                    layer.bindTooltip(config.title, { permanent:true, direction:'center', className:'permanent-label' });
-                    layer.bindPopup(`<div class="p-2"><div class="text-[10px] font-black text-red-500 uppercase tracking-widest border-b border-gray-100 mb-2 pb-1">Area Boundary</div><div class="text-sm font-bold text-gray-800 uppercase">${config.title}</div><div class="text-[11px] text-gray-500 mt-1 italic font-mono">Center: ${c.lat.toFixed(5)}, ${c.lng.toFixed(5)}</div></div>`);
-                  } else if (isKonturLayer) {
-                    const elev: number = feature?.properties?.ELEV ?? null;
-                    const isIndex = elev !== null && Math.round(Math.abs(elev)) % 5 === 0;
-                    // Tooltip hover (sticky, BUKAN permanent) — aman untuk polyline
-                    layer.bindTooltip(
-                      elev !== null ? `${elev} m` : config.title,
-                      {
-                        permanent:  false,
-                        sticky:     true,
-                        direction:  'auto',
-                        className:  isIndex ? 'kontur-index-label' : '',
-                      }
-                    );
-                    // Popup untuk semua kontur
-                    const indexBadge = isIndex
-                      ? `<span style="background:#0d9488;color:white;font-size:7px;font-weight:800;padding:1px 5px;border-radius:4px;letter-spacing:0.1em;text-transform:uppercase;">INDEX</span>`
-                      : `<span style="background:#374151;color:#9ca3af;font-size:7px;font-weight:800;padding:1px 5px;border-radius:4px;letter-spacing:0.1em;text-transform:uppercase;">1m</span>`;
-                    layer.bindPopup(`<div class="p-2">
-                      <div style="display:flex;align-items:center;gap:6px;" class="border-b border-gray-100 mb-2 pb-1">
-                        <span class="text-[10px] font-black text-teal-500 uppercase tracking-widest">Contour</span>
-                        ${indexBadge}
-                      </div>
-                      <div class="text-sm font-bold text-gray-800">${elev !== null ? elev + ' m' : 'N/A'}</div>
-                      <div class="text-[11px] text-gray-500 mt-1 italic">${config.title} — ${config.project}</div>
-                    </div>`);
-                  } else {
-                    const elev = feature?.properties?.depth ?? feature?.properties?.elevation ?? feature?.properties?.z ?? feature?.properties?.contour ?? null;
-                    const elevLabel = elev !== null ? `<div class="text-[11px] text-gray-500 mt-1">Elevation: <b>${elev} m</b></div>` : "";
-                    layer.bindPopup(`<div class="p-2"><div class="text-[10px] font-black text-blue-500 uppercase tracking-widest border-b border-gray-100 mb-2 pb-1">Survey Segment</div><div class="text-sm font-bold text-gray-800 uppercase italic">${config.title}</div><div class="text-[11px] text-gray-500 mt-1 italic">Project: ${config.project}</div>${elevLabel}</div>`);
-                  }
-                }}
-              />
-            );
-          })}
-
-          {/* GeoTIFF raster layers */}
+          {/* 1 — GeoTIFF raster layers (paling bawah) */}
           {layerGroups.flatMap(g => g.subLayers).map(config => {
             // @ts-ignore
             if (!config.isRaster) return null;
@@ -667,6 +585,94 @@ const Mapping2D = () => {
               />
             );
           })}
+
+          {/* 2 — Kontur di Pane khusus zIndex 450, di atas raster DEM ~200 */}
+          <Pane name="kontur-pane" style={{ zIndex: 450 }}>
+            {layerGroups.flatMap(g => g.subLayers).map(config => {
+              if (!["kontur_tabularasa", "kontur_poso"].includes(config.id)) return null;
+              const data = geoData[config.id];
+              if (!activeSubLayers[config.id] || !data?.type) return null;
+              const styleFn = (feature: any) => {
+                const elev: number = feature?.properties?.ELEV ?? 0;
+                const isIndex = Math.round(Math.abs(elev)) % 5 === 0;
+                return {
+                  color:       config.color,
+                  weight:      isIndex ? 2.5 : 0.8,
+                  opacity:     isIndex ? 1   : 0.45,
+                  fillOpacity: 0,
+                };
+              };
+              return (
+                <GeoJSON
+                  key={`geojson-${config.id}-${data.features?.length||0}`}
+                  data={data}
+                  style={styleFn as any}
+                  eventHandlers={{ contextmenu: e => { const l=e.target; if(l._map) l._map.flyToBounds(l.getBounds(),{padding:[100,100],duration:1.5,maxZoom:20}); }}}
+                  onEachFeature={(feature, layer: any) => {
+                    const elev: number = feature?.properties?.ELEV ?? null;
+                    const isIndex = elev !== null && Math.round(Math.abs(elev)) % 5 === 0;
+                    layer.bindTooltip(
+                      elev !== null ? `${elev} m` : config.title,
+                      { permanent: false, sticky: true, direction: "auto", className: isIndex ? "kontur-index-label" : "" }
+                    );
+                    const indexBadge = isIndex
+                      ? `<span style="background:#0d9488;color:white;font-size:7px;font-weight:800;padding:1px 5px;border-radius:4px;text-transform:uppercase;">INDEX</span>`
+                      : `<span style="background:#374151;color:#9ca3af;font-size:7px;font-weight:800;padding:1px 5px;border-radius:4px;text-transform:uppercase;">1m</span>`;
+                    layer.bindPopup(`<div class="p-2">
+                      <div style="display:flex;align-items:center;gap:6px;" class="border-b border-gray-100 mb-2 pb-1">
+                        <span class="text-[10px] font-black text-teal-500 uppercase tracking-widest">Contour</span>
+                        ${indexBadge}
+                      </div>
+                      <div class="text-sm font-bold text-gray-800">${elev !== null ? elev + " m" : "N/A"}</div>
+                      <div class="text-[11px] text-gray-500 mt-1 italic">${config.title} — ${config.project}</div>
+                    </div>`);
+                  }}
+                />
+              );
+            })}
+          </Pane>
+
+          {/* 3 — Vector lainnya (area boundary, survey lines) */}
+          <Pane name="vector-pane" style={{ zIndex: 500 }}>
+            {layerGroups.flatMap(g => g.subLayers).map(config => {
+              // @ts-ignore
+              if (config.isRaster) return null;
+              if (["kontur_tabularasa", "kontur_poso"].includes(config.id)) return null;
+              const data = geoData[config.id];
+              // @ts-ignore
+              if (!activeSubLayers[config.id] || !data?.type || config.isDummy) return null;
+              const styleFn = {
+                color:       config.color,
+                weight:      (config as any).isPolygon ? 2 : 4,
+                opacity:     0.9,
+                dashArray:   config.dash,
+                fillColor:   config.color,
+                fillOpacity: (config as any).isPolygon ? 0.15 : 0,
+              };
+              return (
+                <GeoJSON
+                  key={`geojson-${config.id}-${data.features?.length||0}`}
+                  data={data}
+                  style={styleFn as any}
+                  eventHandlers={{ contextmenu: e => { const l=e.target; if(l._map) l._map.flyToBounds(l.getBounds(),{padding:[100,100],duration:1.5,maxZoom:20}); }}}
+                  onEachFeature={(feature, layer: any) => {
+                    if ((config as any).isPolygon) {
+                      const c = layer.getBounds().getCenter();
+                      layer.bindTooltip(config.title, { permanent: true, direction: "center", className: "permanent-label" });
+                      layer.bindPopup(`<div class="p-2"><div class="text-[10px] font-black text-red-500 uppercase tracking-widest border-b border-gray-100 mb-2 pb-1">Area Boundary</div><div class="text-sm font-bold text-gray-800 uppercase">${config.title}</div><div class="text-[11px] text-gray-500 mt-1 italic font-mono">Center: ${c.lat.toFixed(5)}, ${c.lng.toFixed(5)}</div></div>`);
+                    } else {
+                      const elev = feature?.properties?.depth ?? feature?.properties?.elevation ?? feature?.properties?.z ?? feature?.properties?.contour ?? null;
+                      const elevLabel = elev !== null ? `<div class="text-[11px] text-gray-500 mt-1">Elevation: <b>${elev} m</b></div>` : "";
+                      layer.bindPopup(`<div class="p-2"><div class="text-[10px] font-black text-blue-500 uppercase tracking-widest border-b border-gray-100 mb-2 pb-1">Survey Segment</div><div class="text-sm font-bold text-gray-800 uppercase italic">${config.title}</div><div class="text-[11px] text-gray-500 mt-1 italic">Project: ${config.project}</div>${elevLabel}</div>`);
+                    }
+                  }}
+                />
+              );
+            })}
+          </Pane>
+
+          {/* 4 — Pin markers paling atas */}
+          <PinMarkers />
 
           <ZoomControl position="bottomright" />
         </MapContainer>
