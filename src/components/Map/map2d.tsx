@@ -418,8 +418,8 @@ const layerGroups = [
     groupId: "kontur", title: "Contour Lines",
     icon: <Activity size={18} className="text-teal-400" />,
     subLayers: [
-      { id: "kontur_tabularasa", filePath: "/data/kontur/Kontur_Tabularasa_Interval_1m.geojson", title: "Kontur Tabularasa", project: "Site 1", color: "#2dd4bf", dash: "4, 3" },
-      { id: "kontur_poso",       filePath: "/data/kontur/Kontur_Poso_Interval_1m.geojson",       title: "Kontur Poso",       project: "Site 2", color: "#fb923c", dash: "4, 3" },
+      { id: "kontur_tabularasa", filePath: "/data/kontur/kontur_tabularasa.geojson", title: "Kontur Tabularasa", project: "Site 1", color: "#2dd4bf", dash: "4, 3" },
+      { id: "kontur_poso",       filePath: "/data/kontur/kontur_poso.geojson",       title: "Kontur Poso",       project: "Site 2", color: "#fb923c", dash: "4, 3" },
     ]
   },
   {
@@ -621,15 +621,16 @@ const Mapping2D = () => {
                   } else if (isKonturLayer) {
                     const elev: number = feature?.properties?.ELEV ?? null;
                     const isIndex = elev !== null && Math.round(Math.abs(elev)) % 5 === 0;
-                    // Label permanen hanya untuk kontur indeks
-                    if (isIndex && elev !== null) {
-                      layer.bindTooltip(`${elev} m`, {
-                        permanent:  true,
-                        direction:  'center',
-                        className:  'kontur-index-label',
-                        sticky:     false,
-                      });
-                    }
+                    // Tooltip hover (sticky, BUKAN permanent) — aman untuk polyline
+                    layer.bindTooltip(
+                      elev !== null ? `${elev} m` : config.title,
+                      {
+                        permanent:  false,
+                        sticky:     true,
+                        direction:  'auto',
+                        className:  isIndex ? 'kontur-index-label' : '',
+                      }
+                    );
                     // Popup untuk semua kontur
                     const indexBadge = isIndex
                       ? `<span style="background:#0d9488;color:white;font-size:7px;font-weight:800;padding:1px 5px;border-radius:4px;letter-spacing:0.1em;text-transform:uppercase;">INDEX</span>`
