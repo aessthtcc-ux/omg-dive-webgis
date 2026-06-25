@@ -208,10 +208,10 @@ const Modal = ({
 
                       <div className="flex-1 min-w-0">
                         <h4 className="text-sm md:text-lg lg:text-xl font-bold text-dark dark:text-white mb-1.5 md:mb-2 leading-snug">
-                          {point.title}
+                          {t(point.title)}
                         </h4>
                         <p className="text-xs md:text-sm lg:text-base text-SlateBlueText dark:text-opacity-80 leading-relaxed text-justify mb-2 md:mb-4">
-                          {point.details}
+                          {t(point.details)}
                         </p>
                         {point.tags && (
                           <div className="flex flex-wrap gap-1 md:gap-2">
