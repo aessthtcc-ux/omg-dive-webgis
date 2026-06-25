@@ -1,7 +1,10 @@
+"use client";
+
 import React, { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Info, Star, Fish, ChevronRight, ChevronLeft } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useTranslationContext } from "@/context/TranslationContext";
 
 interface WildlifeItem {
   id: number;
@@ -18,75 +21,75 @@ interface WildlifeItem {
   scubagoSource?: boolean;
 }
 
-const wildlifeData: WildlifeItem[] = [
+const wildlifeRawData = [
   {
     id: 1, name: "Green Sea Turtle", scientificName: "Chelonia mydas",
     image: "https://cdn.divessi.com/cached/Wildlife_Green_Sea_Turtle_Shutterstock-Shane-Myers-Photography.jpg/400.jpg",
-    likelihood: 4, likelihoodLabel: "Common", bestSeason: "Apr – Oct", depth: "5 – 30 m",
-    behavior: "Frequently observed resting on the wreck bow or grazing on algae along the hull. The high coral cover of Poso (80%) provides ideal resting habitat.",
+    likelihood: 4 as const, likelihoodLabelKey: "Common", bestSeason: "Apr – Oct", depth: "5 – 30 m",
+    behaviorKey: "Frequently observed resting on the wreck bow or grazing on algae along the hull. The high coral cover of Poso (80%) provides ideal resting habitat.",
     tags: ["Protected", "IUCN Endangered"],
   },
   {
     id: 2, name: "Hawksbill Turtle", scientificName: "Eretmochelys imbricata",
     image: "https://cdn.divessi.com/cached/Wildlife_Hawksbill_Turtle_Shutterstock-Ed-Jenkins.jpg/400.jpg",
-    likelihood: 3, likelihoodLabel: "Occasional", bestSeason: "May – Sep", depth: "10 – 30 m",
-    behavior: "Feeds on sponges colonising the wreck structure. More active during morning dives before current picks up.",
+    likelihood: 3 as const, likelihoodLabelKey: "Occasional", bestSeason: "May – Sep", depth: "10 – 30 m",
+    behaviorKey: "Feeds on sponges colonising the wreck structure. More active during morning dives before current picks up.",
     tags: ["Critically Endangered", "Sponge Feeder"],
   },
   {
     id: 3, name: "Moray Eel", scientificName: "Gymnothorax spp.",
     image: "https://cdn.divessi.com/cached/Wildlife_Moray_Eel_Alamy-WaterFrame.jpg/400.jpg",
-    likelihood: 5, likelihoodLabel: "Very Common", bestSeason: "Year-round", depth: "20 – 30 m",
-    behavior: "Permanent resident in the engine room and cargo hold crevices. Multiple individuals often spotted simultaneously during penetration dives.",
+    likelihood: 5 as const, likelihoodLabelKey: "Very Common", bestSeason: "Year-round", depth: "20 – 30 m",
+    behaviorKey: "Permanent resident in the engine room and cargo hold crevices. Multiple individuals often spotted simultaneously during penetration dives.",
     tags: ["Resident", "Nocturnal", "Wreck Dweller"],
   },
   {
     id: 4, name: "Nudibranch", scientificName: "Nudibranchia spp.",
     image: "https://cdn.divessi.com/cached/Wildlife_Nudy01_SSI-Peter-Schinck.jpg/300.jpg",
-    likelihood: 4, likelihoodLabel: "Common", bestSeason: "Year-round", depth: "15 – 30 m",
-    behavior: "Found across coral-encrusted surfaces of the hull and deck. The 80% coral cover of Poso supports exceptionally high nudibranch diversity.",
+    likelihood: 4 as const, likelihoodLabelKey: "Common", bestSeason: "Year-round", depth: "15 – 30 m",
+    behaviorKey: "Found across coral-encrusted surfaces of the hull and deck. The 80% coral cover of Poso supports exceptionally high nudibranch diversity.",
     tags: ["Macro Subject", "Photogenic"],
   },
   {
     id: 5, name: "Butterfly Fish", scientificName: "Chaetodontidae spp.",
     image: "https://cdn.divessi.com/cached/Wildlife_Butterfly_Fish_Shutterstock_Krzysztof-Odziomek.jpg/300.jpg",
-    likelihood: 4, likelihoodLabel: "Common", bestSeason: "May – Oct", depth: "3 – 25 m",
-    behavior: "Pairs patrol the coral-encrusted upper deck and railings, feeding on polyps. More abundant here than Tabularasa due to higher coral cover.",
-    tags: ["Reef Fish", "Photogenic"],  scubagoSource: true,
+    likelihood: 4 as const, likelihoodLabelKey: "Common", bestSeason: "May – Oct", depth: "3 – 25 m",
+    behaviorKey: "Pairs patrol the coral-encrusted upper deck and railings, feeding on polyps. More abundant here than Tabularasa due to higher coral cover.",
+    tags: ["Reef Fish", "Photogenic"], scubagoSource: true,
   },
   {
     id: 6, name: "Clownfish", scientificName: "Amphiprion ocellaris",
     image: "https://cdn.divessi.com/cached/Wildlife_Clownfish_Udo_Kefrig.jpg/300.jpg",
-    likelihood: 4, likelihoodLabel: "Common", bestSeason: "May – Nov", depth: "3 – 15 m",
-    behavior: "Found in anemones growing on shallow sections of the wreck deck. The flat-lying structure of Poso creates ideal shallow anemone habitat.",
-    tags: ["Anemone Host", "Resident"],  scubagoSource: true,
+    likelihood: 4 as const, likelihoodLabelKey: "Common", bestSeason: "May – Nov", depth: "3 – 15 m",
+    behaviorKey: "Found in anemones growing on shallow sections of the wreck deck. The flat-lying structure of Poso creates ideal shallow anemone habitat.",
+    tags: ["Anemone Host", "Resident"], scubagoSource: true,
   },
   {
     id: 7, name: "Lionfish", scientificName: "Pterois volitans",
     image: "https://cdn.divessi.com/cached/Wildlife_Lionfish_iStock-cinoby.jpg/300.jpg",
-    likelihood: 3, likelihoodLabel: "Occasional", bestSeason: "Feb, May, Aug – Oct", depth: "20 – 30 m",
-    behavior: "Lurks in shadowed overhangs and under the wreck hull. Approach with caution — venomous spines. Best spotted during twilight dives.",
-    tags: ["Venomous", "Ambush Predator"],  scubagoSource: true,
+    likelihood: 3 as const, likelihoodLabelKey: "Occasional", bestSeason: "Feb, May, Aug – Oct", depth: "20 – 30 m",
+    behaviorKey: "Lurks in shadowed overhangs and under the wreck hull. Approach with caution — venomous spines. Best spotted during twilight dives.",
+    tags: ["Venomous", "Ambush Predator"], scubagoSource: true,
   },
   {
     id: 8, name: "Surgeonfish", scientificName: "Acanthurus spp.",
     image: "https://cdn.divessi.com/cached/Wildlife_Surgeonfish_iStock-mirecca.jpg/300.jpg",
-    likelihood: 3, likelihoodLabel: "Occasional", bestSeason: "Sep – Oct", depth: "5 – 25 m",
-    behavior: "Schools form around the upper structure during feeding periods. The sharp caudal spine is used defensively — maintain respectful distance.",
-    tags: ["Schooling", "Reef Grazer"],  scubagoSource: true,
+    likelihood: 3 as const, likelihoodLabelKey: "Occasional", bestSeason: "Sep – Oct", depth: "5 – 25 m",
+    behaviorKey: "Schools form around the upper structure during feeding periods. The sharp caudal spine is used defensively — maintain respectful distance.",
+    tags: ["Schooling", "Reef Grazer"], scubagoSource: true,
   },
   {
     id: 9, name: "Stingray", scientificName: "Dasyatis spp.",
     image: "https://cdn.divessi.com/cached/Wildlife_Stingray_iStock-Extreme-Photographer.jpg/300.jpg",
-    likelihood: 2, likelihoodLabel: "Uncommon", bestSeason: "Aug – Nov", depth: "25 – 30 m",
-    behavior: "Rests camouflaged on the sandy seabed surrounding the wreck base. Best spotted on slow circumnavigation dives around the hull perimeter.",
-    tags: ["Benthic", "Sandy Bottom"],  scubagoSource: true,
+    likelihood: 2 as const, likelihoodLabelKey: "Uncommon", bestSeason: "Aug – Nov", depth: "25 – 30 m",
+    behaviorKey: "Rests camouflaged on the sandy seabed surrounding the wreck base. Best spotted on slow circumnavigation dives around the hull perimeter.",
+    tags: ["Benthic", "Sandy Bottom"], scubagoSource: true,
   },
   {
     id: 10, name: "Parrotfish", scientificName: "Scaridae spp.",
     image: "https://cdn.divessi.com/cached/Wildlife_Parrotfish_iStock-burnsboxco.jpg/300.jpg",
-    likelihood: 3, likelihoodLabel: "Occasional", bestSeason: "Mar, Jul, Sep – Oct", depth: "5 – 25 m",
-    behavior: "Grazes on algae and encrusting coral on the hull. The biting sound is often audible underwater. Produces fine white sand as a feeding byproduct.",
+    likelihood: 3 as const, likelihoodLabelKey: "Occasional", bestSeason: "Mar, Jul, Sep – Oct", depth: "5 – 25 m",
+    behaviorKey: "Grazes on algae and encrusting coral on the hull. The biting sound is often audible underwater. Produces fine white sand as a feeding byproduct.",
     tags: ["Reef Grazer", "Sand Producer"], scubagoSource: true,
   },
 ];
@@ -114,20 +117,16 @@ const LikelihoodBar = ({ level }: { level: number }) => {
   );
 };
 
-// ---------------------------------------------------------------------------
-// ✅ DetailModal — via createPortal ke document.body
-// ---------------------------------------------------------------------------
 const DetailModal = ({ animal, onClose }: { animal: WildlifeItem; onClose: () => void }) => {
+  const { t } = useTranslationContext();
   const cfg = likelihoodConfig[animal.likelihood];
 
-  // Lock body scroll
   useEffect(() => {
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     return () => { document.body.style.overflow = prev; };
   }, []);
 
-  // Escape key
   useEffect(() => {
     const handler = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
     window.addEventListener("keydown", handler);
@@ -149,9 +148,7 @@ const DetailModal = ({ animal, onClose }: { animal: WildlifeItem; onClose: () =>
         style={{ maxHeight: "calc(100dvh - 2rem)" }}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Scrollable inner wrapper */}
         <div className="overflow-y-auto" style={{ maxHeight: "calc(100dvh - 2rem)" }}>
-          {/* Image header */}
           <div className="relative h-52 overflow-hidden shrink-0">
             <img src={animal.image} alt={animal.name} className="w-full h-full object-cover" />
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
@@ -162,7 +159,7 @@ const DetailModal = ({ animal, onClose }: { animal: WildlifeItem; onClose: () =>
               </svg>
             </button>
             <div className={`absolute top-4 left-4 px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border backdrop-blur-sm ${cfg.bg} ${cfg.color} ${cfg.border}`}>
-              {animal.likelihoodLabel}
+              {t(animal.likelihoodLabel)}
             </div>
             <div className="absolute bottom-0 left-0 p-5">
               <p className="text-white font-black text-xl leading-tight">{animal.name}</p>
@@ -170,11 +167,10 @@ const DetailModal = ({ animal, onClose }: { animal: WildlifeItem; onClose: () =>
             </div>
           </div>
 
-          {/* Body */}
           <div className="p-5 space-y-4">
             <div>
               <div className="flex items-center justify-between mb-1.5">
-                <span className="text-[9px] font-black uppercase tracking-widest text-gray-400">Sighting Likelihood</span>
+                <span className="text-[9px] font-black uppercase tracking-widest text-gray-400">{t("Sighting Likelihood")}</span>
                 <div className="flex gap-0.5">
                   {Array.from({ length: 5 }).map((_, i) => (
                     <Star key={i} size={11} className={i < animal.likelihood ? `${cfg.color} fill-current` : "text-gray-300 dark:text-white/20"} />
@@ -184,15 +180,15 @@ const DetailModal = ({ animal, onClose }: { animal: WildlifeItem; onClose: () =>
               <LikelihoodBar level={animal.likelihood} />
             </div>
             <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed italic border-l-2 border-primary/30 pl-3">
-              "{animal.behavior}"
+              "{t(animal.behavior)}"
             </p>
             <div className="grid grid-cols-2 gap-2">
               <div className={`p-3 rounded-xl border ${cfg.bg} ${cfg.border}`}>
-                <p className="text-[9px] font-black uppercase tracking-widest text-gray-400 mb-0.5">Best Season</p>
+                <p className="text-[9px] font-black uppercase tracking-widest text-gray-400 mb-0.5">{t("Best Season")}</p>
                 <p className="text-sm font-bold text-dark dark:text-white">{animal.bestSeason}</p>
               </div>
               <div className={`p-3 rounded-xl border ${cfg.bg} ${cfg.border}`}>
-                <p className="text-[9px] font-black uppercase tracking-widest text-gray-400 mb-0.5">Depth Range</p>
+                <p className="text-[9px] font-black uppercase tracking-widest text-gray-400 mb-0.5">{t("Depth Range")}</p>
                 <p className="text-sm font-bold text-dark dark:text-white">{animal.depth}</p>
               </div>
             </div>
@@ -200,7 +196,7 @@ const DetailModal = ({ animal, onClose }: { animal: WildlifeItem; onClose: () =>
               <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/10">
                 <Fish size={12} className="text-primary flex-shrink-0" />
                 <span className="text-[10px] font-black text-dark dark:text-white">{animal.scubagoSightings} sightings logged</span>
-                <span className="ml-auto text-[8px] font-black uppercase tracking-widest text-gray-300 dark:text-white/20">Scubago UGC</span>
+                <span className="ml-auto text-[8px] font-black uppercase tracking-widest text-gray-300 dark:text-white/20">{t("Scubago UGC")}</span>
               </div>
             )}
             <div className="flex flex-wrap gap-1.5">
@@ -218,10 +214,24 @@ const DetailModal = ({ animal, onClose }: { animal: WildlifeItem; onClose: () =>
   );
 };
 
-// ---------------------------------------------------------------------------
-// Main — Carousel
-// ---------------------------------------------------------------------------
 const WildlifeSightings = () => {
+  const { t } = useTranslationContext();
+
+  const wildlifeData: WildlifeItem[] = wildlifeRawData.map(raw => ({
+    id: raw.id,
+    name: raw.name,
+    scientificName: raw.scientificName,
+    image: raw.image,
+    likelihood: raw.likelihood,
+    likelihoodLabel: raw.likelihoodLabelKey,
+    bestSeason: raw.bestSeason,
+    depth: raw.depth,
+    behavior: raw.behaviorKey,
+    tags: raw.tags,
+    scubagoSightings: (raw as any).scubagoSightings,
+    scubagoSource: (raw as any).scubagoSource,
+  }));
+
   const scrollRef  = useRef<HTMLDivElement>(null);
   const cardRefs   = useRef<(HTMLElement | null)[]>([]);
   const [activeIndex,    setActiveIndex]    = useState(0);
@@ -279,7 +289,7 @@ const WildlifeSightings = () => {
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-2">
           <Fish size={15} className="text-emerald-500" />
-          <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">Marine Biodiversity</span>
+          <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">{t("Marine Biodiversity")}</span>
         </div>
         <div className="hidden sm:flex items-center gap-1.5 text-gray-400 text-[9px] font-black tracking-widest bg-gray-100 dark:bg-white/5 px-3 py-1.5 rounded-full border border-gray-200 dark:border-white/10 flex-shrink-0">
           TAP FOR DETAIL <ChevronRight size={11} className="animate-pulse" />
@@ -346,11 +356,10 @@ const WildlifeSightings = () => {
       <div className="flex items-start gap-1.5 pt-1">
         <Info size={11} className="text-gray-400 mt-0.5 flex-shrink-0" />
         <p className="text-[10px] text-gray-400">
-          Likelihood estimated from species ecology, Poso wreck depth profile & coral cover characteristics.
+          {t("Likelihood estimated from species ecology, Poso wreck depth profile & coral cover characteristics.")}
         </p>
       </div>
 
-      {/* ✅ Modal via Portal — selalu center di viewport */}
       <AnimatePresence>
         {selectedAnimal && (
           <DetailModal animal={selectedAnimal} onClose={() => setSelectedAnimal(null)} />

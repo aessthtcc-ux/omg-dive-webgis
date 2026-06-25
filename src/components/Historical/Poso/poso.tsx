@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import WildlifeSightings from "@/components/Historical/Poso";
+import { useTranslationContext } from "@/context/TranslationContext";
 import {
   Anchor, MapPin, Waves, History,
   Camera, Activity, Info, X, Images,
@@ -12,9 +13,6 @@ import {
   Sun, Fish, Star, Eye, Gauge
 } from "lucide-react";
 
-// ---------------------------------------------------------------------------
-// GALLERY
-// ---------------------------------------------------------------------------
 const posoImages = [
   "https://cdn.divessi.com/cached/divesites/79/97/9/images/68ee66958c878_79979_741447.png/800.jpg",
   "https://cdn.divessi.com/cached/divesites/79/97/9/images/68ee66fe3ab2f_79979_741447.png/800.jpg",
@@ -22,9 +20,6 @@ const posoImages = [
   "https://cdn.divessi.com/cached/divesites/79/97/9/images/68ee66fe3ab2f_79979_741447.png/800.jpg",
 ];
 
-// ---------------------------------------------------------------------------
-// SITE POTENTIAL DATA
-// ---------------------------------------------------------------------------
 interface CriterionItem {
   label: string; score: number; max: number;
   category: "archaeological" | "ecological"; description: string;
@@ -43,9 +38,6 @@ const posoCriteriaData: CriterionItem[] = [
   { label: "Marine Regional Issue",score: 3, max: 3, category: "ecological",     description: "Restricted use zone within Seribu Islands conservation area" },
 ];
 
-// ---------------------------------------------------------------------------
-// DIVE ENVIRONMENT
-// ---------------------------------------------------------------------------
 type Season = "west" | "transition" | "east";
 
 interface SeasonData {
@@ -96,18 +88,12 @@ const posoSeasonData: SeasonData[] = [
   },
 ];
 
-// ---------------------------------------------------------------------------
-// MARINE DATA INTERFACE
-// ---------------------------------------------------------------------------
 interface MarineData {
   waveHeight: number; wavePeriod: number; oceanCurrent: number;
   waterTemp: number; windSpeed: number; precipitation: number;
   loading: boolean; error: string | null;
 }
 
-// ---------------------------------------------------------------------------
-// HELPERS
-// ---------------------------------------------------------------------------
 const scoreColor = (score: number, max: number) => {
   const pct = score / max;
   if (pct >= 1)   return { dot: "bg-emerald-500", bar: "bg-emerald-500", badge: "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400" };
@@ -131,28 +117,18 @@ const StarRating = ({ rating, max = 5 }: { rating: number; max?: number }) => (
   </div>
 );
 
-// ---------------------------------------------------------------------------
-// ✅ LIGHTBOX PORTAL — selalu center di viewport
-// ---------------------------------------------------------------------------
-const LightboxPortal = ({
-  images,
-  currentSlide,
-  setCurrentSlide,
-  onClose,
-}: {
-  images: string[];
-  currentSlide: number;
-  setCurrentSlide: React.Dispatch<React.SetStateAction<number>>;
-  onClose: () => void;
+const LightboxPortal = ({ images, currentSlide, setCurrentSlide, onClose }: {
+  images: string[]; currentSlide: number;
+  setCurrentSlide: React.Dispatch<React.SetStateAction<number>>; onClose: () => void;
 }) => {
-  // Lock body scroll
+  const { t } = useTranslationContext();
+
   useEffect(() => {
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     return () => { document.body.style.overflow = prev; };
   }, []);
 
-  // Keyboard nav
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.key === "Escape")      onClose();
@@ -164,81 +140,48 @@ const LightboxPortal = ({
   }, [images.length, onClose, setCurrentSlide]);
 
   return createPortal(
-    <motion.div
-      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
       className="fixed inset-0 z-[9999] bg-black/90 flex items-center justify-center p-4 sm:p-8"
-      onClick={onClose}
-    >
-      <motion.div
-        initial={{ scale: 0.94, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.94, opacity: 0 }}
+      onClick={onClose}>
+      <motion.div initial={{ scale: 0.94, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.94, opacity: 0 }}
         className="relative w-full max-w-3xl flex flex-col bg-[#0d0d0d] rounded-2xl overflow-hidden shadow-2xl border border-white/10"
-        style={{ maxHeight: "calc(100dvh - 2rem)" }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Header bar */}
+        style={{ maxHeight: "calc(100dvh - 2rem)" }} onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between px-4 py-2.5 border-b border-white/10 shrink-0">
           <div className="flex items-center gap-2">
             <div className="w-1.5 h-1.5 bg-primary rounded-full" />
-            <span className="text-[10px] font-bold text-white/60 uppercase tracking-widest">
-              Poso Wreck Documentation
-            </span>
+            <span className="text-[10px] font-bold text-white/60 uppercase tracking-widest">{t("Poso Wreck Documentation")}</span>
           </div>
-          <button
-            onClick={onClose}
-            className="p-1.5 bg-white/10 hover:bg-red-500 text-white rounded-lg transition-colors border border-white/10"
-          >
+          <button onClick={onClose} className="p-1.5 bg-white/10 hover:bg-red-500 text-white rounded-lg transition-colors border border-white/10">
             <X size={15} />
           </button>
         </div>
-
-        {/* Main image */}
         <div className="relative flex-1 min-h-0 flex items-center justify-center bg-[#0a0a0a] overflow-hidden">
           <AnimatePresence mode="wait">
-            <motion.img
-              key={currentSlide}
-              src={images[currentSlide]}
-              initial={{ opacity: 0, scale: 0.98 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.98 }}
-              transition={{ duration: 0.2 }}
-              className="w-full h-full object-contain"
-              style={{ maxHeight: "calc(100dvh - 12rem)" }}
-              alt={`Poso Wreck ${currentSlide + 1}`}
-            />
+            <motion.img key={currentSlide} src={images[currentSlide]}
+              initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.98 }}
+              transition={{ duration: 0.2 }} className="w-full h-full object-contain"
+              style={{ maxHeight: "calc(100dvh - 12rem)" }} alt={`Poso Wreck ${currentSlide + 1}`} />
           </AnimatePresence>
-          <button
-            onClick={(e) => { e.stopPropagation(); setCurrentSlide(p => (p - 1 + images.length) % images.length); }}
-            className="absolute left-3 p-2 bg-black/60 hover:bg-primary text-white rounded-full border border-white/20 transition-colors"
-          >
+          <button onClick={(e) => { e.stopPropagation(); setCurrentSlide(p => (p - 1 + images.length) % images.length); }}
+            className="absolute left-3 p-2 bg-black/60 hover:bg-primary text-white rounded-full border border-white/20 transition-colors">
             <ChevronLeft size={16} />
           </button>
-          <button
-            onClick={(e) => { e.stopPropagation(); setCurrentSlide(p => (p + 1) % images.length); }}
-            className="absolute right-3 p-2 bg-black/60 hover:bg-primary text-white rounded-full border border-white/20 transition-colors"
-          >
+          <button onClick={(e) => { e.stopPropagation(); setCurrentSlide(p => (p + 1) % images.length); }}
+            className="absolute right-3 p-2 bg-black/60 hover:bg-primary text-white rounded-full border border-white/20 transition-colors">
             <ChevronRight size={16} />
           </button>
         </div>
-
-        {/* Thumbnail strip */}
         <div className="shrink-0 px-4 py-3 border-t border-white/10 flex items-center justify-between gap-4 bg-black/60">
           <div className="flex items-center gap-2 overflow-x-auto">
             {images.map((src, i) => (
-              <button
-                key={i}
-                onClick={(e) => { e.stopPropagation(); setCurrentSlide(i); }}
-                className={`shrink-0 w-12 h-8 sm:w-16 sm:h-10 rounded-lg overflow-hidden border-2 transition-all ${
-                  currentSlide === i ? "border-primary opacity-100" : "border-white/10 opacity-40 hover:opacity-70"
-                }`}
-              >
+              <button key={i} onClick={(e) => { e.stopPropagation(); setCurrentSlide(i); }}
+                className={`shrink-0 w-12 h-8 sm:w-16 sm:h-10 rounded-lg overflow-hidden border-2 transition-all ${currentSlide === i ? "border-primary opacity-100" : "border-white/10 opacity-40 hover:opacity-70"}`}>
                 <img src={src} className="w-full h-full object-cover" alt={`thumb-${i}`} />
               </button>
             ))}
           </div>
           <div className="flex flex-col items-end shrink-0">
-            <span className="text-[11px] font-black text-white/70 tabular-nums">
-              {currentSlide + 1} / {images.length}
-            </span>
+            <span className="text-[11px] font-black text-white/70 tabular-nums">{currentSlide + 1} / {images.length}</span>
             <p className="text-[9px] text-white/30 font-medium hidden sm:block">© INSTRUMENT DIVE ADVENTURE</p>
           </div>
         </div>
@@ -248,10 +191,8 @@ const LightboxPortal = ({
   );
 };
 
-// ---------------------------------------------------------------------------
-// SITE POTENTIAL
-// ---------------------------------------------------------------------------
 const PosoPotential = () => {
+  const { t } = useTranslationContext();
   const [activeCategory, setActiveCategory] = useState<"all" | "archaeological" | "ecological">("all");
   const [hoveredIndex,   setHoveredIndex]   = useState<number | null>(null);
 
@@ -272,10 +213,10 @@ const PosoPotential = () => {
           <div>
             <div className="flex items-center gap-2 mb-2">
               <Activity size={16} className="text-white/80" />
-              <span className="text-[10px] md:text-xs font-black uppercase tracking-widest text-white/80">Ecotourism Suitability Assessment</span>
+              <span className="text-[10px] md:text-xs font-black uppercase tracking-widest text-white/80">{t("Ecotourism Suitability Assessment")}</span>
             </div>
-            <h3 className="text-2xl md:text-3xl lg:text-4xl font-black text-white tracking-tight mb-1">Site Potential</h3>
-            <p className="text-white/70 font-medium text-xs md:text-sm">Based on criteria by I. Dillenia et al. (2021)</p>
+            <h3 className="text-2xl md:text-3xl lg:text-4xl font-black text-white tracking-tight mb-1">{t("Site Potential")}</h3>
+            <p className="text-white/70 font-medium text-xs md:text-sm">{t("Based on criteria by I. Dillenia et al. (2021)")}</p>
           </div>
           <div className="flex items-center gap-4 md:gap-6">
             <div className="relative w-20 h-20 md:w-28 md:h-28 flex-shrink-0">
@@ -313,7 +254,7 @@ const PosoPotential = () => {
           {(["all", "archaeological", "ecological"] as const).map((cat) => (
             <button key={cat} onClick={() => setActiveCategory(cat)}
               className={`px-3 md:px-4 py-1.5 rounded-xl text-[10px] md:text-xs font-black uppercase tracking-widest transition-colors ${activeCategory === cat ? "bg-primary text-white" : "bg-gray-100 dark:bg-white/5 text-gray-500 hover:bg-gray-200 dark:hover:bg-white/10"}`}>
-              {cat === "all" ? "All Criteria" : cat}
+              {cat === "all" ? t("All Criteria") : t(cat)}
             </button>
           ))}
           <span className="ml-auto text-[10px] text-gray-400 font-bold">{filtered.length} criteria shown</span>
@@ -329,8 +270,8 @@ const PosoPotential = () => {
                   className="group relative flex items-center gap-3 p-3 md:p-4 rounded-xl md:rounded-2xl border border-gray-100 dark:border-white/10 bg-gray-50/50 dark:bg-white/[0.03] hover:border-primary/30 transition-colors cursor-default overflow-hidden">
                   <div className={`w-2 h-2 rounded-full flex-shrink-0 ${item.category === "archaeological" ? "bg-blue-400" : "bg-emerald-400"}`} />
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs md:text-sm font-bold text-dark dark:text-white">{item.label}</p>
-                    {hoveredIndex === i && <p className="text-[10px] text-gray-400 leading-relaxed mt-0.5">{item.description}</p>}
+                    <p className="text-xs md:text-sm font-bold text-dark dark:text-white">{t(item.label)}</p>
+                    {hoveredIndex === i && <p className="text-[10px] text-gray-400 leading-relaxed mt-0.5">{t(item.description)}</p>}
                   </div>
                   <div className="flex gap-1 items-center flex-shrink-0">
                     {Array.from({ length: item.max }).map((_, idx) => (
@@ -343,22 +284,14 @@ const PosoPotential = () => {
             })}
           </AnimatePresence>
         </div>
-        <div className="flex flex-wrap items-center gap-3 mt-4">
-          {[{ dot: "bg-blue-400", label: "Archaeological" }, { dot: "bg-emerald-400", label: "Ecological" }, { dot: "bg-emerald-500", label: "Full (3/3)" }, { dot: "bg-blue-500", label: "Partial (2/3)" }, { dot: "bg-amber-500", label: "Low (1/3)" }].map(({ dot, label }) => (
-            <div key={label} className="flex items-center gap-1.5">
-              <div className={`w-2 h-2 rounded-full ${dot}`} />
-              <span className="text-[10px] font-bold text-gray-400">{label}</span>
-            </div>
-          ))}
-        </div>
         <div className="mt-5 p-4 md:p-5 bg-primary/5 border border-primary/20 rounded-[1.5rem] flex flex-col md:flex-row items-start gap-3">
           <div className="bg-primary/20 p-2.5 rounded-xl text-primary flex-shrink-0"><Info size={16} /></div>
           <div>
             <p className="text-xs md:text-sm font-bold text-primary leading-snug">
-              Total score <span className="underline decoration-2 underline-offset-4">{totalScore}/{totalMax} ({pct}%)</span> — exceptional potential for marine eco-archaeological park development.
+              {t("Poso scored 26/30 — the highest among all surveyed wrecks — indicating exceptional potential as an underwater archaeological park.")}
             </p>
             <p className="text-[10px] text-gray-400 mt-1.5 flex items-center gap-1.5">
-              <BookOpen size={11} /> Source: I. Dillenia et al. (2021). Suitability assessment, Pramuka Island.
+              <BookOpen size={11} /> {t("Source: I. Dillenia et al. (2021). Suitability assessment, Pramuka Island.")}
             </p>
           </div>
         </div>
@@ -367,10 +300,8 @@ const PosoPotential = () => {
   );
 };
 
-// ---------------------------------------------------------------------------
-// DIVE ENVIRONMENT
-// ---------------------------------------------------------------------------
 const PosoDiveEnvironment = () => {
+  const { t } = useTranslationContext();
   const [activeSeason, setActiveSeason] = useState<Season>("transition");
   const season = posoSeasonData.find((s) => s.key === activeSeason)!;
 
@@ -384,31 +315,23 @@ const PosoDiveEnvironment = () => {
             <div>
               <div className="flex items-center gap-2 mb-1.5">
                 <Activity size={15} className="text-white/80" />
-                <span className="text-[10px] font-black uppercase tracking-widest text-white/80">Dive Environment Profile</span>
+                <span className="text-[10px] font-black uppercase tracking-widest text-white/80">{t("Dive Environment Profile")}</span>
               </div>
-              <h3 className="text-2xl md:text-3xl lg:text-4xl font-black text-white tracking-tight mb-0.5">{season.label}</h3>
+              <h3 className="text-2xl md:text-3xl lg:text-4xl font-black text-white tracking-tight mb-0.5">{t(season.label)}</h3>
               <p className="text-white/70 font-medium text-xs md:text-sm">{season.period}</p>
             </div>
             <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
-              <span className="px-3 py-1 rounded-full bg-white/20 text-white text-[10px] font-black uppercase tracking-widest border border-white/20">{season.badge}</span>
+              <span className="px-3 py-1 rounded-full bg-white/20 text-white text-[10px] font-black uppercase tracking-widest border border-white/20">{t(season.badge)}</span>
               <StarRating rating={season.overallRating} />
             </div>
           </div>
           <div className="flex gap-2 flex-wrap">
             {posoSeasonData.map((s) => (
               <button key={s.key} onClick={() => setActiveSeason(s.key)}
-                className={`px-3 md:px-5 py-1.5 rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5 ${
-                  activeSeason === s.key
-                    ? "bg-white text-gray-900 shadow-md"
-                    : "bg-white/15 text-white hover:bg-white/25 border border-white/20"
-                }`}>
+                className={`px-3 md:px-5 py-1.5 rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5 ${activeSeason === s.key ? "bg-white text-gray-900 shadow-md" : "bg-white/15 text-white hover:bg-white/25 border border-white/20"}`}>
                 {s.icon}
-                <span className="hidden sm:inline">{s.label}</span>
-                <span className="sm:hidden">{
-                  s.label === "West Monsoon" ? "West" :
-                  s.label === "East Monsoon" ? "East" :
-                  "Trans"
-                }</span>
+                <span className="hidden sm:inline">{t(s.label)}</span>
+                <span className="sm:hidden">{s.label === "West Monsoon" ? t("West") : s.label === "East Monsoon" ? t("East") : t("Trans")}</span>
               </button>
             ))}
           </div>
@@ -419,15 +342,15 @@ const PosoDiveEnvironment = () => {
           className="p-5 md:p-8 lg:p-10">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 md:gap-8">
             <div className="space-y-3">
-              <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-3">Environmental Conditions</p>
+              <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-3">{t("Environmental Conditions")}</p>
               {[
-                { label: "Water Temperature",     icon: <Thermometer size={17} className={season.accentColor} />, value: `${season.temp.min}°C – ${season.temp.max}°C` },
-                { label: "Underwater Visibility*",icon: <Eye size={17} className={season.accentColor} />,         value: `${season.visibility.min} – ${season.visibility.max} m`, progress: season.visibility.max / 15 },
+                { label: "Water Temperature",      icon: <Thermometer size={17} className={season.accentColor} />, value: `${season.temp.min}°C – ${season.temp.max}°C` },
+                { label: "Underwater Visibility*", icon: <Eye size={17} className={season.accentColor} />,         value: `${season.visibility.min} – ${season.visibility.max} m`, progress: season.visibility.max / 15 },
               ].map(({ label, icon, value, progress }) => (
                 <div key={label} className={`p-4 rounded-xl md:rounded-2xl border ${season.bgCard} ${season.borderCard} flex items-center gap-3`}>
                   <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${season.bgCard} border ${season.borderCard}`}>{icon}</div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-[9px] font-black uppercase tracking-widest text-gray-400 mb-0.5">{label}</p>
+                    <p className="text-[9px] font-black uppercase tracking-widest text-gray-400 mb-0.5">{t(label)}</p>
                     <p className={`text-base md:text-xl font-black ${season.accentColor}`}>{value}</p>
                     {progress !== undefined && (
                       <div className="mt-1.5 w-full bg-gray-100 dark:bg-white/10 rounded-full h-1.5 overflow-hidden">
@@ -440,14 +363,14 @@ const PosoDiveEnvironment = () => {
               ))}
               {[
                 { label: "Current Speed", icon: <Gauge size={17} className={season.accentColor} />, value: season.current.label, level: season.current.level },
-                { label: "Wave Condition",icon: <Waves size={17} className={season.accentColor} />, value: season.wave.label,    level: season.wave.level },
+                { label: "Wave Condition", icon: <Waves size={17} className={season.accentColor} />, value: season.wave.label, level: season.wave.level },
               ].map(({ label, icon, value, level }) => (
                 <div key={label} className={`p-4 rounded-xl md:rounded-2xl border ${season.bgCard} ${season.borderCard}`}>
                   <div className="flex items-center gap-3 mb-2">
                     <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${season.bgCard} border ${season.borderCard}`}>{icon}</div>
                     <div>
-                      <p className="text-[9px] font-black uppercase tracking-widest text-gray-400">{label}</p>
-                      <p className={`text-sm font-black ${season.accentColor}`}>{value}</p>
+                      <p className="text-[9px] font-black uppercase tracking-widest text-gray-400">{t(label)}</p>
+                      <p className={`text-sm font-black ${season.accentColor}`}>{t(value)}</p>
                     </div>
                   </div>
                   <MeterBar level={level} from={season.gradientFrom} to={season.gradientTo} />
@@ -456,28 +379,28 @@ const PosoDiveEnvironment = () => {
             </div>
             <div className="flex flex-col gap-4">
               <div>
-                <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">Recommended Diver Level</p>
+                <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">{t("Recommended Diver Level")}</p>
                 <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black ${season.diverLevelColor}`}>
-                  <Fish size={13} />{season.diverLevel}
+                  <Fish size={13} />{t(season.diverLevel)}
                 </div>
               </div>
               <div className="flex-1">
-                <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2.5">Season Highlights</p>
+                <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2.5">{t("Season Highlights")}</p>
                 <div className="space-y-2">
                   {season.highlights.map((h, i) => (
                     <motion.div key={i} initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.08 }}
                       className={`flex items-start gap-3 p-3 rounded-xl border ${season.bgCard} ${season.borderCard}`}>
                       <div className={`w-5 h-5 rounded-full flex-shrink-0 flex items-center justify-center bg-gradient-to-br ${season.gradientFrom} ${season.gradientTo} text-white text-[9px] font-black`}>{i + 1}</div>
-                      <p className="text-xs text-gray-700 dark:text-gray-300 leading-relaxed font-medium">{h}</p>
+                      <p className="text-xs text-gray-700 dark:text-gray-300 leading-relaxed font-medium">{t(h)}</p>
                     </motion.div>
                   ))}
                 </div>
               </div>
               <div className="p-4 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/10">
-                <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2.5">Visibility Comparison</p>
+                <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2.5">{t("Visibility Comparison")}</p>
                 {posoSeasonData.map((s) => (
                   <div key={s.key} className="flex items-center gap-2 mb-2 last:mb-0">
-                    <span className="text-[10px] font-bold text-gray-500 w-16 truncate">{s.label.split(" ")[0]}</span>
+                    <span className="text-[10px] font-bold text-gray-500 w-16 truncate">{t(s.label.split(" ")[0])}</span>
                     <div className="flex-1 bg-gray-200 dark:bg-white/10 rounded-full h-1.5 overflow-hidden">
                       <motion.div initial={{ width: 0 }} animate={{ width: `${(s.visibility.max / 15) * 100}%` }} transition={{ duration: 0.6 }}
                         className={`h-full rounded-full bg-gradient-to-r ${s.gradientFrom} ${s.gradientTo} ${activeSeason === s.key ? "opacity-100" : "opacity-40"}`} />
@@ -498,10 +421,8 @@ const PosoDiveEnvironment = () => {
   );
 };
 
-// ---------------------------------------------------------------------------
-// MAIN CONTENT
-// ---------------------------------------------------------------------------
 const PosoContent = () => {
+  const { t } = useTranslationContext();
   const [isGalleryOpen, setIsGalleryOpen] = useState(false);
   const [currentSlide,  setCurrentSlide]  = useState(0);
 
@@ -522,15 +443,7 @@ const PosoContent = () => {
         const data = await res.json();
         if (cancelled) return;
         if (data.error) throw new Error(data.error);
-        setMarineWeather({
-          waveHeight:    data.waveHeight    ?? 0,
-          wavePeriod:    data.wavePeriod    ?? 0,
-          oceanCurrent:  data.oceanCurrent  ?? 0,
-          waterTemp:     data.waterTemp     ?? 0,
-          windSpeed:     data.windSpeed     ?? 0,
-          precipitation: data.precipitation ?? 0,
-          loading: false, error: null,
-        });
+        setMarineWeather({ waveHeight: data.waveHeight ?? 0, wavePeriod: data.wavePeriod ?? 0, oceanCurrent: data.oceanCurrent ?? 0, waterTemp: data.waterTemp ?? 0, windSpeed: data.windSpeed ?? 0, precipitation: data.precipitation ?? 0, loading: false, error: null });
       } catch (err: any) {
         if (cancelled || err?.name === "AbortError") return;
         setMarineWeather(prev => ({ ...prev, loading: false, error: "Weather data unavailable" }));
@@ -551,12 +464,12 @@ const PosoContent = () => {
   };
 
   const weatherCards = [
-    { label: "Wave Height",  icon: <Waves size={17} />,       value: marineWeather.waveHeight,    unit: "m",    bg: "bg-blue-50/50 dark:bg-blue-900/10",    border: "border-blue-100 dark:border-blue-800/30",    iconBg: "bg-blue-100 dark:bg-blue-800/50 text-blue-600 dark:text-blue-400" },
-    { label: "Wave Period",  icon: <Activity size={17} />,    value: marineWeather.wavePeriod,    unit: "s",    bg: "bg-indigo-50/50 dark:bg-indigo-900/10", border: "border-indigo-100 dark:border-indigo-800/30", iconBg: "bg-indigo-100 dark:bg-indigo-800/50 text-indigo-600 dark:text-indigo-400" },
-    { label: "Current Vel.",icon: <Wind size={17} />,        value: marineWeather.oceanCurrent,  unit: "km/h", bg: "bg-teal-50/50 dark:bg-teal-900/10",     border: "border-teal-100 dark:border-teal-800/30",    iconBg: "bg-teal-100 dark:bg-teal-800/50 text-teal-600 dark:text-teal-400" },
-    { label: "Surface Temp",icon: <Thermometer size={17} />, value: marineWeather.waterTemp,     unit: "°C",   bg: "bg-orange-50/50 dark:bg-orange-900/10", border: "border-orange-100 dark:border-orange-800/30", iconBg: "bg-orange-100 dark:bg-orange-800/50 text-orange-600 dark:text-orange-400" },
-    { label: "Wind Speed",  icon: <Wind size={17} />,        value: marineWeather.windSpeed,     unit: "km/h", bg: "bg-purple-50/50 dark:bg-purple-900/10", border: "border-purple-100 dark:border-purple-800/30", iconBg: "bg-purple-100 dark:bg-purple-800/50 text-purple-600 dark:text-purple-400" },
-    { label: "Precipitation",icon:<CloudRain size={17} />,   value: marineWeather.precipitation, unit: "mm",   bg: "bg-cyan-50/50 dark:bg-cyan-900/10",     border: "border-cyan-100 dark:border-cyan-800/30",    iconBg: "bg-cyan-100 dark:bg-cyan-800/50 text-cyan-600 dark:text-cyan-400" },
+    { label: "Wave Height",   icon: <Waves size={17} />,       value: marineWeather.waveHeight,    unit: "m",    bg: "bg-blue-50/50 dark:bg-blue-900/10",    border: "border-blue-100 dark:border-blue-800/30",    iconBg: "bg-blue-100 dark:bg-blue-800/50 text-blue-600 dark:text-blue-400" },
+    { label: "Wave Period",   icon: <Activity size={17} />,    value: marineWeather.wavePeriod,    unit: "s",    bg: "bg-indigo-50/50 dark:bg-indigo-900/10", border: "border-indigo-100 dark:border-indigo-800/30", iconBg: "bg-indigo-100 dark:bg-indigo-800/50 text-indigo-600 dark:text-indigo-400" },
+    { label: "Current Vel.", icon: <Wind size={17} />,        value: marineWeather.oceanCurrent,  unit: "km/h", bg: "bg-teal-50/50 dark:bg-teal-900/10",     border: "border-teal-100 dark:border-teal-800/30",    iconBg: "bg-teal-100 dark:bg-teal-800/50 text-teal-600 dark:text-teal-400" },
+    { label: "Surface Temp", icon: <Thermometer size={17} />, value: marineWeather.waterTemp,     unit: "°C",   bg: "bg-orange-50/50 dark:bg-orange-900/10", border: "border-orange-100 dark:border-orange-800/30", iconBg: "bg-orange-100 dark:bg-orange-800/50 text-orange-600 dark:text-orange-400" },
+    { label: "Wind Speed",   icon: <Wind size={17} />,        value: marineWeather.windSpeed,     unit: "km/h", bg: "bg-purple-50/50 dark:bg-purple-900/10", border: "border-purple-100 dark:border-purple-800/30", iconBg: "bg-purple-100 dark:bg-purple-800/50 text-purple-600 dark:text-purple-400" },
+    { label: "Precipitation",icon: <CloudRain size={17} />,   value: marineWeather.precipitation, unit: "mm",   bg: "bg-cyan-50/50 dark:bg-cyan-900/10",     border: "border-cyan-100 dark:border-cyan-800/30",    iconBg: "bg-cyan-100 dark:bg-cyan-800/50 text-cyan-600 dark:text-cyan-400" },
   ];
 
   return (
@@ -570,13 +483,13 @@ const PosoContent = () => {
           <div className="absolute top-5 md:top-10 left-5 md:left-10 z-20">
             <div className="flex items-center gap-2 bg-white/25 w-fit px-3 md:px-4 py-1 rounded-full border border-white/10">
               <Anchor size={13} />
-              <span className="text-[10px] font-bold uppercase tracking-widest">Dutch Maritime Heritage</span>
+              <span className="text-[10px] font-bold uppercase tracking-widest">{t("Dutch Maritime Heritage")}</span>
             </div>
           </div>
           <div className="relative z-10 mt-8 md:mt-0">
-            <h2 className="text-3xl md:text-5xl lg:text-6xl font-black mb-3 md:mb-6 tracking-tight leading-none">Poso Wreck</h2>
+            <h2 className="text-3xl md:text-5xl lg:text-6xl font-black mb-3 md:mb-6 tracking-tight leading-none">{t("Poso Wreck")}</h2>
             <p className="text-sm md:text-lg text-blue-50/80 max-w-md leading-relaxed font-medium">
-              A former Dutch maritime trading vessel later converted into a cement cargo ship. KM Poso sank in 1970 after colliding with KM Berdikari in the waters of Karang Congkak.
+              {t("A former Dutch maritime trading vessel later converted into a cement cargo ship. KM Poso sank in 1970 after colliding with KM Berdikari in the waters of Karang Congkak.")}
             </p>
           </div>
           <History className="absolute -bottom-10 -right-10 w-40 md:w-64 h-40 md:h-64 opacity-10" />
@@ -586,20 +499,18 @@ const PosoContent = () => {
           className="lg:col-span-5 grid grid-cols-2 grid-rows-2 gap-3 h-[260px] md:h-[420px]">
           <div className="col-span-2 row-span-1 relative rounded-[1.5rem] md:rounded-[2.5rem] overflow-hidden cursor-pointer group"
             onClick={() => { setCurrentSlide(0); setIsGalleryOpen(true); }}>
-            <img src={posoImages[0]} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" alt="Poso Wreck Main" loading="lazy" />
+            <img src={posoImages[0]} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" alt={t("Poso Wreck Main")} loading="lazy" />
             <div className="absolute inset-0 bg-black/20" />
             <div className="absolute top-3 right-3 bg-black/40 p-1.5 rounded-full text-white border border-white/20"><Camera size={15} /></div>
           </div>
-          <div className="rounded-[1.5rem] md:rounded-[2rem] overflow-hidden cursor-pointer"
-            onClick={() => { setCurrentSlide(1); setIsGalleryOpen(true); }}>
-            <img src={posoImages[1]} className="w-full h-full object-cover" alt="Poso Wreck 2" loading="lazy" />
+          <div className="rounded-[1.5rem] md:rounded-[2rem] overflow-hidden cursor-pointer" onClick={() => { setCurrentSlide(1); setIsGalleryOpen(true); }}>
+            <img src={posoImages[1]} className="w-full h-full object-cover" alt={t("Poso Wreck 2")} loading="lazy" />
           </div>
-          <div className="relative rounded-[1.5rem] md:rounded-[2rem] overflow-hidden cursor-pointer group"
-            onClick={() => { setCurrentSlide(2); setIsGalleryOpen(true); }}>
-            <img src={posoImages[2]} className="w-full h-full object-cover" alt="Poso Wreck 3" loading="lazy" />
+          <div className="relative rounded-[1.5rem] md:rounded-[2rem] overflow-hidden cursor-pointer group" onClick={() => { setCurrentSlide(2); setIsGalleryOpen(true); }}>
+            <img src={posoImages[2]} className="w-full h-full object-cover" alt={t("Poso Wreck 3")} loading="lazy" />
             <div className="absolute inset-0 bg-primary/65 flex flex-col items-center justify-center text-white">
               <Images size={19} className="mb-1" />
-              <span className="text-[10px] font-black uppercase tracking-tighter">View All</span>
+              <span className="text-[10px] font-black uppercase tracking-tighter">{t("View All")}</span>
             </div>
           </div>
         </motion.div>
@@ -608,14 +519,14 @@ const PosoContent = () => {
       {/* LIVE CONDITIONS */}
       <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: false }} transition={{ duration: 0.5 }}>
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg md:text-xl font-black flex items-center gap-2 dark:text-white"><Waves className="text-primary" size={18} /> Current Conditions</h3>
-          <span className="text-[9px] font-bold text-gray-400 bg-gray-100 dark:bg-white/5 px-2 py-1 rounded-full uppercase tracking-widest">Live · Open-Meteo</span>
+          <h3 className="text-lg md:text-xl font-black flex items-center gap-2 dark:text-white"><Waves className="text-primary" size={18} /> {t("Current Conditions")}</h3>
+          <span className="text-[9px] font-bold text-gray-400 bg-gray-100 dark:bg-white/5 px-2 py-1 rounded-full uppercase tracking-widest">{t("Live · Open-Meteo")}</span>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
           {weatherCards.map((card) => (
             <div key={card.label} className={`p-4 md:p-5 rounded-[1.5rem] ${card.bg} border ${card.border} flex flex-col items-center text-center`}>
               <div className={`w-9 h-9 ${card.iconBg} rounded-full flex items-center justify-center mb-2`}>{card.icon}</div>
-              <span className="text-[9px] font-bold text-gray-500 uppercase tracking-widest mb-1.5 leading-tight">{card.label}</span>
+              <span className="text-[9px] font-bold text-gray-500 uppercase tracking-widest mb-1.5 leading-tight">{t(card.label)}</span>
               <Val loading={marineWeather.loading} error={marineWeather.error} value={card.value} unit={card.unit} />
             </div>
           ))}
@@ -623,27 +534,21 @@ const PosoContent = () => {
         {marineWeather.error && (
           <div className="mt-3 p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/40 rounded-xl flex items-center gap-2">
             <AlertCircle size={13} className="text-amber-500 flex-shrink-0" />
-            <p className="text-[10px] text-amber-600 dark:text-amber-400 font-medium">Unable to fetch live data. Showing placeholder values.</p>
+            <p className="text-[10px] text-amber-600 dark:text-amber-400 font-medium">{t("Unable to fetch live data. Showing placeholder values.")}</p>
           </div>
         )}
-        <div className="flex items-start gap-2 mt-2.5">
-          <AlertCircle size={11} className="text-gray-400 mt-0.5 flex-shrink-0" />
-          <p className="text-[10px] text-gray-400 leading-relaxed">
-            All values are surface/atmospheric measurements from Open-Meteo API. Underwater visibility should be obtained from in-situ measurements.
-          </p>
-        </div>
       </motion.div>
 
       {/* HISTORICAL BACKGROUND */}
       <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: false }} transition={{ duration: 0.6 }}
         className="p-6 md:p-10 rounded-[2rem] bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/10">
-        <h3 className="text-xl md:text-2xl font-black mb-4 flex items-center gap-3 text-dark dark:text-white"><History className="text-primary" /> Historical Background</h3>
+        <h3 className="text-xl md:text-2xl font-black mb-4 flex items-center gap-3 text-dark dark:text-white"><History className="text-primary" /> {t("Historical Background")}</h3>
         <div className="space-y-3">
           <p className="text-sm md:text-base text-gray-600 dark:text-gray-400 leading-relaxed text-justify">
-            The Poso shipwreck sank in 1970 after colliding with KM Berdikari in the waters of Karang Congkak, near Panggang Island, Kepulauan Seribu. Originally a Dutch maritime trading vessel, KM Poso was later converted into a cargo ship transporting cement and construction materials.
+            {t("The Poso shipwreck sank in 1970 after colliding with KM Berdikari in the waters of Karang Congkak, near Panggang Island, Kepulauan Seribu. Originally a Dutch maritime trading vessel, KM Poso was later converted into a cargo ship transporting cement and construction materials.")}
           </p>
           <p className="text-sm md:text-base text-gray-600 dark:text-gray-400 leading-relaxed text-justify">
-            With strong historical ties to Dutch maritime trade routes, the Poso wreck represents an important chapter of maritime history. The structure remains largely intact with coral coverage exceeding 80%, making it one of the highest-scoring sites for marine eco-archaeological park development.
+            {t("With strong historical ties to Dutch maritime trade routes, the Poso wreck represents an important chapter of maritime history. The structure remains largely intact with coral coverage exceeding 80%, making it one of the highest-scoring sites for marine eco-archaeological park development.")}
           </p>
         </div>
       </motion.div>
@@ -658,8 +563,8 @@ const PosoContent = () => {
           <motion.div key={label} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: false }} transition={{ duration: 0.5, delay: i * 0.08 }}
             className="p-5 md:p-7 rounded-[1.5rem] bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 flex flex-col">
             {icon}
-            <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider">{label}</h4>
-            <p className="text-sm md:text-base font-bold dark:text-white mt-1">{value}</p>
+            <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider">{t(label)}</h4>
+            <p className="text-sm md:text-base font-bold dark:text-white mt-1">{t(value)}</p>
           </motion.div>
         ))}
       </div>
@@ -676,10 +581,10 @@ const PosoContent = () => {
             <div className="min-w-0">
               <div className="flex items-center gap-2 mb-1.5">
                 <Fish size={14} className="text-white/80 flex-shrink-0" />
-                <span className="text-[10px] font-black uppercase tracking-widest text-white/80">Marine Biodiversity</span>
+                <span className="text-[10px] font-black uppercase tracking-widest text-white/80">{t("Marine Biodiversity")}</span>
               </div>
-              <h3 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-black text-white tracking-tight mb-0.5 leading-tight">Potential Wildlife</h3>
-              <p className="text-white/70 font-medium text-xs md:text-sm">Species recorded at Poso Wreck Site</p>
+              <h3 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-black text-white tracking-tight mb-0.5 leading-tight">{t("Potential Wildlife")}</h3>
+              <p className="text-white/70 font-medium text-xs md:text-sm">{t("Species recorded at Poso Wreck Site")}</p>
             </div>
             <div className="w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 rounded-xl bg-white/15 border border-white/20 flex items-center justify-center flex-shrink-0">
               <Fish size={20} className="text-white" />
@@ -691,15 +596,9 @@ const PosoContent = () => {
         </div>
       </motion.div>
 
-      {/* ✅ LIGHTBOX via Portal — selalu center di viewport */}
       <AnimatePresence>
         {isGalleryOpen && (
-          <LightboxPortal
-            images={posoImages}
-            currentSlide={currentSlide}
-            setCurrentSlide={setCurrentSlide}
-            onClose={() => setIsGalleryOpen(false)}
-          />
+          <LightboxPortal images={posoImages} currentSlide={currentSlide} setCurrentSlide={setCurrentSlide} onClose={() => setIsGalleryOpen(false)} />
         )}
       </AnimatePresence>
     </motion.div>
