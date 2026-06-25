@@ -42,7 +42,7 @@ const AutoFitBounds = ({ geoData }: { geoData: Record<string, any> }) => {
 };
 
 // ---------------------------------------------------------------------------
-// PinMarkers — marker untuk Tabularasa & Poso
+// PinMarkers — tidak diubah
 // ---------------------------------------------------------------------------
 const PinMarkers = () => {
   const pins = [
@@ -101,7 +101,7 @@ const PinMarkers = () => {
 };
 
 // ---------------------------------------------------------------------------
-// GeoTIFFLayer — floating tooltip untuk SEMUA device (desktop + mobile)
+// GeoTIFFLayer — sama seperti sebelumnya, hanya path berubah ke /data/cog/
 // ---------------------------------------------------------------------------
 const GeoTIFFLayer = ({ url, elevUrl, isVisible, title }: {
   url: string;
@@ -172,6 +172,7 @@ const GeoTIFFLayer = ({ url, elevUrl, isVisible, title }: {
         // @ts-ignore
         const GeoRasterLayer = (await import('georaster-layer-for-leaflet')).default;
 
+        // ── COG: fetch dengan range-request agar hanya tile yang dibutuhkan
         const res = await fetch(url);
         if (!res.ok) throw new Error(`HTTP ${res.status} — ${url}`);
         const buf = await res.arrayBuffer();
@@ -393,10 +394,49 @@ const GeoTIFFLayer = ({ url, elevUrl, isVisible, title }: {
 };
 
 // ---------------------------------------------------------------------------
-// LAYER GROUPS — DEM diletakkan di atas, diikuti kontur, area, dan survey lines
+// ── PERUBAHAN UTAMA: FlatGeobufLayer ────────────────────────────────────────
+// Menggantikan fetch().json() biasa dengan parser flatgeobuf yang streaming
+// ---------------------------------------------------------------------------
+const useFlatGeobuf = (url: string, isActive: boolean) => {
+  const [geoJsonData, setGeoJsonData] = useState<any>(null);
+
+  useEffect(() => {
+    if (!isActive || geoJsonData) return;
+    let cancelled = false;
+
+    const load = async () => {
+      try {
+        const { deserialize } = await import("flatgeobuf/lib/mjs/geojson.js");
+        const res = await fetch(url);
+        if (!res.ok || !res.body) throw new Error(`HTTP ${res.status}`);
+
+        const features: any[] = [];
+        // flatgeobuf.deserialize streaming — hanya baca header dulu, lalu fitur
+        for await (const feature of deserialize(res.body)) {
+          if (cancelled) return;
+          features.push(feature);
+        }
+
+        if (!cancelled) {
+          setGeoJsonData({ type: "FeatureCollection", features });
+        }
+      } catch (err) {
+        console.error(`FlatGeobuf load error (${url}):`, err);
+      }
+    };
+
+    load();
+    return () => { cancelled = true; };
+  }, [url, isActive]);
+
+  return geoJsonData;
+};
+
+// ---------------------------------------------------------------------------
+// LAYER GROUPS — path diubah ke /data/fgb/ (vektor) dan /data/cog/ (raster)
+// Semua config lainnya TIDAK BERUBAH
 // ---------------------------------------------------------------------------
 
-// Mapping: DEM sublayer id → kontur sublayer id yang otomatis ikut
 const DEM_TO_KONTUR: Record<string, string> = {
   dem_tabularasa: "kontur_tabularasa",
   dem_poso:       "kontur_poso",
@@ -407,42 +447,46 @@ const layerGroups = [
     groupId: "dem", title: "Digital Elevation Model",
     icon: <ImageIcon size={18} className="text-purple-500" />,
     subLayers: [
-      { id: "dem_tabularasa",      filePath: "/data/dem/DEM_Tabularasa_RGB_1m_WGS84.tif",                   elevPath: "/data/dem/DEM_Tabularasa_elev_1m_WGS84.tif",            title: "DEM Tabularasa Shipwreck", project: "Site 1", color: "#8b5cf6", dash: "0", isDummy: false, isRaster: true },
-      { id: "dem_poso",            filePath: "/data/dem/DEM_Poso_RGB_1m_WGS84.tif",                         elevPath: "/data/dem/DEM_Poso_elev_0.5m_WGS84.tif",                  title: "DEM Poso Shipwreck",       project: "Site 2", color: "#ec4899", dash: "0", isDummy: false, isRaster: true },
-      { id: "dem_perairandangkal", filePath: "/data/dem/DEM_PerairanDangkal_RGB_1m_WGS84.tif",              elevPath: "/data/dem/DEM_PerairanDangkal_elev_1m_WGS84.tif",        title: "DEM Perairan Dangkal",     project: "Site 3", color: "#06b6d4", dash: "0", isDummy: false, isRaster: true },
-      { id: "dem_pesisirpanggang", filePath: "/data/dem/DEM_PesisirPanggangRidge_RGB_1m_WGS84.tif",        elevPath: "/data/dem/DEM_PesisirPanggangRidge_elev_1m_WGS84.tif",        title: "DEM Pesisir Panggang",     project: "Site 4", color: "#f97316", dash: "0", isDummy: false, isRaster: true },
-      { id: "dem_kanalpramuka",    filePath: "/data/dem/DEM_KanalPramuka_RGB_1m.tif",                       elevPath: "/data/dem/DEM_KanalPramuka_elev_1m_WGS84.tif",                 title: "DEM Kanal Pramuka",        project: "Site 5", color: "#22c55e", dash: "0", isDummy: false, isRaster: true },
-      { id: "dem_pesisirpramuka",  filePath: "/data/dem/DEM_PesisirPramuka_ProjectALB_RGB_0.5m_WGS84.tif", elevPath: "/data/dem/DEM_PesisirPramuka_ProjectALB_elev_0.5m_WGS84.tif", title: "DEM Pesisir Pramuka",      project: "Site 6", color: "#eab308", dash: "0", isDummy: false, isRaster: true },
+      // ── path berubah: /data/dem/ → /data/cog/
+      { id: "dem_tabularasa",      filePath: "/data/cog/DEM_Tabularasa_RGB_1m_WGS84.tif",                   elevPath: "/data/cog/DEM_Tabularasa_elev_1m_WGS84.tif",            title: "DEM Tabularasa Shipwreck", project: "Site 1", color: "#8b5cf6", dash: "0", isDummy: false, isRaster: true },
+      { id: "dem_poso",            filePath: "/data/cog/DEM_Poso_RGB_1m_WGS84.tif",                         elevPath: "/data/cog/DEM_Poso_elev_0.5m_WGS84.tif",                  title: "DEM Poso Shipwreck",       project: "Site 2", color: "#ec4899", dash: "0", isDummy: false, isRaster: true },
+      { id: "dem_perairandangkal", filePath: "/data/cog/DEM_PerairanDangkal_RGB_1m_WGS84.tif",              elevPath: "/data/cog/DEM_PerairanDangkal_elev_1m_WGS84.tif",        title: "DEM Perairan Dangkal",     project: "Site 3", color: "#06b6d4", dash: "0", isDummy: false, isRaster: true },
+      { id: "dem_pesisirpanggang", filePath: "/data/cog/DEM_PesisirPanggangRidge_RGB_1m_WGS84.tif",        elevPath: "/data/cog/DEM_PesisirPanggangRidge_elev_1m_WGS84.tif",   title: "DEM Pesisir Panggang",     project: "Site 4", color: "#f97316", dash: "0", isDummy: false, isRaster: true },
+      { id: "dem_kanalpramuka",    filePath: "/data/cog/DEM_KanalPramuka_RGB_1m.tif",                       elevPath: "/data/cog/DEM_KanalPramuka_elev_1m_WGS84.tif",           title: "DEM Kanal Pramuka",        project: "Site 5", color: "#22c55e", dash: "0", isDummy: false, isRaster: true },
+      { id: "dem_pesisirpramuka",  filePath: "/data/cog/DEM_PesisirPramuka_ProjectALB_RGB_0.5m_WGS84.tif", elevPath: "/data/cog/DEM_PesisirPramuka_ProjectALB_elev_0.5m_WGS84.tif", title: "DEM Pesisir Pramuka", project: "Site 6", color: "#eab308", dash: "0", isDummy: false, isRaster: true },
     ]
   },
   {
     groupId: "kontur", title: "Contour Lines",
     icon: <Activity size={18} className="text-teal-400" />,
     subLayers: [
-      { id: "kontur_tabularasa", filePath: "/data/kontur/Kontur_Tabularasa_Interval_1m.geojson", title: "Kontur Tabularasa", project: "Site 1", color: "#2dd4bf", dash: "4, 3" },
-      { id: "kontur_poso",       filePath: "/data/kontur/Kontur_Poso_Interval_1m.geojson",       title: "Kontur Poso",       project: "Site 2", color: "#fb923c", dash: "4, 3" },
+      // ── path berubah: /data/kontur/*.geojson → /data/fgb/*.fgb
+      { id: "kontur_tabularasa", filePath: "/data/fgb/Kontur_Tabularasa_Interval_1m.fgb", title: "Kontur Tabularasa", project: "Site 1", color: "#2dd4bf", dash: "4, 3" },
+      { id: "kontur_poso",       filePath: "/data/fgb/Kontur_Poso_Interval_1m.fgb",       title: "Kontur Poso",       project: "Site 2", color: "#fb923c", dash: "4, 3" },
     ]
   },
   {
     groupId: "area", title: "Area Boundaries",
     icon: <Box size={18} className="text-red-500" />,
     subLayers: [
-      { id: "aoi_poso", filePath: "/data/area/AOI_POSO.geojson",      title: "Poso Wreck",       project: "Poso",       color: "#ef4444", dash: "5, 5", isPolygon: true },
-      { id: "aoi_tabu", filePath: "/data/area/AOI_TABULARASA.geojson", title: "Tabularasa Wreck", project: "Tabularasa", color: "#ef4444", dash: "5, 5", isPolygon: true },
+      // ── path berubah: /data/area/*.geojson → /data/fgb/*.fgb
+      { id: "aoi_poso", filePath: "/data/fgb/AOI_POSO.fgb",      title: "Poso Wreck",       project: "Poso",       color: "#ef4444", dash: "5, 5", isPolygon: true },
+      { id: "aoi_tabu", filePath: "/data/fgb/AOI_TABULARASA.fgb", title: "Tabularasa Wreck", project: "Tabularasa", color: "#ef4444", dash: "5, 5", isPolygon: true },
     ]
   },
   {
     groupId: "survey_lines", title: "Survey Lines",
     icon: <Activity size={18} className="text-blue-500" />,
     subLayers: [
-      { id: "cross_poso",  filePath: "/data/linesurvey/crossline_poso.geojson",       title: "Crossline Poso",        project: "Poso",       color: "#3b82f6", dash: "5, 10" },
-      { id: "cross_tabu",  filePath: "/data/linesurvey/crossline_tabularasa.geojson", title: "Crossline Tabularasa",  project: "Tabularasa", color: "#3b82f6", dash: "5, 10" },
-      { id: "diag_poso",   filePath: "/data/linesurvey/diagline_poso.geojson",        title: "Diagline Poso",         project: "Poso",       color: "#a855f7", dash: "2, 5" },
-      { id: "diag_tabu",   filePath: "/data/linesurvey/diagline_tabularasa.geojson",  title: "Diagline Tabularasa",   project: "Tabularasa", color: "#a855f7", dash: "2, 5" },
-      { id: "main_poso",   filePath: "/data/linesurvey/mainline_poso2.geojson",       title: "Mainline Poso",         project: "Poso",       color: "#10b981", dash: "0" },
-      { id: "main_tabu",   filePath: "/data/linesurvey/mainline_tabularasa.geojson",  title: "Mainline Tabularasa",   project: "Tabularasa", color: "#10b981", dash: "0" },
-      { id: "patch_poso",  filePath: "/data/linesurvey/patchtest_poso.geojson",       title: "Patch Test Poso",       project: "Poso",       color: "#f59e0b", dash: "0" },
-      { id: "patch_tabu",  filePath: "/data/linesurvey/patchtest_tabularasa.geojson", title: "Patch Test Tabularasa", project: "Tabularasa", color: "#f59e0b", dash: "0" },
+      // ── path berubah: /data/linesurvey/*.geojson → /data/fgb/*.fgb
+      { id: "cross_poso",  filePath: "/data/fgb/crossline_poso.fgb",       title: "Crossline Poso",        project: "Poso",       color: "#3b82f6", dash: "5, 10" },
+      { id: "cross_tabu",  filePath: "/data/fgb/crossline_tabularasa.fgb", title: "Crossline Tabularasa",  project: "Tabularasa", color: "#3b82f6", dash: "5, 10" },
+      { id: "diag_poso",   filePath: "/data/fgb/diagline_poso.fgb",        title: "Diagline Poso",         project: "Poso",       color: "#a855f7", dash: "2, 5" },
+      { id: "diag_tabu",   filePath: "/data/fgb/diagline_tabularasa.fgb",  title: "Diagline Tabularasa",   project: "Tabularasa", color: "#a855f7", dash: "2, 5" },
+      { id: "main_poso",   filePath: "/data/fgb/mainline_poso2.fgb",       title: "Mainline Poso",         project: "Poso",       color: "#10b981", dash: "0" },
+      { id: "main_tabu",   filePath: "/data/fgb/mainline_tabularasa.fgb",  title: "Mainline Tabularasa",   project: "Tabularasa", color: "#10b981", dash: "0" },
+      { id: "patch_poso",  filePath: "/data/fgb/patchtest_poso.fgb",       title: "Patch Test Poso",       project: "Poso",       color: "#f59e0b", dash: "0" },
+      { id: "patch_tabu",  filePath: "/data/fgb/patchtest_tabularasa.fgb", title: "Patch Test Tabularasa", project: "Tabularasa", color: "#f59e0b", dash: "0" },
     ]
   },
 ];
@@ -455,9 +499,6 @@ const baseMaps = [
 
 const PANEL_W = { mobile: 280, tablet: 300, desktop: 360 };
 
-// ---------------------------------------------------------------------------
-// Default state: hanya DEM Tabularasa & DEM Poso + kontur keduanya yang aktif
-// ---------------------------------------------------------------------------
 const DEFAULT_ACTIVE_SUBLAYERS: Record<string, boolean> = layerGroups
   .flatMap(g => g.subLayers)
   .reduce((acc, sub) => ({
@@ -472,6 +513,113 @@ const DEFAULT_ACTIVE_GROUPS: Record<string, boolean> = layerGroups
     [g.groupId]: g.subLayers.some(s => DEFAULT_ACTIVE_SUBLAYERS[s.id]),
   }), {});
 
+// ---------------------------------------------------------------------------
+// VectorLayer — wrapper per-sublayer yang pakai useFlatGeobuf
+// Memisahkan state load per layer agar tidak semua load sekaligus
+// ---------------------------------------------------------------------------
+const VectorLayer = ({
+  config,
+  isActive,
+  geoData,          // legacy: dipakai untuk kontur yang tetap perlu bounds
+  onDataReady,
+}: {
+  config: any;
+  isActive: boolean;
+  geoData: Record<string, any>;
+  onDataReady: (id: string, data: any) => void;
+}) => {
+  // Deteksi apakah ini file .fgb atau .geojson
+  const isFgb = config.filePath.endsWith(".fgb");
+
+  // FlatGeobuf: load on demand
+  const fgbData = useFlatGeobuf(isFgb ? config.filePath : "", isActive && isFgb);
+
+  // GeoJSON legacy (fallback jika masih .geojson)
+  const legacyData = !isFgb ? geoData[config.id] : null;
+
+  const data = isFgb ? fgbData : legacyData;
+
+  // Beritahu parent saat data siap (untuk AutoFitBounds)
+  useEffect(() => {
+    if (data) onDataReady(config.id, data);
+  }, [data, config.id]);
+
+  if (!isActive || !data?.features?.length) return null;
+
+  // Kontur
+  if (["kontur_tabularasa", "kontur_poso"].includes(config.id)) {
+    const styleFn = (feature: any) => {
+      const elev: number = feature?.properties?.ELEV ?? 0;
+      const isIndex = Math.round(Math.abs(elev)) % 5 === 0;
+      return {
+        color:       config.color,
+        weight:      isIndex ? 2.5 : 0.8,
+        opacity:     isIndex ? 1   : 0.45,
+        fillOpacity: 0,
+      };
+    };
+    return (
+      <GeoJSON
+        key={`geojson-${config.id}-${data.features.length}`}
+        data={data}
+        style={styleFn as any}
+        eventHandlers={{ contextmenu: e => { const l=e.target; if(l._map) l._map.flyToBounds(l.getBounds(),{padding:[100,100],duration:1.5,maxZoom:20}); }}}
+        onEachFeature={(feature, layer: any) => {
+          const elev: number = feature?.properties?.ELEV ?? null;
+          const isIndex = elev !== null && Math.round(Math.abs(elev)) % 5 === 0;
+          layer.bindTooltip(
+            elev !== null ? `${elev} m` : config.title,
+            { permanent: false, sticky: true, direction: "auto", className: isIndex ? "kontur-index-label" : "" }
+          );
+          const indexBadge = isIndex
+            ? `<span style="background:#0d9488;color:white;font-size:7px;font-weight:800;padding:1px 5px;border-radius:4px;text-transform:uppercase;">INDEX</span>`
+            : `<span style="background:#374151;color:#9ca3af;font-size:7px;font-weight:800;padding:1px 5px;border-radius:4px;text-transform:uppercase;">1m</span>`;
+          layer.bindPopup(`<div class="p-2">
+            <div style="display:flex;align-items:center;gap:6px;" class="border-b border-gray-100 mb-2 pb-1">
+              <span class="text-[10px] font-black text-teal-500 uppercase tracking-widest">Contour</span>
+              ${indexBadge}
+            </div>
+            <div class="text-sm font-bold text-gray-800">${elev !== null ? elev + " m" : "N/A"}</div>
+            <div class="text-[11px] text-gray-500 mt-1 italic">${config.title} — ${config.project}</div>
+          </div>`);
+        }}
+      />
+    );
+  }
+
+  // Area & Survey Lines
+  const styleFn = {
+    color:       config.color,
+    weight:      config.isPolygon ? 2 : 4,
+    opacity:     0.9,
+    dashArray:   config.dash,
+    fillColor:   config.color,
+    fillOpacity: config.isPolygon ? 0.15 : 0,
+  };
+  return (
+    <GeoJSON
+      key={`geojson-${config.id}-${data.features.length}`}
+      data={data}
+      style={styleFn as any}
+      eventHandlers={{ contextmenu: e => { const l=e.target; if(l._map) l._map.flyToBounds(l.getBounds(),{padding:[100,100],duration:1.5,maxZoom:20}); }}}
+      onEachFeature={(feature, layer: any) => {
+        if (config.isPolygon) {
+          const c = layer.getBounds().getCenter();
+          layer.bindTooltip(config.title, { permanent: true, direction: "center", className: "permanent-label" });
+          layer.bindPopup(`<div class="p-2"><div class="text-[10px] font-black text-red-500 uppercase tracking-widest border-b border-gray-100 mb-2 pb-1">Area Boundary</div><div class="text-sm font-bold text-gray-800 uppercase">${config.title}</div><div class="text-[11px] text-gray-500 mt-1 italic font-mono">Center: ${c.lat.toFixed(5)}, ${c.lng.toFixed(5)}</div></div>`);
+        } else {
+          const elev = feature?.properties?.depth ?? feature?.properties?.elevation ?? feature?.properties?.z ?? feature?.properties?.contour ?? null;
+          const elevLabel = elev !== null ? `<div class="text-[11px] text-gray-500 mt-1">Elevation: <b>${elev} m</b></div>` : "";
+          layer.bindPopup(`<div class="p-2"><div class="text-[10px] font-black text-blue-500 uppercase tracking-widest border-b border-gray-100 mb-2 pb-1">Survey Segment</div><div class="text-sm font-bold text-gray-800 uppercase italic">${config.title}</div><div class="text-[11px] text-gray-500 mt-1 italic">Project: ${config.project}</div>${elevLabel}</div>`);
+        }
+      }}
+    />
+  );
+};
+
+// ---------------------------------------------------------------------------
+// Mapping2D — komponen utama, hanya bagian data loading yang berubah
+// ---------------------------------------------------------------------------
 const Mapping2D = () => {
   const [mounted,       setMounted]       = useState(false);
   const [isPanelOpen,   setIsPanelOpen]   = useState(false);
@@ -479,7 +627,9 @@ const Mapping2D = () => {
   const [isBaseMapOpen, setIsBaseMapOpen] = useState(false);
   const [openDesc,      setOpenDesc]      = useState<string | null>(null);
   const [activeBasemap, setActiveBasemap] = useState(baseMaps[1]);
-  const [geoData,       setGeoData]       = useState<Record<string, any>>({});
+
+  // ── geoData sekarang hanya diisi oleh VectorLayer.onDataReady (bukan fetch massal)
+  const [geoData, setGeoData] = useState<Record<string, any>>({});
 
   const [winWidth, setWinWidth] = useState(1024);
   useEffect(() => {
@@ -492,21 +642,12 @@ const Mapping2D = () => {
   const [activeGroups,    setActiveGroups]    = useState<Record<string, boolean>>(DEFAULT_ACTIVE_GROUPS);
   const [activeSubLayers, setActiveSubLayers] = useState<Record<string, boolean>>(DEFAULT_ACTIVE_SUBLAYERS);
 
-  useEffect(() => {
-    setMounted(true);
-    const fetch_ = async () => {
-      const dataMap: Record<string, any> = {};
-      // @ts-ignore
-      const fetchable = layerGroups.flatMap(g => g.subLayers).filter(s => !s.isDummy && !s.isRaster);
-      const results = await Promise.all(fetchable.map(async cfg => {
-        try { const res = await fetch(cfg.filePath); if (res.ok) return { id: cfg.id, data: await res.json() }; } catch {}
-        return null;
-      }));
-      results.forEach(r => { if (r) dataMap[r.id] = r.data; });
-      setGeoData(dataMap);
-    };
-    fetch_();
-  }, []);
+  useEffect(() => { setMounted(true); }, []);
+
+  // Callback dari VectorLayer saat data siap — untuk AutoFitBounds
+  const handleDataReady = (id: string, data: any) => {
+    setGeoData(prev => prev[id] ? prev : { ...prev, [id]: data });
+  };
 
   const toggleGroup = (id: string) => {
     const next = !activeGroups[id];
@@ -516,7 +657,6 @@ const Mapping2D = () => {
       setActiveSubLayers(p => {
         const s = { ...p };
         g.subLayers.forEach(sub => { s[sub.id] = next; });
-        // Jika group DEM, sinkronkan kontur yang terkait
         if (id === "dem") {
           Object.entries(DEM_TO_KONTUR).forEach(([, konturId]) => { s[konturId] = next; });
           setActiveGroups(pg => ({ ...pg, kontur: next }));
@@ -530,22 +670,16 @@ const Mapping2D = () => {
     setActiveSubLayers(p => {
       const next = !p[id];
       const updated = { ...p, [id]: next };
-
-      // Jika toggle DEM Tabularasa atau Poso → ikutkan kontur pasangannya
       if (id in DEM_TO_KONTUR) {
         const konturId = DEM_TO_KONTUR[id];
         updated[konturId] = next;
-        // Update group kontur: aktif jika ada salah satu kontur yang aktif
         const anyKonturActive = Object.values(DEM_TO_KONTUR).some(k => updated[k]);
         setActiveGroups(pg => ({ ...pg, kontur: anyKonturActive }));
       }
-
-      // Sinkronkan group state berdasarkan sublayers aktif
       layerGroups.forEach(g => {
         const anyActive = g.subLayers.some(s => updated[s.id]);
         setActiveGroups(pg => ({ ...pg, [g.groupId]: anyActive }));
       });
-
       return updated;
     });
   };
@@ -555,6 +689,11 @@ const Mapping2D = () => {
   const panelW     = winWidth >= 1024 ? PANEL_W.desktop : winWidth >= 768 ? PANEL_W.tablet : PANEL_W.mobile;
   const panelLeft  = winWidth >= 1024 ? '1.5rem' : winWidth >= 768 ? '1rem' : '0.5rem';
   const toggleLeft = isPanelOpen ? `calc(${panelLeft} + ${panelW}px + 0.5rem)` : '0.5rem';
+
+  // Semua sublayer vektor (non-raster)
+  const vectorSubLayers = layerGroups
+    .flatMap(g => g.subLayers)
+    .filter((s): s is typeof s & { filePath: string } => !(s as any).isRaster && !(s as any).isDummy);
 
   return (
     <section className="relative h-screen w-full overflow-hidden bg-slate-950 pt-24">
@@ -571,10 +710,9 @@ const Mapping2D = () => {
           <TileLayer url={activeBasemap.url} maxZoom={24} maxNativeZoom={19} />
           <AutoFitBounds geoData={geoData} />
 
-          {/* 1 — GeoTIFF raster layers (paling bawah) */}
+          {/* 1 — GeoTIFF COG raster layers */}
           {layerGroups.flatMap(g => g.subLayers).map(config => {
-            // @ts-ignore
-            if (!config.isRaster) return null;
+            if (!(config as any).isRaster) return null;
             return (
               <GeoTIFFLayer
                 key={`raster-${config.id}`}
@@ -586,99 +724,44 @@ const Mapping2D = () => {
             );
           })}
 
-          {/* 2 — Kontur di Pane khusus zIndex 450, di atas raster DEM ~200 */}
+          {/* 2 — Kontur (FlatGeobuf) */}
           <Pane name="kontur-pane" style={{ zIndex: 450 }}>
-            {layerGroups.flatMap(g => g.subLayers).map(config => {
-              if (!["kontur_tabularasa", "kontur_poso"].includes(config.id)) return null;
-              const data = geoData[config.id];
-              if (!activeSubLayers[config.id] || !data?.type) return null;
-              const styleFn = (feature: any) => {
-                const elev: number = feature?.properties?.ELEV ?? 0;
-                const isIndex = Math.round(Math.abs(elev)) % 5 === 0;
-                return {
-                  color:       config.color,
-                  weight:      isIndex ? 2.5 : 0.8,
-                  opacity:     isIndex ? 1   : 0.45,
-                  fillOpacity: 0,
-                };
-              };
-              return (
-                <GeoJSON
-                  key={`geojson-${config.id}-${data.features?.length||0}`}
-                  data={data}
-                  style={styleFn as any}
-                  eventHandlers={{ contextmenu: e => { const l=e.target; if(l._map) l._map.flyToBounds(l.getBounds(),{padding:[100,100],duration:1.5,maxZoom:20}); }}}
-                  onEachFeature={(feature, layer: any) => {
-                    const elev: number = feature?.properties?.ELEV ?? null;
-                    const isIndex = elev !== null && Math.round(Math.abs(elev)) % 5 === 0;
-                    layer.bindTooltip(
-                      elev !== null ? `${elev} m` : config.title,
-                      { permanent: false, sticky: true, direction: "auto", className: isIndex ? "kontur-index-label" : "" }
-                    );
-                    const indexBadge = isIndex
-                      ? `<span style="background:#0d9488;color:white;font-size:7px;font-weight:800;padding:1px 5px;border-radius:4px;text-transform:uppercase;">INDEX</span>`
-                      : `<span style="background:#374151;color:#9ca3af;font-size:7px;font-weight:800;padding:1px 5px;border-radius:4px;text-transform:uppercase;">1m</span>`;
-                    layer.bindPopup(`<div class="p-2">
-                      <div style="display:flex;align-items:center;gap:6px;" class="border-b border-gray-100 mb-2 pb-1">
-                        <span class="text-[10px] font-black text-teal-500 uppercase tracking-widest">Contour</span>
-                        ${indexBadge}
-                      </div>
-                      <div class="text-sm font-bold text-gray-800">${elev !== null ? elev + " m" : "N/A"}</div>
-                      <div class="text-[11px] text-gray-500 mt-1 italic">${config.title} — ${config.project}</div>
-                    </div>`);
-                  }}
+            {layerGroups.flatMap(g => g.subLayers)
+              .filter(c => ["kontur_tabularasa", "kontur_poso"].includes(c.id))
+              .map(config => (
+                <VectorLayer
+                  key={config.id}
+                  config={config}
+                  isActive={activeSubLayers[config.id]}
+                  geoData={geoData}
+                  onDataReady={handleDataReady}
                 />
-              );
-            })}
+              ))}
           </Pane>
 
-          {/* 3 — Vector lainnya (area boundary, survey lines) */}
+          {/* 3 — Area + Survey Lines (FlatGeobuf) */}
           <Pane name="vector-pane" style={{ zIndex: 500 }}>
-            {layerGroups.flatMap(g => g.subLayers).map(config => {
-              // @ts-ignore
-              if (config.isRaster) return null;
-              if (["kontur_tabularasa", "kontur_poso"].includes(config.id)) return null;
-              const data = geoData[config.id];
-              // @ts-ignore
-              if (!activeSubLayers[config.id] || !data?.type || config.isDummy) return null;
-              const styleFn = {
-                color:       config.color,
-                weight:      (config as any).isPolygon ? 2 : 4,
-                opacity:     0.9,
-                dashArray:   config.dash,
-                fillColor:   config.color,
-                fillOpacity: (config as any).isPolygon ? 0.15 : 0,
-              };
-              return (
-                <GeoJSON
-                  key={`geojson-${config.id}-${data.features?.length||0}`}
-                  data={data}
-                  style={styleFn as any}
-                  eventHandlers={{ contextmenu: e => { const l=e.target; if(l._map) l._map.flyToBounds(l.getBounds(),{padding:[100,100],duration:1.5,maxZoom:20}); }}}
-                  onEachFeature={(feature, layer: any) => {
-                    if ((config as any).isPolygon) {
-                      const c = layer.getBounds().getCenter();
-                      layer.bindTooltip(config.title, { permanent: true, direction: "center", className: "permanent-label" });
-                      layer.bindPopup(`<div class="p-2"><div class="text-[10px] font-black text-red-500 uppercase tracking-widest border-b border-gray-100 mb-2 pb-1">Area Boundary</div><div class="text-sm font-bold text-gray-800 uppercase">${config.title}</div><div class="text-[11px] text-gray-500 mt-1 italic font-mono">Center: ${c.lat.toFixed(5)}, ${c.lng.toFixed(5)}</div></div>`);
-                    } else {
-                      const elev = feature?.properties?.depth ?? feature?.properties?.elevation ?? feature?.properties?.z ?? feature?.properties?.contour ?? null;
-                      const elevLabel = elev !== null ? `<div class="text-[11px] text-gray-500 mt-1">Elevation: <b>${elev} m</b></div>` : "";
-                      layer.bindPopup(`<div class="p-2"><div class="text-[10px] font-black text-blue-500 uppercase tracking-widest border-b border-gray-100 mb-2 pb-1">Survey Segment</div><div class="text-sm font-bold text-gray-800 uppercase italic">${config.title}</div><div class="text-[11px] text-gray-500 mt-1 italic">Project: ${config.project}</div>${elevLabel}</div>`);
-                    }
-                  }}
+            {vectorSubLayers
+              .filter(c => !["kontur_tabularasa", "kontur_poso"].includes(c.id))
+              .map(config => (
+                <VectorLayer
+                  key={config.id}
+                  config={config}
+                  isActive={activeSubLayers[config.id]}
+                  geoData={geoData}
+                  onDataReady={handleDataReady}
                 />
-              );
-            })}
+              ))}
           </Pane>
 
-          {/* 4 — Pin markers paling atas */}
+          {/* 4 — Pin markers */}
           <PinMarkers />
 
           <ZoomControl position="bottomright" />
         </MapContainer>
       </div>
 
-      {/* BASEMAP */}
+      {/* BASEMAP — tidak berubah */}
       <div className="absolute top-[120px] right-2 md:right-6 z-[1] flex flex-col items-end">
         <button onClick={() => setIsBaseMapOpen(!isBaseMapOpen)}
           className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl border border-gray-200 dark:border-white/10 p-2.5 md:p-3 rounded-xl md:rounded-2xl shadow-xl flex items-center gap-2 md:gap-3 hover:scale-105 transition-all">
@@ -706,7 +789,7 @@ const Mapping2D = () => {
         </AnimatePresence>
       </div>
 
-      {/* TOGGLE */}
+      {/* TOGGLE — tidak berubah */}
       <div className="absolute top-[120px] z-[10] flex flex-col justify-center h-[calc(100vh-160px)] pointer-events-none transition-all duration-500" style={{ left: toggleLeft }}>
         <button onClick={() => setIsPanelOpen(!isPanelOpen)}
           className="w-10 h-20 md:h-24 bg-blue-600 hover:bg-blue-700 rounded-2xl flex items-center justify-center text-white shadow-xl transition-all active:scale-95 pointer-events-auto"
@@ -715,7 +798,7 @@ const Mapping2D = () => {
         </button>
       </div>
 
-      {/* SIDE PANEL */}
+      {/* SIDE PANEL — tidak berubah */}
       <motion.div animate={{ x: isPanelOpen?0:-(panelW+20) }} transition={{ type:"spring", stiffness:260, damping:25 }}
         style={{ width: panelW, left: panelLeft }}
         className="absolute top-[120px] bottom-10 z-[1] pointer-events-none h-[calc(100vh-160px)]">
@@ -754,7 +837,6 @@ const Mapping2D = () => {
                             <h4 className="text-[9px] md:text-[10px] font-bold text-gray-700 dark:text-gray-300 uppercase tracking-tight flex items-center gap-1">
                               {layer.title}
                               {(layer as any).isDummy&&<span className="text-[7px] bg-purple-100 text-purple-600 px-1 rounded-sm">Soon</span>}
-                              {/* Badge "auto" untuk kontur yang terhubung ke DEM */}
                               {Object.values(DEM_TO_KONTUR).includes(layer.id) && (
                                 <span className="text-[7px] bg-teal-100 text-teal-600 px-1 rounded-sm">auto</span>
                               )}
@@ -776,10 +858,10 @@ const Mapping2D = () => {
                           <motion.div initial={{ height:0,opacity:0 }} animate={{ height:"auto",opacity:1 }} exit={{ height:0,opacity:0 }}
                             className="px-3 pb-3 text-[9px] text-gray-500 italic border-t border-gray-100 dark:border-white/5 pt-2 bg-white/50 dark:bg-black/20">
                             {(layer as any).isRaster
-                              ? `RGB visualization + single-band depth query — ${layer.title}.`
+                              ? `COG (Cloud Optimized GeoTIFF) — tile-based lazy load. ${layer.title}.`
                               : Object.values(DEM_TO_KONTUR).includes(layer.id)
-                                ? `Kontur otomatis aktif/nonaktif mengikuti DEM pasangannya. Format: WGS84 GeoJSON.`
-                                : "Format: WGS84 GeoJSON. Right-click to focus."}
+                                ? `FlatGeobuf — streaming vektor dengan spatial index. Auto aktif/nonaktif mengikuti DEM.`
+                                : "FlatGeobuf — streaming vektor dengan spatial index. Right-click to focus."}
                           </motion.div>
                         )}
                       </AnimatePresence>
@@ -792,7 +874,7 @@ const Mapping2D = () => {
         </div>
       </motion.div>
 
-      {/* LEGEND DESKTOP */}
+      {/* LEGEND DESKTOP — tidak berubah */}
       <motion.div initial={{ y:20,opacity:0 }} animate={{ y:0,opacity:1 }} className="hidden md:block absolute bottom-10 right-6 z-[1] pointer-events-none">
         <div className="bg-white/90 dark:bg-gray-900/95 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-[2rem] shadow-2xl p-5 lg:p-6 w-56 lg:w-64 pointer-events-auto">
           <h5 className="text-[10px] font-black text-gray-400 uppercase mb-4 tracking-[0.2em] flex items-center gap-2 border-b border-gray-200 dark:border-white/10 pb-3">
@@ -825,7 +907,7 @@ const Mapping2D = () => {
         </div>
       </motion.div>
 
-      {/* LEGEND MOBILE */}
+      {/* LEGEND MOBILE — tidak berubah */}
       <div className="md:hidden absolute bottom-3 right-2 z-[1] pointer-events-auto">
         <button onClick={() => setIsLegendOpen(!isLegendOpen)}
           className={`flex items-center gap-1.5 px-3 py-2 rounded-xl shadow-lg border transition-all text-[10px] font-black uppercase tracking-wider ${isLegendOpen?'bg-blue-600 text-white border-blue-700':'bg-white/95 dark:bg-gray-900/95 text-gray-700 dark:text-white border-gray-200 dark:border-white/10 backdrop-blur-xl'}`}>

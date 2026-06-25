@@ -25,6 +25,7 @@
         "cesium": "^1.138.0",
         "date-fns": "^3.4.0",
         "encoding": "^0.1.13",
+        "flatgeobuf": "^4.4.0",
         "framer-motion": "^12.34.3",
         "georaster": "^1.6.0",
         "georaster-layer-for-leaflet": "^4.1.2",
