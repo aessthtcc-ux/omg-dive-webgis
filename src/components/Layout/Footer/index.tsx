@@ -7,6 +7,7 @@ import {
   Youtube, ExternalLink, BookOpen, Anchor,
   MapPin, ArrowUpRight, Waves, ChevronRight
 } from "lucide-react";
+import { useTranslationContext } from "@/context/TranslationContext";
 
 // ---------------------------------------------------------------------------
 // DATA
@@ -55,17 +56,18 @@ const references = [
 ];
 
 const stats = [
-  { value: "2",    label: "Wreck Sites",        icon: <Anchor size={16} /> },
-  { value: "80%",  label: "Coral Cover (Poso)", icon: <Waves size={16} /> },
-  { value: "33m",  label: "Max Survey Depth",   icon: <MapPin size={16} /> },
-  { value: "1970", label: "Oldest Wreck",        icon: <BookOpen size={16} /> },
+  { value: "2",    labelKey: "Wreck Sites",        icon: <Anchor size={16} /> },
+  { value: "80%",  labelKey: "Coral Cover (Poso)", icon: <Waves size={16} /> },
+  { value: "33m",  labelKey: "Max Survey Depth",   icon: <MapPin size={16} /> },
+  { value: "1970", labelKey: "Oldest Wreck",        icon: <BookOpen size={16} /> },
 ];
-
 
 // ---------------------------------------------------------------------------
 // MAIN FOOTER
 // ---------------------------------------------------------------------------
 const Footer: FC = () => {
+  const { t } = useTranslationContext();
+
   return (
     <footer className="relative bg-secondary border-t border-white/5 overflow-hidden">
 
@@ -92,7 +94,7 @@ const Footer: FC = () => {
             <Link href="/">
               <Image
                 src="/images/footer/logo-white.svg"
-                alt="OMG-DIVE Logo"
+                alt={t("OMG-DIVE Logo")}
                 width={140}
                 height={40}
                 quality={100}
@@ -101,35 +103,19 @@ const Footer: FC = () => {
             </Link>
 
             <p className="text-sm text-white/50 leading-relaxed max-w-xs">
-              A WebGIS StoryMap platform documenting underwater shipwreck heritage in Kepulauan Seribu through high-resolution multibeam sonar and geospatial data integration.
+              {t("Exploring underwater shipwreck sites through hydrographic survey, spatial analysis, and marine archaeology.")}
             </p>
 
             <div className="flex items-center gap-2 text-white/40 text-xs font-medium">
               <MapPin size={13} className="text-primary flex-shrink-0" />
-              <span>Pramuka Island, Kepulauan Seribu, DKI Jakarta</span>
+              <span>{t("Pramuka Island, Kepulauan Seribu, DKI Jakarta")}</span>
             </div>
-
-            {/* YouTube CTA 
-            <Link
-              href="https://www.youtube.com/watch?v=YOUR_VIDEO_ID"
-              target="_blank"
-              className="inline-flex items-center gap-3 self-start bg-[#FF0000]/10 hover:bg-[#FF0000]/20 border border-[#FF0000]/25 hover:border-[#FF0000]/50 px-4 sm:px-5 py-3 rounded-2xl transition-all duration-300 group w-full sm:w-auto"
-            > 
-              <div className="bg-[#FF0000] p-1.5 rounded-lg group-hover:scale-110 transition-transform flex-shrink-0">
-                <Youtube size={16} color="white" fill="white" />
-              </div>
-              <div className="min-w-0">
-                <p className="text-white text-xs font-black leading-none mb-0.5 truncate">Watch How We Build the WebGIS</p>
-                <p className="text-white/40 text-[10px] font-medium">WebGIS Storymap Tutorial</p>
-              </div>
-              <ArrowUpRight size={14} className="text-white/30 group-hover:text-white/70 ml-auto flex-shrink-0 transition-colors" />
-            </Link> */}
           </div>
 
           {/* Navigation Column */}
           <div className="lg:col-span-2">
             <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white/30 mb-5 sm:mb-6">
-              Table of Contents
+              {t("Table of Contents")}
             </p>
             <ul className="grid grid-cols-2 sm:grid-cols-1 gap-y-2.5 gap-x-2">
               {navLinks.map((link) => (
@@ -142,7 +128,7 @@ const Footer: FC = () => {
                       size={12}
                       className="text-primary opacity-0 group-hover:opacity-100 -translate-x-1 group-hover:translate-x-0 transition-all duration-200 flex-shrink-0"
                     />
-                    {link.label}
+                    {t(link.label)}
                   </Link>
                 </li>
               ))}
@@ -153,20 +139,20 @@ const Footer: FC = () => {
           <div className="sm:col-span-2 lg:col-span-6">
             <div className="flex items-center gap-2 mb-5 sm:mb-6">
               <BookOpen size={14} className="text-primary" />
-              <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white/30">References</p>
+              <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white/30">{t("References")}</p>
             </div>
 
             <div className="flex flex-col gap-3 sm:gap-4">
-              {references.map((ref, i) => (
+              {references.map((ref) => (
                 <div
                   key={ref.id}
                   className="group relative pl-4 border-l border-white/10 hover:border-primary/50 transition-colors duration-300 py-1"
                 >
                   <div className="absolute -left-[5px] top-2 w-2.5 h-2.5 rounded-full bg-secondary border border-white/20 group-hover:border-primary group-hover:bg-primary transition-all duration-300" />
                   <p className="text-[10px] sm:text-[11px] leading-relaxed text-white/40 italic">
-                    <span className="not-italic font-bold text-white/60">{ref.authors}</span>{" "}
+                    <span className="not-italic font-bold text-white/60">{t(ref.authors)}</span>{" "}
                     ({ref.year}).{" "}
-                    {ref.title}{" "}
+                    {t(ref.title)}{" "}
                     <span className="not-italic font-semibold text-white/50">{ref.journal}</span>
                     {ref.volume  && <span className="not-italic">, {ref.volume}</span>}
                     {ref.article && <span className="not-italic">, {ref.article}</span>}
@@ -191,9 +177,8 @@ const Footer: FC = () => {
             {/* Data disclaimer */}
             <div className="mt-5 sm:mt-6 p-3 sm:p-4 rounded-2xl bg-white/[0.03] border border-white/8">
               <p className="text-[9px] sm:text-[10px] text-white/30 leading-relaxed">
-                <span className="font-bold text-white/50">Data Notice:</span> Live marine conditions sourced from Open-Meteo API (open-meteo.com).
-                Wildlife sighting counts reference from Scubago.com User Generated Content, used as supplementary reference with explicit attribution.
-                Site assessment scores based on I. Dillenia et al. (2021).
+                <span className="font-bold text-white/50">{t("Data Notice:")}</span>{" "}
+                {t("Live marine conditions sourced from Open-Meteo API (open-meteo.com). Wildlife sighting counts reference from Scubago.com User Generated Content, used as supplementary reference with explicit attribution. Site assessment scores based on I. Dillenia et al. (2021).")}
               </p>
             </div>
           </div>
@@ -204,12 +189,12 @@ const Footer: FC = () => {
           <div className="flex items-center gap-3">
             <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
             <p className="text-[11px] text-white/30 font-medium">
-              © 2026 OMG-DIVE · All rights reserved
+              © 2026 OMG-DIVE · {t("All rights reserved")}
             </p>
           </div>
           <p className="text-[10px] sm:text-[11px] text-white/20 font-medium text-center sm:text-right">
-            Underwater Mapping & Geospatial Data Integration ·{" "}
-            <span className="text-white/30">Marine Archaeological Survey</span>
+            {t("Underwater Mapping & Geospatial Data Integration")} ·{" "}
+            <span className="text-white/30">{t("Marine Archaeological Survey")}</span>
           </p>
         </div>
 
