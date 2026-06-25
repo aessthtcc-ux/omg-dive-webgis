@@ -516,7 +516,7 @@ const Mapping3D = () => {
             </div>
             <div className="flex items-center gap-2">
               <span className="text-[8px] font-black uppercase px-1.5 py-0.5 rounded-sm bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400">{t("3D Mesh")}</span>
-              <span className="text-[9px] text-gray-400">{t("Reconstructed OBJ surface")}</span>
+              <span className="text-[9px] text-gray-400">{t("Reconstructed PLY surface")}</span>
             </div>
           </div>
         </div>

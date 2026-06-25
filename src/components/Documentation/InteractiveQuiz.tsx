@@ -7,6 +7,7 @@ import {
   CheckCircle, XCircle, Zap, Star,
   ChevronRight, Shield, Target, Award, Clock
 } from "lucide-react";
+import { useTranslationContext } from "@/context/TranslationContext";
 
 // ---------------------------------------------------------------------------
 // QUIZ DATA
@@ -93,12 +94,9 @@ const OptionButton = ({ label, index, selected, correct, revealed, onClick }: {
   label: string; index: number; selected: boolean; correct: boolean; revealed: boolean; onClick: () => void;
 }) => {
   const letters = ["A", "B", "C", "D"];
-
-  // ✅ Semua class ditulis penuh — tidak ada dynamic string concat
   let wrap  = "bg-white dark:bg-white/5 border-gray-200 dark:border-white/10 hover:border-primary hover:bg-primary/5 dark:hover:bg-primary/10 cursor-pointer shadow-sm";
   let badge = "bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-white/60";
   let text  = "text-gray-800 dark:text-white";
-
   if (revealed) {
     if (correct) {
       wrap  = "bg-emerald-50 dark:bg-emerald-500/20 border-emerald-400 dark:border-emerald-400/60 cursor-default";
@@ -114,7 +112,6 @@ const OptionButton = ({ label, index, selected, correct, revealed, onClick }: {
       text  = "text-gray-500 dark:text-white/40";
     }
   }
-
   return (
     <motion.button
       initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
@@ -135,63 +132,64 @@ const OptionButton = ({ label, index, selected, correct, revealed, onClick }: {
 // ---------------------------------------------------------------------------
 // INTRO SCREEN
 // ---------------------------------------------------------------------------
-const IntroScreen = ({ onStart }: { onStart: () => void }) => (
-  <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-    className="flex flex-col gap-6 py-2">
-    <div>
-      <h2 className="text-3xl lg:text-4xl font-black tracking-tighter leading-[1.05] text-gray-900 dark:text-white mb-3">
-        How deep does your <span className="text-primary">knowledge go?</span>
-      </h2>
-      <p className="text-gray-500 dark:text-gray-400 text-sm leading-relaxed max-w-lg">
-        15 questions about wreck diving, marine life, and maritime history of the Pramuka Islands. Answer fast — earn more points.
-      </p>
-    </div>
+const IntroScreen = ({ onStart }: { onStart: () => void }) => {
+  const { t } = useTranslationContext();
+  return (
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+      className="flex flex-col gap-6 py-2">
+      <div>
+        <h2 className="text-3xl lg:text-4xl font-black tracking-tighter leading-[1.05] text-gray-900 dark:text-white mb-3">
+          {t("How deep does your")} <span className="text-primary">{t("knowledge go?")}</span>
+        </h2>
+        <p className="text-gray-500 dark:text-gray-400 text-sm leading-relaxed max-w-lg">
+          {t("15 questions about wreck diving, marine life, and maritime history of the Pramuka Islands. Answer fast — earn more points.")}
+        </p>
+      </div>
 
-    {/* Rule pills */}
-    <div className="flex flex-wrap gap-2">
-      {[
-        { icon: <Target size={12} />, text: "15 questions" },
-        { icon: <Clock size={12} />,  text: "20 sec / question" },
-        { icon: <Zap size={12} />,   text: "Time bonus" },
-        { icon: <Star size={12} />,  text: "3 difficulty levels" },
-      ].map(({ icon, text }) => (
-        <div key={text} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gray-100 dark:bg-white/10 border border-gray-200 dark:border-white/15 text-gray-700 dark:text-gray-300 text-xs font-semibold">
-          <span className="text-primary">{icon}</span>
-          {text}
-        </div>
-      ))}
-    </div>
-
-    {/* Category grid */}
-    <div>
-      <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-3">Question categories</p>
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-        {Object.entries(catMeta).map(([key, cfg], i) => (
-          <motion.div key={key} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.05 + i * 0.07 }}
-            className="flex items-center gap-2.5 p-3 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/10">
-            <div className={`w-1.5 h-6 rounded-full ${cfg.dot} opacity-80 flex-shrink-0`} />
-            <div>
-              <p className="text-xs font-black text-gray-800 dark:text-white">{cfg.label}</p>
-              <p className="text-[10px] text-gray-500 dark:text-gray-400">
-                {questions.filter(q => q.category === key).length} Question
-              </p>
-            </div>
-          </motion.div>
+      <div className="flex flex-wrap gap-2">
+        {[
+          { icon: <Target size={12} />, text: t("15 questions") },
+          { icon: <Clock size={12} />,  text: t("20 sec / question") },
+          { icon: <Zap size={12} />,   text: t("Time bonus") },
+          { icon: <Star size={12} />,  text: t("3 difficulty levels") },
+        ].map(({ icon, text }) => (
+          <div key={text} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gray-100 dark:bg-white/10 border border-gray-200 dark:border-white/15 text-gray-700 dark:text-gray-300 text-xs font-semibold">
+            <span className="text-primary">{icon}</span>
+            {text}
+          </div>
         ))}
       </div>
-    </div>
 
-    <motion.button
-      whileHover={{ scale: 1.02, y: -2 }} whileTap={{ scale: 0.97 }}
-      onClick={onStart}
-      className="self-start flex items-center gap-3 bg-primary text-white font-black px-8 py-3.5 rounded-xl shadow-lg shadow-primary/25 hover:shadow-primary/40 transition-all text-sm"
-    >
-      Start Diving
-      <ChevronRight size={18} />
-    </motion.button>
-  </motion.div>
-);
+      <div>
+        <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-3">{t("Question categories")}</p>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          {Object.entries(catMeta).map(([key, cfg], i) => (
+            <motion.div key={key} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.05 + i * 0.07 }}
+              className="flex items-center gap-2.5 p-3 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/10">
+              <div className={`w-1.5 h-6 rounded-full ${cfg.dot} opacity-80 flex-shrink-0`} />
+              <div>
+                <p className="text-xs font-black text-gray-800 dark:text-white">{cfg.label}</p>
+                <p className="text-[10px] text-gray-500 dark:text-gray-400">
+                  {questions.filter(q => q.category === key).length} {t("Question")}
+                </p>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+
+      <motion.button
+        whileHover={{ scale: 1.02, y: -2 }} whileTap={{ scale: 0.97 }}
+        onClick={onStart}
+        className="self-start flex items-center gap-3 bg-primary text-white font-black px-8 py-3.5 rounded-xl shadow-lg shadow-primary/25 hover:shadow-primary/40 transition-all text-sm"
+      >
+        {t("Start Diving")}
+        <ChevronRight size={18} />
+      </motion.button>
+    </motion.div>
+  );
+};
 
 // ---------------------------------------------------------------------------
 // PLAYING SCREEN
@@ -200,6 +198,7 @@ const PlayingScreen = ({ question, questionIndex, total, score, timeLeft, select
   question: Question; questionIndex: number; total: number; score: number; timeLeft: number;
   selected: number | null; revealed: boolean; onSelect: (i: number) => void; onNext: () => void;
 }) => {
+  const { t } = useTranslationContext();
   const cat  = catMeta[question.category];
   const diff = diffMeta[question.difficulty];
   const pct  = (questionIndex / total) * 100;
@@ -208,7 +207,6 @@ const PlayingScreen = ({ question, questionIndex, total, score, timeLeft, select
     <motion.div key={question.id} initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: -30 }} transition={{ duration: 0.25 }} className="flex flex-col gap-4">
 
-      {/* Top bar */}
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2 min-w-0">
           <span className="text-xs font-black text-gray-500 dark:text-gray-400 tabular-nums flex-shrink-0">
@@ -233,34 +231,29 @@ const PlayingScreen = ({ question, questionIndex, total, score, timeLeft, select
         </div>
       </div>
 
-      {/* Progress bar */}
       <div className="h-1 w-full bg-gray-100 dark:bg-white/10 rounded-full overflow-hidden">
         <motion.div animate={{ width: `${pct}%` }} transition={{ duration: 0.4 }}
           className={`h-full rounded-full ${cat.bar}`} />
       </div>
 
-      {/* Question */}
       <div className="p-4 rounded-2xl bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10">
         <p className="text-base font-bold text-gray-900 dark:text-white leading-snug">
-          {question.question}
+          {t(question.question)}
         </p>
       </div>
 
-      {/* Options */}
       <div className="grid grid-cols-1 gap-2">
         {question.options.map((opt, i) => (
-          <OptionButton key={i} index={i} label={opt}
+          <OptionButton key={i} index={i} label={t(opt)}
             selected={selected === i} correct={i === question.correct}
             revealed={revealed} onClick={() => onSelect(i)} />
         ))}
       </div>
 
-      {/* Feedback */}
       <AnimatePresence>
         {revealed && (
           <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
             className="space-y-3">
-            {/* Result box */}
             <div className={`flex items-start gap-3 p-4 rounded-xl border-2 ${
               selected === question.correct
                 ? "bg-emerald-50 dark:bg-emerald-500/15 border-emerald-300 dark:border-emerald-500/40"
@@ -279,31 +272,29 @@ const PlayingScreen = ({ question, questionIndex, total, score, timeLeft, select
                     : "text-red-700 dark:text-red-300"
                 }`}>
                   {selected === question.correct
-                    ? `Correct! +${POINTS_BASE + timeLeft * POINTS_TIME_BONUS} pts`
-                    : "Incorrect"}
+                    ? `${t("Correct!")} +${POINTS_BASE + timeLeft * POINTS_TIME_BONUS} pts`
+                    : t("Incorrect")}
                 </p>
                 <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
-                  {question.explanation}
+                  {t(question.explanation)}
                 </p>
               </div>
             </div>
 
-            {/* Fun fact */}
             {question.funFact && (
               <div className="flex gap-3 p-3.5 rounded-xl bg-primary/5 dark:bg-primary/10 border border-primary/15 dark:border-primary/25">
                 <Shield size={13} className="text-primary flex-shrink-0 mt-0.5" />
                 <p className="text-xs text-gray-600 dark:text-gray-300 leading-relaxed">
-                  <span className="font-black text-primary">Fun fact — </span>{question.funFact}
+                  <span className="font-black text-primary">Fun fact — </span>{t(question.funFact)}
                 </p>
               </div>
             )}
 
-            {/* Next button */}
             <motion.button whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.98 }} onClick={onNext}
               className="w-full flex items-center justify-center gap-2 bg-gray-900 dark:bg-white text-white dark:text-gray-900 font-black py-3 rounded-xl text-sm transition-colors hover:bg-gray-700 dark:hover:bg-white/90">
               {questionIndex + 1 < total
-                ? <><ChevronRight size={16} />Next Question</>
-                : <><Award size={16} />See Results</>
+                ? <><ChevronRight size={16} />{t("Next Question")}</>
+                : <><Award size={16} />{t("See Results")}</>
               }
             </motion.button>
           </motion.div>
@@ -319,15 +310,16 @@ const PlayingScreen = ({ question, questionIndex, total, score, timeLeft, select
 const ResultScreen = ({ score, answers, questions: qs, onRestart }: {
   score: number; answers: AnswerRecord[]; questions: Question[]; onRestart: () => void;
 }) => {
+  const { t } = useTranslationContext();
   const correct = answers.filter(a => a.correct).length;
   const total   = qs.length;
   const pct     = Math.round((correct / total) * 100);
 
   const grade =
-    pct >= 90 ? { emoji: "🐠", label: "Master Diver",     desc: "Outstanding! You know Pramuka Island like a seasoned marine archaeologist.",    color: "text-primary border-primary/30 dark:border-primary/40 bg-primary/5 dark:bg-primary/10" } :
-    pct >= 70 ? { emoji: "🐟", label: "Advanced Diver",   desc: "Impressive! A few more dives and you'll master every corner of these wrecks.",  color: "text-emerald-700 dark:text-emerald-300 border-emerald-300 dark:border-emerald-500/40 bg-emerald-50 dark:bg-emerald-500/15" } :
-    pct >= 50 ? { emoji: "🌊", label: "Open Water Diver", desc: "Good start! Keep exploring the storymap to deepen your knowledge.",             color: "text-amber-700 dark:text-amber-300 border-amber-300 dark:border-amber-500/40 bg-amber-50 dark:bg-amber-500/15" } :
-                { emoji: "🏊", label: "Surface Swimmer",  desc: "Every expert was once a beginner. Dive back into the storymap and try again!",  color: "text-red-700 dark:text-red-300 border-red-300 dark:border-red-500/40 bg-red-50 dark:bg-red-500/15" };
+    pct >= 90 ? { emoji: "🐠", label: t("Master Diver"),     desc: t("Outstanding! You know Pramuka Island like a seasoned marine archaeologist."),    color: "text-primary border-primary/30 dark:border-primary/40 bg-primary/5 dark:bg-primary/10" } :
+    pct >= 70 ? { emoji: "🐟", label: t("Advanced Diver"),   desc: t("Impressive! A few more dives and you'll master every corner of these wrecks."),  color: "text-emerald-700 dark:text-emerald-300 border-emerald-300 dark:border-emerald-500/40 bg-emerald-50 dark:bg-emerald-500/15" } :
+    pct >= 50 ? { emoji: "🌊", label: t("Open Water Diver"), desc: t("Good start! Keep exploring the storymap to deepen your knowledge."),             color: "text-amber-700 dark:text-amber-300 border-amber-300 dark:border-amber-500/40 bg-amber-50 dark:bg-amber-500/15" } :
+                { emoji: "🏊", label: t("Surface Swimmer"),  desc: t("Every expert was once a beginner. Dive back into the storymap and try again!"),  color: "text-red-700 dark:text-red-300 border-red-300 dark:border-red-500/40 bg-red-50 dark:bg-red-500/15" };
 
   const byCategory = Object.keys(catMeta).map(cat => {
     const catQs  = qs.filter(q => q.category === cat);
@@ -339,22 +331,20 @@ const ResultScreen = ({ score, answers, questions: qs, onRestart }: {
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
       className="flex flex-col gap-5">
 
-      {/* Grade card */}
       <div className={`flex items-center gap-4 p-5 rounded-2xl border-2 ${grade.color}`}>
         <span className="text-4xl flex-shrink-0">{grade.emoji}</span>
         <div>
-          <p className="text-xs font-black uppercase tracking-widest opacity-70 mb-0.5">Your rank</p>
+          <p className="text-xs font-black uppercase tracking-widest opacity-70 mb-0.5">{t("Your rank")}</p>
           <p className="text-xl font-black leading-tight">{grade.label}</p>
           <p className="text-xs opacity-80 leading-relaxed mt-1">{grade.desc}</p>
         </div>
       </div>
 
-      {/* Score row */}
       <div className="grid grid-cols-3 gap-3">
         {[
-          { v: score.toLocaleString(), l: "Score",    icon: <Zap size={15} className="text-yellow-500" /> },
-          { v: `${correct}/${total}`,  l: "Correct",  icon: <CheckCircle size={15} className="text-emerald-500" /> },
-          { v: `${pct}%`,              l: "Accuracy", icon: <Target size={15} className="text-primary" /> },
+          { v: score.toLocaleString(), l: t("Score"),    icon: <Zap size={15} className="text-yellow-500" /> },
+          { v: `${correct}/${total}`,  l: t("Correct"),  icon: <CheckCircle size={15} className="text-emerald-500" /> },
+          { v: `${pct}%`,              l: t("Accuracy"), icon: <Target size={15} className="text-primary" /> },
         ].map(({ v, l, icon }) => (
           <div key={l} className="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10">
             {icon}
@@ -364,12 +354,11 @@ const ResultScreen = ({ score, answers, questions: qs, onRestart }: {
         ))}
       </div>
 
-      {/* Category bars */}
       <div className="space-y-2.5">
-        <p className="text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-gray-400 mb-1">By Category</p>
-        {byCategory.map(({ cat, total: t, correct: c }) => {
+        <p className="text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-gray-400 mb-1">{t("By Category")}</p>
+        {byCategory.map(({ cat, total: t2, correct: c }) => {
           const cfg = catMeta[cat as keyof typeof catMeta];
-          const p   = t > 0 ? Math.round((c / t) * 100) : 0;
+          const p   = t2 > 0 ? Math.round((c / t2) * 100) : 0;
           return (
             <div key={cat} className="flex items-center gap-3">
               <span className={`text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded-lg border w-16 text-center flex-shrink-0 ${cfg.pill}`}>
@@ -380,15 +369,14 @@ const ResultScreen = ({ score, answers, questions: qs, onRestart }: {
                   transition={{ duration: 0.7, ease: "easeOut", delay: 0.2 }}
                   className={`h-full rounded-full ${cfg.bar}`} />
               </div>
-              <span className="text-xs font-black text-gray-600 dark:text-gray-300 w-8 text-right">{c}/{t}</span>
+              <span className="text-xs font-black text-gray-600 dark:text-gray-300 w-8 text-right">{c}/{t2}</span>
             </div>
           );
         })}
       </div>
 
-      {/* Answer review */}
       <div className="space-y-2">
-        <p className="text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-gray-400">Answer Review</p>
+        <p className="text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-gray-400">{t("Answer Review")}</p>
         <div className="space-y-1.5 max-h-52 overflow-y-auto pr-1" style={{ scrollbarWidth: "thin" }}>
           {answers.map((ans) => {
             const q = qs.find(q => q.id === ans.questionId)!;
@@ -403,9 +391,9 @@ const ResultScreen = ({ score, answers, questions: qs, onRestart }: {
                   : <XCircle size={13} className="text-red-500 flex-shrink-0 mt-0.5" />
                 }
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs font-semibold text-gray-700 dark:text-gray-200 line-clamp-1">{q.question}</p>
+                  <p className="text-xs font-semibold text-gray-700 dark:text-gray-200 line-clamp-1">{t(q.question)}</p>
                   {!ans.correct && (
-                    <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-bold mt-0.5">✓ {q.options[q.correct]}</p>
+                    <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-bold mt-0.5">✓ {t(q.options[q.correct])}</p>
                   )}
                 </div>
                 <span className="text-[10px] text-gray-400 dark:text-gray-500 flex-shrink-0">{ans.timeLeft}s</span>
@@ -415,11 +403,10 @@ const ResultScreen = ({ score, answers, questions: qs, onRestart }: {
         </div>
       </div>
 
-      {/* Restart */}
       <motion.button whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.98 }} onClick={onRestart}
         className="flex items-center justify-center gap-2 w-full bg-gray-900 dark:bg-white text-white dark:text-gray-900 font-black py-3.5 rounded-xl text-sm hover:bg-gray-700 dark:hover:bg-white/90 transition-colors">
         <RefreshCw size={15} />
-        Try Again
+        {t("Try Again")}
       </motion.button>
     </motion.div>
   );
@@ -429,6 +416,7 @@ const ResultScreen = ({ score, answers, questions: qs, onRestart }: {
 // MAIN
 // ---------------------------------------------------------------------------
 const MarineQuiz: React.FC = () => {
+  const { t } = useTranslationContext();
   const [phase,    setPhase]    = useState<GamePhase>("intro");
   const [quizQs,  setQuizQs]   = useState<Question[]>([]);
   const [qIndex,  setQIndex]    = useState(0);
@@ -495,19 +483,17 @@ const MarineQuiz: React.FC = () => {
     <section className="min-h-screen bg-white dark:bg-darkmode transition-colors duration-300 pt-24 pb-16 px-4 lg:px-8">
       <div className="max-w-5xl mx-auto">
 
-        {/* Page title */}
         <div className="mb-6">
           <p className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500 mb-1">
-            OMG-DIVE · Interactive
+            {t("OMG-DIVE · Interactive")}
           </p>
           <h1 className="text-2xl lg:text-3xl font-black tracking-tighter text-gray-900 dark:text-white">
-            Marine <span className="text-primary">Knowledge</span> Quiz
+            {t("Marine")} <span className="text-primary">{t("Knowledge")}</span> {t("Quiz")}
           </h1>
         </div>
 
         <div className="flex flex-col xl:flex-row gap-5 items-start">
 
-          {/* Main card */}
           <div className="w-full xl:flex-1 xl:min-w-0 rounded-2xl bg-white dark:bg-white/[0.04] border border-gray-200 dark:border-white/10 shadow-lg dark:shadow-none overflow-hidden">
             <div className="p-5 lg:p-7">
               <AnimatePresence mode="wait">
@@ -532,15 +518,14 @@ const MarineQuiz: React.FC = () => {
             </div>
           </div>
 
-          {/* Sidebar — xl only */}
           <div className="hidden xl:flex flex-col gap-4 w-52 flex-shrink-0 sticky top-28">
             <div className="rounded-2xl bg-white dark:bg-white/[0.04] border border-gray-200 dark:border-white/10 p-4 shadow-sm dark:shadow-none">
-              <p className="text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-gray-400 mb-3">Scoring</p>
+              <p className="text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-gray-400 mb-3">{t("Scoring")}</p>
               <div className="space-y-2">
                 {[
-                  { l: "Correct answer", v: "100 pts"    },
-                  { l: "Time bonus",     v: "+5 pts/sec" },
-                  { l: "Max per Q",      v: "200 pts",   accent: true },
+                  { l: t("Correct answer"), v: "100 pts"    },
+                  { l: t("Time bonus"),     v: "+5 pts/sec" },
+                  { l: t("Max per Q"),      v: "200 pts",   accent: true },
                 ].map(({ l, v, accent }) => (
                   <div key={l} className="flex justify-between items-center text-xs">
                     <span className="text-gray-500 dark:text-gray-400">{l}</span>
@@ -551,11 +536,11 @@ const MarineQuiz: React.FC = () => {
             </div>
 
             <div className="rounded-2xl bg-white dark:bg-white/[0.04] border border-gray-200 dark:border-white/10 p-4 shadow-sm dark:shadow-none">
-              <p className="text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-gray-400 mb-3">Difficulty</p>
+              <p className="text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-gray-400 mb-3">{t("Difficulty")}</p>
               <div className="space-y-2">
                 {Object.entries(diffMeta).map(([key, cfg]) => (
                   <div key={key} className="flex items-center justify-between">
-                    <span className="text-xs text-gray-600 dark:text-gray-300 capitalize">{key}</span>
+                    <span className="text-xs text-gray-600 dark:text-gray-300 capitalize">{t(key)}</span>
                     <div className="flex gap-0.5">
                       {[1,2,3].map(i => (
                         <Star key={i} size={9} className={i <= cfg.stars ? `${cfg.color} fill-current` : "text-gray-200 dark:text-white/15"} />

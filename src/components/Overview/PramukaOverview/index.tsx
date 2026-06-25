@@ -10,11 +10,11 @@ import {
   AreaChart, Area, XAxis, YAxis, ResponsiveContainer
 } from 'recharts';
 import dynamic from 'next/dynamic';
+import { useTranslationContext } from "@/context/TranslationContext";
 
 const MapContainer = dynamic(() => import('react-leaflet').then((mod) => mod.MapContainer), { ssr: false });
 const TileLayer    = dynamic(() => import('react-leaflet').then((mod) => mod.TileLayer),    { ssr: false });
 
-// ✅ FIX: InvalidateSize untuk atasi tile hitam di mobile
 const InvalidateSize = dynamic(() =>
   Promise.resolve(() => {
     const { useMap } = require('react-leaflet');
@@ -42,6 +42,7 @@ const heroImages = [
 ];
 
 const PramukaOverview = () => {
+  const { t } = useTranslationContext();
   const [currentIdx, setCurrentIdx] = useState(0);
   const position: [number, number] = [-5.7461, 106.6139];
 
@@ -61,14 +62,12 @@ const PramukaOverview = () => {
 
   return (
     <div className="min-h-screen text-dark dark:text-white pb-16 md:pb-20">
-      {/* ✅ MOBILE FIX: padding top lebih kecil di mobile */}
       <div className="pt-24 md:pt-32 container mx-auto px-4 md:px-6 space-y-6 md:space-y-12">
 
         {/* HERO SECTION */}
         {/* @ts-ignore */}
         <motion.section
           {...slideUp}
-          // ✅ MOBILE FIX: padding & min-height lebih kecil di mobile
           className="relative p-6 md:p-10 lg:p-12 rounded-[2rem] md:rounded-[3rem] bg-gray-900 text-white overflow-hidden min-h-[320px] md:min-h-[500px] lg:min-h-[550px] flex flex-col justify-center shadow-sm"
         >
           <div className="absolute inset-0 z-0">
@@ -79,20 +78,19 @@ const PramukaOverview = () => {
                 initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                 transition={{ duration: 1.5, ease: "easeInOut" }}
                 className="w-full h-full object-cover"
-                alt="Pulau Pramuka Footage"
+                alt={t("Pulau Pramuka Footage")}
               />
             </AnimatePresence>
             <div className="absolute inset-0 bg-blue-600/40 z-10" />
             <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/20 to-transparent z-20" />
           </div>
 
-          {/* ✅ MOBILE FIX: logo lebih kecil di mobile */}
           <div className="absolute top-5 md:top-10 right-5 md:right-10 z-30">
             <motion.div
               initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
               className="w-16 h-16 md:w-24 md:h-24 lg:w-32 lg:h-32 flex items-center justify-center"
             >
-              <img src="/images/logodesa.png" alt="Logo Desa Pramuka" className="w-full h-full object-contain drop-shadow-2xl" />
+              <img src="/images/logodesa.png" alt={t("Logo Desa Pramuka")} className="w-full h-full object-contain drop-shadow-2xl" />
             </motion.div>
           </div>
 
@@ -102,20 +100,18 @@ const PramukaOverview = () => {
               className="flex items-center gap-2 mb-3 md:mb-6 bg-white/20 w-fit px-3 md:px-4 py-1 md:py-1.5 rounded-full backdrop-blur-md border border-white/10"
             >
               <TreePalm size={14} className="text-primary" />
-              <span className="text-[10px] md:text-xs font-bold uppercase tracking-widest">National Tourism Hub</span>
+              <span className="text-[10px] md:text-xs font-bold uppercase tracking-widest">{t("National Tourism Hub")}</span>
             </motion.div>
 
-            {/* ✅ MOBILE FIX: judul jauh lebih kecil di mobile */}
             <h1 className="text-4xl md:text-6xl lg:text-8xl font-black mb-3 md:mb-6 tracking-tight leading-none drop-shadow-2xl">
-              Pramuka Island
+              {t("Pramuka Island")}
             </h1>
 
             <p className="text-sm md:text-lg lg:text-xl text-blue-50/90 max-w-md leading-relaxed font-medium drop-shadow-lg">
-              The gateway to nature, history, and underwater wonders. Where beauty meets adventure in the heart of Kepulauan Seribu.
+              {t("The gateway to nature, history, and underwater wonders. Where beauty meets adventure in the heart of Kepulauan Seribu.")}
             </p>
           </div>
 
-          {/* Slideshow dots */}
           <div className="absolute bottom-5 md:bottom-10 right-5 md:right-12 z-30 flex gap-1.5 md:gap-2">
             {heroImages.map((_, i) => (
               <div
@@ -133,25 +129,23 @@ const PramukaOverview = () => {
             {...slideUp}
             className="lg:col-span-7 p-6 md:p-10 rounded-[2rem] md:rounded-[3rem] bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/10 flex flex-col justify-between shadow-sm"
           >
-            {/* ✅ MOBILE FIX: di mobile stack vertikal, di desktop 2 kolom */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
               <div className="flex flex-col justify-between gap-4">
                 <div>
                   <h3 className="text-xl md:text-2xl font-black flex items-center gap-3 mb-4 md:mb-6">
-                    <MapPin className="text-primary" /> Location
+                    <MapPin className="text-primary" /> {t("Island Overview")}
                   </h3>
                   <p className="text-sm md:text-base text-gray-600 dark:text-gray-400 leading-relaxed text-justify font-medium">
-                    Situated in North Jakarta, it serves as the administrative center of the Thousand Islands Regency. Strategically located between bustling city life and pristine marine nature.
+                    {t("Situated in North Jakarta, it serves as the administrative center of the Thousand Islands Regency. Strategically located between bustling city life and pristine marine nature.")}
                   </p>
                 </div>
 
                 <div className="bg-white dark:bg-white/10 p-4 md:p-5 rounded-[1.5rem] md:rounded-[2rem] border border-dashed border-gray-200 dark:border-white/20 shadow-inner">
-                  <span className="text-[10px] font-black text-primary uppercase tracking-widest block mb-1">Coordinates</span>
+                  <span className="text-[10px] font-black text-primary uppercase tracking-widest block mb-1">{t("Survey Site")}</span>
                   <code className="text-xs md:text-sm font-mono font-bold dark:text-white">5.7461° S, 106.6139° E</code>
                 </div>
               </div>
 
-              {/* ✅ FIX: Map container dengan tinggi fixed dan InvalidateSize */}
               <div className="relative w-full h-[220px] md:h-[260px] lg:h-full min-h-[200px]">
                 <div
                   className="absolute inset-0 overflow-hidden border-4 border-white dark:border-white/10 shadow-xl z-0"
@@ -164,15 +158,10 @@ const PramukaOverview = () => {
                     style={{ height: '100%', width: '100%' }}
                     zoomControl={false}
                   >
-                    <TileLayer
-                      attribution='&copy; OSM'
-                      url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                    />
-                    {/* ✅ FIX: InvalidateSize atasi tile hitam */}
+                    <TileLayer attribution='&copy; OSM' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
                     <InvalidateSize />
                   </MapContainer>
 
-                  {/* Custom pin overlay */}
                   <div className="absolute inset-0 z-[1000] pointer-events-none flex items-center justify-center">
                     <div className="bg-primary p-2 md:p-2.5 rounded-full shadow-2xl animate-bounce border-2 border-white">
                       <MapPin size={20} color="white" fill="white" />
@@ -194,12 +183,11 @@ const PramukaOverview = () => {
             <div className="relative z-10">
               <div>
                 <h3 className="text-lg md:text-xl font-black mb-1 flex items-center gap-2 text-white">
-                  <TrendingUp className="text-primary" size={18} /> ADWI Achievement
+                  <TrendingUp className="text-primary" size={18} /> {t("ADWI Achievement")}
                 </h3>
-                <p className="text-[10px] text-gray-500 font-bold uppercase tracking-[0.2em]">National Award Journey</p>
+                <p className="text-[10px] text-gray-500 font-bold uppercase tracking-[0.2em]">{t("National Award Journey")}</p>
               </div>
 
-              {/* ✅ MOBILE FIX: tinggi chart lebih kecil di mobile */}
               <div className="h-[160px] md:h-[200px] w-full mt-3 md:mt-4 -ml-2 relative">
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart
@@ -237,7 +225,7 @@ const PramukaOverview = () => {
             <div className="relative z-10 pt-3 md:pt-4 border-t border-white/5 flex items-center justify-between">
               <div>
                 <span className="text-3xl md:text-4xl font-black text-white leading-none tracking-tight">TOP 50</span>
-                <p className="text-[9px] font-bold uppercase text-gray-500 tracking-[0.2em] mt-1">National Milestone 2024</p>
+                <p className="text-[9px] font-bold uppercase text-gray-500 tracking-[0.2em] mt-1">{t("National Milestone 2024")}</p>
               </div>
               <div className="h-9 w-9 md:h-10 md:w-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center">
                 <ShieldCheck className="text-primary" size={18} />
@@ -253,14 +241,13 @@ const PramukaOverview = () => {
         {/* @ts-ignore */}
         <motion.div {...slideUp} className="space-y-5 md:space-y-8">
           <h3 className="text-2xl md:text-3xl font-black tracking-tighter uppercase">
-            Why Visit <span className="text-primary">Pramuka?</span>
+            {t("Why Visit")} <span className="text-primary">Pramuka?</span>
           </h3>
-          {/* ✅ MOBILE FIX: 1 kolom di mobile */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
             {[
-              { title: "Natural Beauty",    icon: <Sun />,        desc: "Pristine beaches and crystal-clear waters untouched by mass tourism." },
-              { title: "Diverse Activities",icon: <Fish />,       desc: "From snorkeling to island hopping, adventure is everywhere." },
-              { title: "Comprehensive",     icon: <ShieldCheck />,desc: "Well-equipped infrastructure with homestays and restaurants." },
+              { title: "Natural Beauty",     icon: <Sun />,        desc: "Pristine beaches and crystal-clear waters untouched by mass tourism." },
+              { title: "Diverse Activities", icon: <Fish />,       desc: "From snorkeling to island hopping, adventure is everywhere." },
+              { title: "Comprehensive",      icon: <ShieldCheck />,desc: "Well-equipped infrastructure with homestays and restaurants." },
             ].map((item, i) => (
               <motion.div
                 key={i} whileHover={{ y: -6 }}
@@ -269,8 +256,8 @@ const PramukaOverview = () => {
                 <div className="w-11 h-11 md:w-14 md:h-14 bg-primary/10 text-primary rounded-xl md:rounded-2xl flex items-center justify-center mb-4 md:mb-6 group-hover:bg-primary group-hover:text-white transition-all shadow-sm">
                   {React.cloneElement(item.icon as React.ReactElement, { size: 20 })}
                 </div>
-                <h4 className="text-lg md:text-xl font-black mb-2 md:mb-3">{item.title}</h4>
-                <p className="text-sm md:text-base text-gray-500 dark:text-gray-400 leading-relaxed font-medium">{item.desc}</p>
+                <h4 className="text-lg md:text-xl font-black mb-2 md:mb-3">{t(item.title)}</h4>
+                <p className="text-sm md:text-base text-gray-500 dark:text-gray-400 leading-relaxed font-medium">{t(item.desc)}</p>
               </motion.div>
             ))}
           </div>
@@ -282,15 +269,14 @@ const PramukaOverview = () => {
           {...slideUp}
           className="bg-primary/[0.03] dark:bg-white/5 p-6 md:p-10 lg:p-12 rounded-[2rem] md:rounded-[3.5rem] border border-primary/10 shadow-inner"
         >
-          {/* ✅ MOBILE FIX: grid 3 kolom di mobile, 6 di desktop */}
           <div className="grid grid-cols-3 md:grid-cols-6 gap-4 md:gap-0">
             {[
-              { icon: <Home />,     label: "Homestays" },
-              { icon: <Utensils />, label: "Seafood"   },
-              { icon: <Bike />,     label: "Bicycles"  },
-              { icon: <Anchor />,   label: "Dive Gear" },
-              { icon: <Info />,     label: "Info Center"},
-              { icon: <CreditCard />,label: "ATM Center"},
+              { icon: <Home />,      label: "Homestays"   },
+              { icon: <Utensils />,  label: "Seafood"     },
+              { icon: <Bike />,      label: "Bicycles"    },
+              { icon: <Anchor />,    label: "Dive Gear"   },
+              { icon: <Info />,      label: "Info Center" },
+              { icon: <CreditCard />,label: "ATM Center"  },
             ].map((fac, idx) => (
               <div key={idx} className="flex flex-col items-center group">
                 <motion.div
@@ -300,7 +286,7 @@ const PramukaOverview = () => {
                   {React.cloneElement(fac.icon as React.ReactElement, { size: 20 })}
                 </motion.div>
                 <span className="mt-2 md:mt-4 text-[9px] md:text-[10px] font-black uppercase tracking-[0.1em] opacity-60 dark:text-white group-hover:opacity-100 group-hover:text-primary transition-all duration-300 text-center leading-tight">
-                  {fac.label}
+                  {t(fac.label)}
                 </span>
               </div>
             ))}
