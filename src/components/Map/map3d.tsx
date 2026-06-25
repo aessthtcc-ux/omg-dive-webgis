@@ -668,7 +668,7 @@ const Mapping3D = () => {
                   <p className="text-[8px] text-gray-500 font-bold uppercase tracking-widest mb-2 text-center">Depth Scale (Z)</p>
                   <div className="flex items-center gap-3">
                     <div className="w-3 h-16 rounded-full flex-shrink-0"
-                      style={{ background: 'linear-gradient(to top, #0000ff, #00ff00, #ff0000)' }}
+                      style={{ background: 'linear-gradient(to top, #0000ff, #00ff00, #ff0000)' }} />
                     <div className="flex flex-col justify-between h-16 py-0.5">
                       <span className="text-[9px] font-mono font-bold text-gray-300">{engineStats.maxZ.toFixed(1)} m</span>
                       <span className="text-[9px] font-mono text-gray-500">{((engineStats.minZ + engineStats.maxZ) / 2).toFixed(1)} m</span>
@@ -720,7 +720,7 @@ const Mapping3D = () => {
                 <span className="text-[9px] text-gray-400 font-bold uppercase tracking-widest mb-3 block text-center">Depth Scale (Z-Axis)</span>
                 <div className="flex items-center justify-center gap-4">
                   <div className="w-4 h-28 rounded-full border border-white/10"
-                    style={{ background: 'linear-gradient(to top, #0000ff, #00ff00, #ff0000)' }}
+                    style={{ background: 'linear-gradient(to top, #0000ff, #00ff00, #ff0000)' }} />
                   <div className="flex flex-col justify-between h-28 py-1">
                     <span className="text-[11px] font-mono font-bold text-gray-700 dark:text-gray-300">{engineStats.maxZ.toFixed(2)} m</span>
                     <span className="text-[11px] font-mono font-bold text-gray-500">{((engineStats.minZ + engineStats.maxZ) / 2).toFixed(2)} m</span>
