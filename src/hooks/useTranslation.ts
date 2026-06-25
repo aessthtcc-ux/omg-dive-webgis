@@ -45,25 +45,31 @@ export const useTranslation = () => {
     fetch(`/locales/${lang}.json`)
       .then(r => r.json())
       .then((data: Translations) => {
+        console.log("Translations loaded:", Object.keys(data).length); // ← tambah
         cache[lang] = data;
         setTranslations(data);
-      })
+        })
       .catch(() => setTranslations({}))
       .finally(() => setLoading(false));
   }, [lang]);
 
   const switchLang = useCallback(() => {
-    const next: Lang = lang === "id" ? "en" : "id";
+    const next: Lang = lang === "en" ? "id" : "en";
+    console.log("Switching to:", next); // ← tambah
     setLang(next);
     localStorage.setItem("lang", next);
-  }, [lang]);
+    }, [lang]);
 
-  // t() = translate function
-  // Kalau teks tidak ada di dictionary → tampilkan teks asli
-  const t = useCallback(
-    (text: string) => translations[text] ?? text,
+    const t = useCallback(
+    (text: string) => {
+        const result = translations[text] ?? text;
+        if (Object.keys(translations).length > 0 && result === text) {
+        console.log("Missing translation:", text); // ← tambah
+        }
+        return result;
+    },
     [translations]
-  );
+    );
 
   return { lang, t, switchLang, loading };
 };
