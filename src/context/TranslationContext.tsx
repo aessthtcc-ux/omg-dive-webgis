@@ -29,7 +29,7 @@ type TranslationContextType = {
 
 const TranslationContext = createContext<TranslationContextType>({
   t: (text) => text,
-  lang: "id",
+  lang: "en",   // ← ganti ke "en"
   switchLang: () => {},
   loading: false,
 });

@@ -31,7 +31,7 @@ export const useTranslation = () => {
 
   // Load file JSON saat bahasa berubah
   useEffect(() => {
-    if (lang === "id") {
+    if (lang === "en") {
       setTranslations({});
       return;
     }
