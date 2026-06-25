@@ -42,7 +42,7 @@ export const useTranslation = () => {
     }
 
     setLoading(true);
-    fetch(`/messages/${lang}.json`)
+    fetch(`/locales/${lang}.json`)
       .then(r => r.json())
       .then((data: Translations) => {
         cache[lang] = data;
