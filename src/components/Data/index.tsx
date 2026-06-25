@@ -10,6 +10,7 @@ import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, 
   Tooltip, ResponsiveContainer, AreaChart, Area 
 } from 'recharts';
+import { useTranslationContext } from "@/context/TranslationContext";
 
 // ✅ PERF: konstanta di luar komponen — tidak pernah dihitung ulang
 const SURVEY_DATES = ["21", "22", "23", "24", "25", "26"];
@@ -167,6 +168,7 @@ TideChart.displayName = 'TideChart';
 
 // ── MAIN COMPONENT ────────────────────────────────────────
 const DataAnalytics = () => {
+  const { t } = useTranslationContext(); 
   const [activeTab,     setActiveTab]     = useState("svp");
   const [selectedDay,   setSelectedDay]   = useState("21");
   const [svpData,       setSvpData]       = useState<any[]>([]);
@@ -255,10 +257,10 @@ const DataAnalytics = () => {
         {/* Header */}
         <motion.div {...slideUp} className="text-center space-y-3 max-w-3xl mx-auto">
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-black tracking-tighter uppercase text-gray-900 dark:text-white">
-            Survey <span className="text-primary">Analytics</span>
+            {t("Survey")} <span className="text-primary">{t("Analytics")}</span>
           </h2>
           <p className="text-xs md:text-sm text-gray-600 dark:text-gray-400 font-medium">
-            Oceanographic datasets acquired between Sept 21 – 26, 2025.
+            {t("Oceanographic datasets acquired between Sept 21 – 26, 2025.")}
           </p>
           <div className="w-16 md:w-20 h-1.5 bg-primary mx-auto rounded-full" />
         </motion.div>
@@ -267,8 +269,8 @@ const DataAnalytics = () => {
         <div className="flex justify-center">
           <div className="inline-flex p-1.5 bg-gray-900/5 dark:bg-white/5 rounded-[2rem] border border-gray-200 dark:border-white/10 w-full max-w-xs md:w-auto">
             {[
-              { id: "svp",   icon: <Thermometer size={14}/>, label: "SVP Profile" },
-              { id: "tides", icon: <Waves size={14}/>,       label: "Tides"       },
+              { id: "svp",   icon: <Thermometer size={14}/>, label: t("SVP Profile") },
+              { id: "tides", icon: <Waves size={14}/>,       label: t("Tides")       },
             ].map(tab => (
               <button key={tab.id} onClick={() => setActiveTab(tab.id)}
                 className={`flex-1 md:flex-none flex items-center justify-center gap-2 px-5 md:px-8 py-3 md:py-4 rounded-[1.5rem] text-[10px] md:text-xs font-black uppercase tracking-widest transition-colors ${
@@ -289,7 +291,7 @@ const DataAnalytics = () => {
             <div className="lg:col-span-4 space-y-4 md:space-y-6">
               <div className="p-6 md:p-8 rounded-[2.5rem] bg-gray-900 border border-white/5 shadow-2xl">
                 <h3 className="text-white font-black mb-4 flex items-center gap-3 uppercase tracking-tighter text-sm md:text-base">
-                  <Calendar className="text-primary" size={18} /> Select Date
+                  <Calendar className="text-primary" size={18} /> {t("Select Date")}
                 </h3>
                 <div className="grid grid-cols-6 md:grid-cols-3 gap-2">
                   {SURVEY_DATES.map(day => (
@@ -302,20 +304,14 @@ const DataAnalytics = () => {
                     </button>
                   ))}
                 </div>
-                <div className="mt-5 flex items-center p-3 bg-white/5 rounded-xl border border-dashed border-white/10">
-                  <div className="flex items-center gap-2 text-primary overflow-hidden">
-                    <FileCode size={15} className="flex-shrink-0" />
-                    <span className="text-[10px] font-mono font-bold uppercase tracking-tight truncate">SVP_{selectedDay}092025.txt</span>
-                  </div>
-                </div>
               </div>
 
               <div className="p-5 md:p-6 rounded-[2rem] bg-white dark:bg-white/5 border border-gray-100 dark:border-white/10">
                 <h4 className="text-[10px] font-black uppercase tracking-widest mb-2 flex items-center gap-2 text-primary">
-                  <Info size={13}/> Interpretation
+                  <Info size={13}/> {t("Interpretation")}
                 </h4>
                 <p className="text-xs leading-relaxed text-gray-500 dark:text-gray-400 font-medium">
-                  The SVP graph illustrates how acoustic velocity changes with depth. Each day's profile ensures vertical accuracy for multibeam data.
+                  {t("The SVP graph illustrates how acoustic velocity changes with depth. Each day's profile ensures vertical accuracy for multibeam data.")}
                 </p>
               </div>
             </div>
@@ -324,10 +320,10 @@ const DataAnalytics = () => {
             <div className="lg:col-span-8 p-5 md:p-8 rounded-[2.5rem] bg-white dark:bg-gray-900 border border-gray-100 dark:border-white/5 shadow-sm relative">
               <div className="flex flex-wrap justify-between items-start gap-3 mb-5 md:mb-8">
                 <h4 className="text-base md:text-xl font-black flex items-center gap-2">
-                  <BarChart3 className="text-primary" size={18} /> Sound Velocity Profile
+                  <BarChart3 className="text-primary" size={18} /> {t("Sound Velocity Profile")}
                 </h4>
                 <div className="px-3 py-1.5 bg-gray-100 dark:bg-white/5 rounded-full text-[8px] font-black text-gray-500 uppercase tracking-widest flex items-center gap-1.5">
-                  <ArrowDown size={10}/> Depth Inverted
+                  <ArrowDown size={10}/> {t("Depth Inverted")}
                 </div>
               </div>
 
@@ -346,11 +342,8 @@ const DataAnalytics = () => {
           <div className="p-5 md:p-8 lg:p-10 rounded-[2.5rem] bg-gray-900 text-white border border-white/5 shadow-2xl">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-5 md:mb-8 gap-3">
               <h3 className="text-xl md:text-2xl font-black flex items-center gap-3 tracking-tighter uppercase">
-                <Waves className="text-primary" size={22} /> Tidal Observation
+                <Waves className="text-primary" size={22} /> {t("Tidal Observation")}
               </h3>
-              <div className="px-3 py-1.5 bg-white/5 border border-white/10 rounded-xl">
-                <code className="text-[10px] text-primary font-mono tracking-wider">TIDES.csv</code>
-              </div>
             </div>
 
             <TideChart tideData={tideData} isMobile={isMobile} />
@@ -360,7 +353,7 @@ const DataAnalytics = () => {
                 <Info size={14} />
               </div>
               <p className="text-[10px] md:text-[11px] text-gray-400 leading-relaxed italic">
-                Tidal curve used as vertical correction reference. Downsampled to 2-hour intervals for display performance. Precise correction applies full-resolution data.
+                {t("Tidal curve used as vertical correction reference. Downsampled to 2-hour intervals for display performance. Precise correction applies full-resolution data.")}
               </p>
             </div>
           </div>

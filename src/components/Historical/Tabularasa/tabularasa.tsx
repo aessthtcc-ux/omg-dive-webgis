@@ -32,7 +32,7 @@ const Tabularasa = () => {
             className="text-3xl md:text-4xl lg:text-6xl font-black mb-6 text-center tracking-tighter">
             {t("HISTORICAL")} <span className="text-primary">{t("STORIES")}</span>
           </motion.h1>
-          <div className="inline-flex p-1 md:p-1.5 bg-gray-100 dark:bg-white/5 rounded-xl md:rounded-2xl border border-gray-200 dark:border-white/10 shadow-xl w-full max-w-sm md:w-auto">
+          <div className="inline-flex p-1 md:p-1.5 bg-gray-100 dark:bg-white/5 rounded-xl md:rounded-2xl border border-gray-200 dark:border-white/10 shadow-xl w-full md:w-auto">
             {["tabularasa", "poso"].map((tab) => (
               <button key={tab} onClick={() => setActiveWreck(tab)}
                 className={`flex-1 md:flex-none px-4 md:px-8 py-2 md:py-3 rounded-lg md:rounded-xl text-sm md:text-base font-bold transition-colors ${
