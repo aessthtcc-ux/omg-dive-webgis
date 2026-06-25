@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
+import { useTranslationContext } from "@/context/TranslationContext";
 
 if (typeof window !== 'undefined') {
   (window as any).L = L;
@@ -621,6 +622,7 @@ const VectorLayer = ({
 // Mapping2D — komponen utama, hanya bagian data loading yang berubah
 // ---------------------------------------------------------------------------
 const Mapping2D = () => {
+  const { t } = useTranslationContext();
   const [mounted,       setMounted]       = useState(false);
   const [isPanelOpen,   setIsPanelOpen]   = useState(false);
   const [isLegendOpen,  setIsLegendOpen]  = useState(false);
@@ -809,7 +811,7 @@ const Mapping2D = () => {
             </h2>
             <p className="text-[9px] text-gray-400 mt-1.5 flex items-center gap-1">
               <MousePointer2 size={9} className="text-blue-400"/>
-              Hover / tap DEM to inspect depth value
+              {t("Hover / tap DEM to inspect depth value")}
             </p>
           </div>
           <div className="flex-1 space-y-3 md:space-y-4 lg:space-y-5 overflow-y-auto pr-1 custom-scrollbar">

@@ -267,13 +267,13 @@ const DataAnalytics = () => {
 
         {/* Tab switcher */}
         <div className="flex justify-center">
-          <div className="inline-flex p-1.5 bg-gray-900/5 dark:bg-white/5 rounded-[2rem] border border-gray-200 dark:border-white/10 w-full max-w-xs md:w-auto">
+          <div className="inline-flex p-1.5 bg-gray-900/5 dark:bg-white/5 rounded-[2rem] border border-gray-200 dark:border-white/10 w-full md:w-auto">
             {[
               { id: "svp",   icon: <Thermometer size={14}/>, label: t("SVP Profile") },
               { id: "tides", icon: <Waves size={14}/>,       label: t("Tides")       },
             ].map(tab => (
               <button key={tab.id} onClick={() => setActiveTab(tab.id)}
-                className={`flex-1 md:flex-none flex items-center justify-center gap-2 px-5 md:px-8 py-3 md:py-4 rounded-[1.5rem] text-[10px] md:text-xs font-black uppercase tracking-widest transition-colors ${
+                className={`flex-1 md:flex-none flex items-center justify-center gap-2 px-5 md:px-8 py-3 md:py-4 rounded-[1.5rem] text-[10px] md:text-xs font-black uppercase tracking-widest transition-colors whitespace-nowrap ${
                   activeTab === tab.id ? "bg-primary text-white shadow-lg" : "text-gray-500 hover:text-gray-900 dark:hover:text-white"
                 }`}>
                 {tab.icon} {tab.label}
