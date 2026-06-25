@@ -218,38 +218,19 @@ const PointCloudModel = ({ id, url, active, density, onDataLoaded, onLoadingChan
           if (h > finalMaxY) finalMaxY = h;
         }
 
-        // ── Warna: pakai RGB dari LAS jika ada, fallback ke gradien ──
-        const lasColors = rawData.attributes.COLOR_0?.value   // RGBA 0–255 (umum)
-                      ?? rawData.attributes.Red?.value;       // format terpisah R/G/B
-
         const colors = new Float32Array(positions.length);
+        const cShallow = new THREE.Color("#ff0000"); // merah  → dangkal
+        const cMid     = new THREE.Color("#00ff00"); // hijau  → tengah
+        const cDeep    = new THREE.Color("#0000ff"); // biru   → dalam
+        const tmp = new THREE.Color();
 
-        if (lasColors) {
-          // LAS menyimpan RGB sebagai uint16 (0–65535) atau uint8 (0–255)
-          // Normalise ke 0–1 untuk Three.js
-          const maxVal = lasColors instanceof Uint16Array ? 65535 : 255;
-          const stride = lasColors.length / (positions.length / 3); // 3=RGB, 4=RGBA
-          for (let i = 0; i < positions.length / 3; i++) {
-            colors[i*3]   = lasColors[i * stride]     / maxVal;
-            colors[i*3+1] = lasColors[i * stride + 1] / maxVal;
-            colors[i*3+2] = lasColors[i * stride + 2] / maxVal;
-          }
-        } else {
-          // Fallback: gradien ketinggian (perilaku lama)
-          const c1 = new THREE.Color("#081d58");
-          const c2 = new THREE.Color("#1d91c0");
-          const c3 = new THREE.Color("#7fcdbb");
-          const c4 = new THREE.Color("#ffffd9");
-          const tmp = new THREE.Color();
-          for (let i = 0; i < centeredPositions.length; i += 3) {
-            const t = finalMaxY === finalMinY
-              ? 0
-              : Math.max(0, Math.min(1, (centeredPositions[i+1] - finalMinY) / (finalMaxY - finalMinY)));
-            if      (t < 0.33) tmp.lerpColors(c1, c2, t / 0.33);
-            else if (t < 0.66) tmp.lerpColors(c2, c3, (t - 0.33) / 0.33);
-            else               tmp.lerpColors(c3, c4, (t - 0.66) / 0.34);
-            colors[i] = tmp.r; colors[i+1] = tmp.g; colors[i+2] = tmp.b;
-          }
+        for (let i = 0; i < centeredPositions.length; i += 3) {
+          const t = finalMaxY === finalMinY
+            ? 0
+            : Math.max(0, Math.min(1, (centeredPositions[i+1] - finalMinY) / (finalMaxY - finalMinY)));
+          if (t < 0.5) tmp.lerpColors(cDeep, cMid, t / 0.5);
+          else         tmp.lerpColors(cMid, cShallow, (t - 0.5) / 0.5);
+          colors[i] = tmp.r; colors[i+1] = tmp.g; colors[i+2] = tmp.b;
         }
 
         setFullGeoData({ positions: centeredPositions, colors });
