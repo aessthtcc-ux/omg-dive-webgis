@@ -17,7 +17,7 @@ type Translations = Record<string, string>;
 const cache: Partial<Record<Lang, Translations>> = {};
 
 export const useTranslation = () => {
-  const [lang, setLang] = useState<Lang>("id");
+  const [lang, setLang] = useState<Lang>("en");
   const [translations, setTranslations] = useState<Translations>({});
   const [loading, setLoading] = useState(false);
 
