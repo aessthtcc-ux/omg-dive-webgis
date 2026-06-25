@@ -11,6 +11,7 @@ import { ReactNode } from "react";
 import NextTopLoader from 'nextjs-toploader';
 import type { Metadata } from "next";
 import PolyfillLoader from "@/components/PolyfillLoader";
+import  TranslationProvider  from "@/context/TranslationContext";
 
 const dmsans = DM_Sans({ subsets: ["latin"] });
 
@@ -44,6 +45,7 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
                 enableSystem={true}
                 defaultTheme="system"
               >
+                <TranslationProvider> 
                 <Aoscompo>
                   <Header />
                   <NextTopLoader />
@@ -51,6 +53,7 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
                   {children}
                   <Footer />
                 </Aoscompo>
+                </TranslationProvider>
                 <ScrollToTop />
               </ThemeProvider>
             </SessionProviderComp>
