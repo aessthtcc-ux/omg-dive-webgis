@@ -48,7 +48,7 @@ const ProjectTeam = () => {
       name: "Alena Cansery",
       role: "WebGIS Development & GIS Integration",
       ig: "https://instagram.com/alenacsry",
-      ln: "https://id.linkedin.com/in/alena-cansery-b02a34246",
+      ln: "https://id.linkedin.com/in/alena-cansery",
       img: "/images/team/AlenaCansery.jpeg"
     },
     {
