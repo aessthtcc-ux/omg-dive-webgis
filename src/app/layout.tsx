@@ -11,7 +11,7 @@ import { ReactNode } from "react";
 import NextTopLoader from 'nextjs-toploader';
 import type { Metadata } from "next";
 import PolyfillLoader from "@/components/PolyfillLoader";
-import  TranslationProvider  from "@/context/TranslationContext";
+import { TranslationProvider } from "@/context/TranslationContext";
 
 const dmsans = DM_Sans({ subsets: ["latin"] });
 
