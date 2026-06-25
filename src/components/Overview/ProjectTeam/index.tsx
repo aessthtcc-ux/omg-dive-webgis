@@ -39,28 +39,28 @@ const ProjectTeam = () => {
   const teamMembers = [
     {
       name: "Rasya Intishar",
-      role: "Hydrographic Data Acquisition & Processing",
+      role: "3D Point Cloud Alignment & Mesh Reconstruction",
       ig: "https://instagram.com/rasyaintisharr",
       ln: "https://www.linkedin.com/in/rasya-intishar",
       img: "/images/team/RasyaIntishar.jpeg"
     },
     {
       name: "Alena Cansery",
-      role: "3D Visualization, GIS Integration & StoryMap Development",
+      role: "WebGIS Development & GIS Integration",
       ig: "https://instagram.com/alenacsry",
       ln: "https://id.linkedin.com/in/alena-cansery-b02a34246",
       img: "/images/team/AlenaCansery.jpeg"
     },
     {
       name: "Raju Imam Syahanafi",
-      role: "Marine Survey Operations & Field Coordination",
+      role: "Hydrographic Data Processing & Quality Control",
       ig: "https://www.instagram.com/syahanafii/",
       ln: "https://www.linkedin.com/in/raju-imam-syahanafi/",
       img: "/images/team/RajuImamSyahanafi.jpeg"
     },
     {
       name: "Hanif Ramadhan",
-      role: "Data Analysis & Marine Spatial Modeling",
+      role: "Hydrographic Data Processing & Spatial Analysis",
       ig: "https://www.instagram.com/hanifrmadhan/",
       ln: "https://www.linkedin.com/in/hanif-ramadhan",
       img: "/images/team/HanifRamadhan.jpeg"
