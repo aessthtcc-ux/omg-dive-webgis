@@ -2,6 +2,7 @@
 
 import React, { useRef, useState, useEffect } from "react";
 import { Anchor, GraduationCap, Briefcase, Building2, ChevronLeft, ChevronRight } from "lucide-react";
+import { useTranslationContext } from "@/context/TranslationContext"; // ← tambah
 
 interface SDGItem {
   id: number;
@@ -74,6 +75,8 @@ const SectionTitle = ({ title, description }: { title: string; description: stri
 );
 
 const Sdgs = () => {
+  const { t } = useTranslationContext(); // ← tambah
+
   const scrollRef  = useRef<HTMLDivElement>(null);
   const cardRefs   = useRef<(HTMLDivElement | null)[]>([]);
   const [activeIndex,    setActiveIndex]    = useState(0);
@@ -134,8 +137,8 @@ const Sdgs = () => {
     <section className="relative overflow-hidden transition-colors duration-300 bg-IcyBreeze dark:bg-darklight py-16 md:py-20 lg:py-24">
       <div className="container px-4 md:px-6 mx-auto">
         <SectionTitle
-          title="Sustainable Development Goals Focus"
-          description="Our mission is deeply rooted in the United Nations' vision for a sustainable future, focusing on marine preservation and community growth."
+          title={t("Sustainable Development Goals Focus")}
+          description={t("Our mission is deeply rooted in the United Nations' vision for a sustainable future, focusing on marine preservation and community growth.")}
         />
 
         <div className="relative" data-aos="fade-up" data-aos-duration="1000">
@@ -183,7 +186,6 @@ const Sdgs = () => {
                 key={sdg.id}
                 ref={el => { cardRefs.current[idx] = el; }}
                 className={[
-                  // ✅ Lebar card: mobile 92%, tablet 60%, desktop 33%
                   "group relative flex-shrink-0 snap-center flex flex-col",
                   "w-[92vw] sm:w-[70vw] md:w-[calc(50%-10px)] lg:w-[calc(33.333%-14px)]",
                   "p-5 md:p-6 rounded-2xl md:rounded-3xl",
@@ -211,7 +213,7 @@ const Sdgs = () => {
                       ? "bg-primary text-white"
                       : "bg-gray-100 dark:bg-white/10 text-gray-500 dark:text-gray-400"
                   }`}>
-                    {sdg.category}
+                    {t(sdg.category)}
                   </span>
                 </div>
 
@@ -220,9 +222,9 @@ const Sdgs = () => {
                   {sdg.title}
                 </h3>
 
-                {/* ✅ Deskripsi TANPA line-clamp — tampil penuh */}
+                {/* Description */}
                 <p className="text-xs md:text-sm text-SlateBlueText dark:text-opacity-80 leading-relaxed text-justify">
-                  {sdg.description}
+                  {t(sdg.description)}
                 </p>
 
                 {/* Watermark number */}

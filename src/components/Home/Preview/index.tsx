@@ -2,17 +2,22 @@
 import React, { useState } from 'react';
 import dynamic from 'next/dynamic';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useTranslationContext } from "@/context/TranslationContext"; // ← tambah
 
 const MapContent = dynamic(() => import('./MapContent'), { 
   ssr: false,
-  loading: () => (
-    <div className="w-full h-full bg-slate-800 animate-pulse rounded-[1.25rem] flex items-center justify-center">
-      <span className="text-white/30 text-xs font-bold uppercase tracking-widest">Loading map...</span>
-    </div>
-  )
+  loading: () => {
+    const { t } = useTranslationContext(); // ← tambah
+    return (
+      <div className="w-full h-full bg-slate-800 animate-pulse rounded-[1.25rem] flex items-center justify-center">
+        <span className="text-white/30 text-xs font-bold uppercase tracking-widest">{t("Loading map...")}</span>
+      </div>
+    );
+  }
 });
 
 const Mapprev = () => {
+  const { t } = useTranslationContext(); // ← tambah
   const [isRevealed, setIsRevealed] = useState(false);
 
   return (
@@ -27,21 +32,19 @@ const Mapprev = () => {
           {/* Title */}
           <div className="text-center mb-6 md:mb-10">
             <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-white mb-2 md:mb-4">
-              Preview Shipwreck Location
+              {t("Preview Shipwreck Location")}
             </h2>
           </div>
 
-          {/* ✅ FIX: motion.div tingginya mengikuti MapContent, bukan fixed */}
           <motion.div
             initial={{ opacity: 0, y: 50 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: false, amount: 0.3 }}
             onViewportEnter={() => setIsRevealed(true)}
             transition={{ duration: 0.8, ease: "easeOut" }}
-            // ✅ FIX: hapus h-[400px] — biarkan tinggi ditentukan oleh MapContent di dalamnya
             className="relative w-full rounded-[1.5rem] overflow-hidden shadow-2xl border-2 md:border-4 border-white/20 md:border-white dark:border-gray-800"
           >
-            {/* Overlay animasi awan */}
+            {/* Overlay animasi */}
             <AnimatePresence>
               {isRevealed && (
                 <motion.div
@@ -57,7 +60,6 @@ const Mapprev = () => {
               )}
             </AnimatePresence>
 
-            {/* ✅ FIX: MapContent menentukan tinggi, div ini mengikuti */}
             <div className="w-full">
               <MapContent />
             </div>

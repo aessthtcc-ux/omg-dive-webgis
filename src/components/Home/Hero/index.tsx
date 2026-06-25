@@ -5,8 +5,11 @@ import React from 'react';
 import { DotLottiePlayer } from '@dotlottie/react-player';
 import '@dotlottie/react-player/dist/index.css';
 import { ArrowRight, Palmtree } from "lucide-react";
+import { useTranslationContext } from "@/context/TranslationContext"; // ← tambah
 
 const Hero = () => {
+    const { t } = useTranslationContext(); // ← tambah
+
     return (
         <section className="relative overflow-hidden transition-colors duration-300 bg-white dark:bg-darkmode pt-28 pb-16 md:pt-32 md:pb-24 lg:pt-28 lg:pb-32"> 
             
@@ -29,30 +32,27 @@ const Hero = () => {
                             data-aos-duration="1000"
                             className="relative z-0 inline-block text-primary text-sm md:text-lg font-bold before:absolute before:content-[''] before:bg-primary/20 before:w-full before:h-2 before:-z-1 dark:before:-z-1 before:bottom-0"
                         >
-                            Let's Diving Into Vessel Exploration
+                            {t("Let's Diving Into Vessel Exploration")}
                         </p>
 
-                        {/* ✅ MOBILE FIX: h1 lebih kecil di mobile */}
                         <h1
                             className="py-3 md:py-4 text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-black leading-tight"
                             data-aos="fade-up"
                             data-aos-delay="300"
                             data-aos-duration="1000"
                         >
-                            What's Hiding Under Pramuka Island?
+                            {t("What's Hiding Under Pramuka Island?")}
                         </h1>
 
-                        {/* ✅ MOBILE FIX: deskripsi lebih kecil di mobile */}
                         <p
                             data-aos="fade-up"
                             data-aos-delay="400"
                             data-aos-duration="1000"
                             className="text-base md:text-xl text-SlateBlueText dark:text-opacity-80 font-normal pb-6 md:pb-14"
                         >
-                            Exploring underwater shipwreck sites through hydrographic survey, spatial analysis, and marine archaeology.
+                            {t("Exploring underwater shipwreck sites through hydrographic survey, spatial analysis, and marine archaeology.")}
                         </p>
 
-                        {/* ✅ MOBILE FIX: tombol tidak full width, lebih compact */}
                         <div
                             data-aos="fade-up"
                             data-aos-delay="500"
@@ -64,7 +64,7 @@ const Hero = () => {
                                 className="btn btn-1 hover-filled-slide-down rounded-lg overflow-hidden text-sm md:text-base px-4 md:px-6 py-2.5 md:py-3"
                             >
                                 <span className="!flex !items-center gap-2">
-                                    Ready to Explore?
+                                    {t("Ready to Explore?")}
                                     <ArrowRight size={18} className="inline-block transition-colors duration-300" />
                                 </span>
                             </Link>
@@ -78,13 +78,13 @@ const Hero = () => {
                                         className="w-4 h-4 md:w-5 md:h-5 text-current transition-colors duration-300 group-hover:text-white" 
                                         strokeWidth={2}
                                     />
-                                    Island Overview
+                                    {t("Island Overview")}
                                 </span>
                             </Link>
                         </div>
                     </div>
                     
-                    {/* LOTTIE ANIMATION — hanya muncul di lg ke atas */}
+                    {/* LOTTIE ANIMATION */}
                     <div
                         data-aos="fade-left"
                         data-aos-delay="200"
