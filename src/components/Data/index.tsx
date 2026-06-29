@@ -157,7 +157,7 @@ const TideChart = memo(({ tideData, isMobile }: { tideData: any[]; isMobile: boo
       <div className="flex items-center justify-between mt-1.5 px-1 relative z-10">
         <div className="flex items-center gap-1.5">
           <div className="w-3 h-3 rounded-sm bg-blue-500/50 border border-blue-400/50" />
-          <span className="text-[9px] text-gray-500 font-mono">Tidal Height (m)</span>
+          <span className="text-[9px] text-gray-500 font-mono">Tidal Variation (m)</span>
         </div>
         <span className="text-[9px] text-gray-600 font-mono italic">19 – 27 Sep 2025</span>
       </div>
@@ -227,11 +227,23 @@ const DataAnalytics = () => {
       .then(text => {
         const data = text.trim().split("\n").slice(1)
           .map(line => {
-            const p = line.split(";").map(s => s.trim());
-            return { year: p[0], month: p[1], date: p[2], hour: p[3], minute: p[4], depth: parseFloat(p[6]) };
+            // ✅ separator sekarang KOMA, bukan titik koma
+            const p = line.split(",").map(s => s.trim());
+            // p[0]=year(25), p[1]=month, p[2]=date, p[3]=hour, p[4]=minute, p[5]=second, p[6]=depth
+            const yr = p[0];
+            return {
+              year:   yr.length === 2 ? `20${yr}` : yr, // ✅ 25 → 2025
+              month:  p[1],
+              date:   p[2],
+              hour:   p[3],
+              minute: p[4],
+              depth:  parseFloat(p[6]),
+            };
           })
-          // ✅ PERF: ambil hanya tiap 2 jam bukan tiap jam — kurangi titik data
-          .filter(d => (d.minute === "0" || d.minute === "00") && parseInt(d.hour) % 2 === 0)
+          .filter(d => !isNaN(d.depth))
+          // ✅ PERF: data sekarang per-menit (jauh lebih padat).
+          // Ambil hanya pada menit 0 dan tiap 2 jam — kurangi titik data drastis
+          .filter(d => d.minute === "0" && parseInt(d.hour) % 2 === 0)
           .map(d => ({
             displayTime: `${d.date.padStart(2,'0')}-${d.month.padStart(2,'0')}-${d.year} ${d.hour.padStart(2,'0')}:00`,
             depth: d.depth,
