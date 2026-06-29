@@ -131,7 +131,7 @@ const TideChart = memo(({ tideData, isMobile }: { tideData: any[]; isMobile: boo
               )}
             />
             <YAxis
-              domain={[-1, 1]} ticks={[-1, -0.5, -0.25, 0, 0.25, 0.5, 1]}
+              domain={[-0.5, 0.5]} ticks={[-0.5, -0.20, -0.10, 0, 0.10, 0.20, 0.5]}
               tickFormatter={v => v.toFixed(1)}
               stroke="#444" fontSize={9} fontWeight="bold"
               axisLine={false} tickLine={false} unit="m" width={36} tick={{ fill: '#888' }}

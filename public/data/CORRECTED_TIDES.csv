@@ -1,4 +1,4 @@
-"Year;Month;Date;Hour;Minute;Second;Depth(m)"
+"Year,Month,Date,Hour,Minute,Second,Depth(m)"
 25,9,19,8,36,0,-0.015593629
 25,9,19,8,37,0,-0.012593629
 25,9,19,8,38,0,-0.001593629
