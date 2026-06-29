@@ -131,7 +131,7 @@ const TideChart = memo(({ tideData, isMobile }: { tideData: any[]; isMobile: boo
               )}
             />
             <YAxis
-              domain={[-0.5, 0.5]} ticks={[-0.5, -0.20, -0.10, 0, 0.10, 0.20, 0.5]}
+              domain={[-0.4, 0.4]} ticks={[-0.4, -0.20, 0, 0.20, 0.4]}
               tickFormatter={v => v.toFixed(1)}
               stroke="#444" fontSize={9} fontWeight="bold"
               axisLine={false} tickLine={false} unit="m" width={36} tick={{ fill: '#888' }}
@@ -140,6 +140,7 @@ const TideChart = memo(({ tideData, isMobile }: { tideData: any[]; isMobile: boo
               contentStyle={{ backgroundColor: '#111', border: 'none', borderRadius: '12px', fontSize: '11px', boxShadow: '0 8px 20px rgba(0,0,0,0.5)' }}
               labelStyle={{ color: '#3b82f6', fontWeight: 'bold', marginBottom: '4px' }}
               itemStyle={{ color: '#fff' }}
+              formatter={(value: any) => [`${Number(value).toFixed(2)} m`, 'Depth']}
               labelFormatter={(val: any) => {
                 const [datePart, timePart] = String(val).split(' ');
                 const [d, m] = datePart.split('-');
