@@ -172,10 +172,10 @@ type LayerType = 'pointcloud' | 'mesh';
 interface LayerConfig { id: string; label: string; subtitle: string; type: LayerType; url: string; group: 'tabularasa' | 'poso'; }
 
 const LAYERS: LayerConfig[] = [
-  { id: 'pc_tabularasa',   label: 'Tabularasa Point Cloud', subtitle: 'Wreck Site 1 · LAS', type: 'pointcloud', url: '/data/3D/PointCloud_Tabularasa.las', group: 'tabularasa' },
-  { id: 'mesh_tabularasa', label: 'Tabularasa 3D Mesh',     subtitle: 'Wreck Site 1 · PLY', type: 'mesh',       url: '/data/3D/PLY_Mesh_Tabularasa.ply',  group: 'tabularasa' },
-  { id: 'pc_poso',         label: 'Poso Point Cloud',       subtitle: 'Wreck Site 2 · LAS', type: 'pointcloud', url: '/data/3D/PointCloud_Poso.las',       group: 'poso' },
-  { id: 'mesh_poso',       label: 'Poso 3D Mesh',           subtitle: 'Wreck Site 2 · PLY', type: 'mesh',       url: '/data/3D/PLY_Mesh_Poso.ply',        group: 'poso' },
+  { id: 'pc_tabularasa',   label: 'Tabularasa Point Cloud', subtitle: 'Wreck Site 1 · LAS', type: 'pointcloud', url: '/api/data/3D/PointCloud_Tabularasa.las', group: 'tabularasa' },
+  { id: 'mesh_tabularasa', label: 'Tabularasa 3D Mesh',     subtitle: 'Wreck Site 1 · PLY', type: 'mesh',       url: '/api/data/3D/PLY_Mesh_Tabularasa.ply',  group: 'tabularasa' },
+  { id: 'pc_poso',         label: 'Poso Point Cloud',       subtitle: 'Wreck Site 2 · LAS', type: 'pointcloud', url: '/api/data/3D/PointCloud_Poso.las',       group: 'poso' },
+  { id: 'mesh_poso',       label: 'Poso 3D Mesh',           subtitle: 'Wreck Site 2 · PLY', type: 'mesh',       url: '/api/data/3D/PLY_Mesh_Poso.ply',        group: 'poso' },
 ];
 
 // ── MAIN COMPONENT ───────────────────────────────────────
@@ -272,10 +272,10 @@ const Mapping3D = () => {
             <Suspense fallback={null}>
               <Center>
                 {showGrid && <gridHelper args={[30, 30, "#1e1e1e", "#121212"]} position={[0, -2, 0]} />}
-                <PointCloudModel id="pc_tabularasa" url="/data/3D/PointCloud_Tabularasa.las" active={activeLayers.has('pc_tabularasa')} density={pointDensity} onDataLoaded={handleDataLoaded} onLoadingChange={handleLoadingChange} />
-                <PointCloudModel id="pc_poso" url="/data/3D/PointCloud_Poso.las" active={activeLayers.has('pc_poso')} density={pointDensity} onDataLoaded={handleDataLoaded} onLoadingChange={handleLoadingChange} />
-                <PLYMeshModel id="mesh_tabularasa" url="/data/3D/PLY_Mesh_Tabularasa.ply" active={activeLayers.has('mesh_tabularasa')} onLoadingChange={handleLoadingChange} />
-                <PLYMeshModel id="mesh_poso" url="/data/3D/PLY_Mesh_Poso.ply" active={activeLayers.has('mesh_poso')} onLoadingChange={handleLoadingChange} />
+                <PointCloudModel id="pc_tabularasa" url="/api/data/3D/PointCloud_Tabularasa.las" active={activeLayers.has('pc_tabularasa')} density={pointDensity} onDataLoaded={handleDataLoaded} onLoadingChange={handleLoadingChange} />
+                <PointCloudModel id="pc_poso" url="/api/data/3D/PointCloud_Poso.las" active={activeLayers.has('pc_poso')} density={pointDensity} onDataLoaded={handleDataLoaded} onLoadingChange={handleLoadingChange} />
+                <PLYMeshModel id="mesh_tabularasa" url="/api/data/3D/PLY_Mesh_Tabularasa.ply" active={activeLayers.has('mesh_tabularasa')} onLoadingChange={handleLoadingChange} />
+                <PLYMeshModel id="mesh_poso" url="/api/data/3D/PLY_Mesh_Poso.ply" active={activeLayers.has('mesh_poso')} onLoadingChange={handleLoadingChange} />
               </Center>
               <Stars radius={100} depth={50} count={3000} factor={4} fade speed={1} />
             </Suspense>

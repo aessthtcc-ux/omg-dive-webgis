@@ -23,7 +23,7 @@ import { checkRateLimit } from '@/lib/rate-limit';
 // Ganti sesuai domain asli kamu. Bisa lebih dari satu (misal domain custom + vercel.app)
 const ALLOWED_ORIGINS = [
   'https://omg-dive.vercel.app',
-  'http://localhost:3000',
+  //'http://localhost:3000',
 ];
 
 const BLOB_PREFIX = 'data'; // harus sama dengan BLOB_PREFIX di script migrasi

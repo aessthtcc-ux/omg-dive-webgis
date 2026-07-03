@@ -194,7 +194,7 @@ const DataAnalytics = () => {
     const controller = new AbortController();
     setLoading(true);
 
-    fetch(`/data/SVP_${selectedDay}092025.txt`, { signal: controller.signal })
+    fetch(`/api/data/SVP_${selectedDay}092025.txt`, { signal: controller.signal })
       .then(r => r.text())
       .then(text => {
         const validData = text.trim().split("\n")
@@ -223,7 +223,7 @@ const DataAnalytics = () => {
   useEffect(() => {
     const controller = new AbortController();
 
-    fetch('/data/CORRECTED_TIDES.csv', { signal: controller.signal })
+    fetch('/api/data/CORRECTED_TIDES.csv', { signal: controller.signal })
       .then(r => r.text())
       .then(text => {
         const data = text.trim().split("\n").slice(1)

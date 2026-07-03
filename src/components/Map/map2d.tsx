@@ -434,7 +434,7 @@ const useFlatGeobuf = (url: string, isActive: boolean) => {
 };
 
 // ---------------------------------------------------------------------------
-// LAYER GROUPS — path diubah ke /data/fgb/ (vektor) dan /data/cog/ (raster)
+// LAYER GROUPS — path diubah ke /api/data/fgb/ (vektor) dan /data/cog/ (raster)
 // Semua config lainnya TIDAK BERUBAH
 // ---------------------------------------------------------------------------
 
@@ -448,46 +448,46 @@ const layerGroups = [
     groupId: "dem", title: "Digital Elevation Model",
     icon: <ImageIcon size={18} className="text-purple-500" />,
     subLayers: [
-      // ── path berubah: /data/dem/ → /data/cog/
-      { id: "dem_tabularasa",      filePath: "/data/dem/DEM_Tabularasa_RGB_1m_WGS84.tif",                   elevPath: "/data/dem/DEM_Tabularasa_elev_1m_WGS84.tif",            title: "DEM Tabularasa Shipwreck", project: "Site 1", color: "#8b5cf6", dash: "0", isDummy: false, isRaster: true },
-      { id: "dem_poso",            filePath: "/data/dem/DEM_Poso_RGB_1m_WGS84.tif",                         elevPath: "/data/dem/DEM_Poso_elev_0.5m_WGS84.tif",                  title: "DEM Poso Shipwreck",       project: "Site 2", color: "#ec4899", dash: "0", isDummy: false, isRaster: true },
-      { id: "dem_perairandangkal", filePath: "/data/dem/DEM_PerairanDangkal_RGB_1m_WGS84.tif",              elevPath: "/data/dem/DEM_PerairanDangkal_elev_1m_WGS84.tif",        title: "DEM Perairan Dangkal",     project: "Site 3", color: "#06b6d4", dash: "0", isDummy: false, isRaster: true },
-      { id: "dem_pesisirpanggang", filePath: "/data/dem/DEM_PesisirPanggangRidge_RGB_1m_WGS84.tif",        elevPath: "/data/dem/DEM_PesisirPanggangRidge_elev_1m_WGS84.tif",   title: "DEM Pesisir Panggang",     project: "Site 4", color: "#f97316", dash: "0", isDummy: false, isRaster: true },
-      { id: "dem_kanalpramuka",    filePath: "/data/dem/DEM_KanalPramuka_RGB_1m.tif",                       elevPath: "/data/dem/DEM_KanalPramuka_elev_1m_WGS84.tif",           title: "DEM Kanal Pramuka",        project: "Site 5", color: "#22c55e", dash: "0", isDummy: false, isRaster: true },
-      { id: "dem_pesisirpramuka",  filePath: "/data/dem/DEM_PesisirPramuka_ProjectALB_RGB_0.5m_WGS84.tif", elevPath: "/data/dem/DEM_PesisirPramuka_ProjectALB_elev_0.5m_WGS84.tif", title: "DEM Pesisir Pramuka", project: "Site 6", color: "#eab308", dash: "0", isDummy: false, isRaster: true },
+      // ── path berubah: /api/data/dem/ → /data/cog/
+      { id: "dem_tabularasa",      filePath: "/api/data/dem/DEM_Tabularasa_RGB_1m_WGS84.tif",                   elevPath: "/api/data/dem/DEM_Tabularasa_elev_1m_WGS84.tif",            title: "DEM Tabularasa Shipwreck", project: "Site 1", color: "#8b5cf6", dash: "0", isDummy: false, isRaster: true },
+      { id: "dem_poso",            filePath: "/api/data/dem/DEM_Poso_RGB_1m_WGS84.tif",                         elevPath: "/api/data/dem/DEM_Poso_elev_0.5m_WGS84.tif",                  title: "DEM Poso Shipwreck",       project: "Site 2", color: "#ec4899", dash: "0", isDummy: false, isRaster: true },
+      { id: "dem_perairandangkal", filePath: "/api/data/dem/DEM_PerairanDangkal_RGB_1m_WGS84.tif",              elevPath: "/api/data/dem/DEM_PerairanDangkal_elev_1m_WGS84.tif",        title: "DEM Perairan Dangkal",     project: "Site 3", color: "#06b6d4", dash: "0", isDummy: false, isRaster: true },
+      { id: "dem_pesisirpanggang", filePath: "/api/data/dem/DEM_PesisirPanggangRidge_RGB_1m_WGS84.tif",        elevPath: "/api/data/dem/DEM_PesisirPanggangRidge_elev_1m_WGS84.tif",   title: "DEM Pesisir Panggang",     project: "Site 4", color: "#f97316", dash: "0", isDummy: false, isRaster: true },
+      { id: "dem_kanalpramuka",    filePath: "/api/data/dem/DEM_KanalPramuka_RGB_1m.tif",                       elevPath: "/api/data/dem/DEM_KanalPramuka_elev_1m_WGS84.tif",           title: "DEM Kanal Pramuka",        project: "Site 5", color: "#22c55e", dash: "0", isDummy: false, isRaster: true },
+      { id: "dem_pesisirpramuka",  filePath: "/api/data/dem/DEM_PesisirPramuka_ProjectALB_RGB_0.5m_WGS84.tif", elevPath: "/api/data/dem/DEM_PesisirPramuka_ProjectALB_elev_0.5m_WGS84.tif", title: "DEM Pesisir Pramuka", project: "Site 6", color: "#eab308", dash: "0", isDummy: false, isRaster: true },
     ]
   },
   {
     groupId: "kontur", title: "Contour Lines",
     icon: <Activity size={18} className="text-teal-400" />,
     subLayers: [
-      // ── path berubah: /data/kontur/*.geojson → /data/fgb/*.fgb
-      { id: "kontur_tabularasa", filePath: "/data/fgb/Kontur_Tabularasa_Interval_1m.fgb", title: "Kontur Tabularasa", project: "Site 1", color: "#2dd4bf", dash: "4, 3" },
-      { id: "kontur_poso",       filePath: "/data/fgb/Kontur_Poso_Interval_1m.fgb",       title: "Kontur Poso",       project: "Site 2", color: "#fb923c", dash: "4, 3" },
+      // ── path berubah: /data/kontur/*.geojson → /api/data/fgb/*.fgb
+      { id: "kontur_tabularasa", filePath: "/api/data/fgb/Kontur_Tabularasa_Interval_1m.fgb", title: "Kontur Tabularasa", project: "Site 1", color: "#2dd4bf", dash: "4, 3" },
+      { id: "kontur_poso",       filePath: "/api/data/fgb/Kontur_Poso_Interval_1m.fgb",       title: "Kontur Poso",       project: "Site 2", color: "#fb923c", dash: "4, 3" },
     ]
   },
   {
     groupId: "area", title: "Area Boundaries",
     icon: <Box size={18} className="text-red-500" />,
     subLayers: [
-      // ── path berubah: /data/area/*.geojson → /data/fgb/*.fgb
-      { id: "aoi_poso", filePath: "/data/fgb/AOI_POSO.fgb",      title: "Poso Wreck",       project: "Poso",       color: "#ef4444", dash: "5, 5", isPolygon: true },
-      { id: "aoi_tabu", filePath: "/data/fgb/AOI_TABULARASA.fgb", title: "Tabularasa Wreck", project: "Tabularasa", color: "#ef4444", dash: "5, 5", isPolygon: true },
+      // ── path berubah: /data/area/*.geojson → /api/data/fgb/*.fgb
+      { id: "aoi_poso", filePath: "/api/data/fgb/AOI_POSO.fgb",      title: "Poso Wreck",       project: "Poso",       color: "#ef4444", dash: "5, 5", isPolygon: true },
+      { id: "aoi_tabu", filePath: "/api/data/fgb/AOI_TABULARASA.fgb", title: "Tabularasa Wreck", project: "Tabularasa", color: "#ef4444", dash: "5, 5", isPolygon: true },
     ]
   },
   {
     groupId: "survey_lines", title: "Survey Lines",
     icon: <Activity size={18} className="text-blue-500" />,
     subLayers: [
-      // ── path berubah: /data/linesurvey/*.geojson → /data/fgb/*.fgb
-      { id: "cross_poso",  filePath: "/data/fgb/crossline_poso.fgb",       title: "Crossline Poso",        project: "Poso",       color: "#3b82f6", dash: "5, 10" },
-      { id: "cross_tabu",  filePath: "/data/fgb/crossline_tabularasa.fgb", title: "Crossline Tabularasa",  project: "Tabularasa", color: "#3b82f6", dash: "5, 10" },
-      { id: "diag_poso",   filePath: "/data/fgb/diagline_poso.fgb",        title: "Diagline Poso",         project: "Poso",       color: "#a855f7", dash: "2, 5" },
-      { id: "diag_tabu",   filePath: "/data/fgb/diagline_tabularasa.fgb",  title: "Diagline Tabularasa",   project: "Tabularasa", color: "#a855f7", dash: "2, 5" },
-      { id: "main_poso",   filePath: "/data/fgb/mainline_poso2.fgb",       title: "Mainline Poso",         project: "Poso",       color: "#10b981", dash: "0" },
-      { id: "main_tabu",   filePath: "/data/fgb/mainline_tabularasa.fgb",  title: "Mainline Tabularasa",   project: "Tabularasa", color: "#10b981", dash: "0" },
-      { id: "patch_poso",  filePath: "/data/fgb/patchtest_poso.fgb",       title: "Patch Test Poso",       project: "Poso",       color: "#f59e0b", dash: "0" },
-      { id: "patch_tabu",  filePath: "/data/fgb/patchtest_tabularasa.fgb", title: "Patch Test Tabularasa", project: "Tabularasa", color: "#f59e0b", dash: "0" },
+      // ── path berubah: /data/linesurvey/*.geojson → /api/data/fgb/*.fgb
+      { id: "cross_poso",  filePath: "/api/data/fgb/crossline_poso.fgb",       title: "Crossline Poso",        project: "Poso",       color: "#3b82f6", dash: "5, 10" },
+      { id: "cross_tabu",  filePath: "/api/data/fgb/crossline_tabularasa.fgb", title: "Crossline Tabularasa",  project: "Tabularasa", color: "#3b82f6", dash: "5, 10" },
+      { id: "diag_poso",   filePath: "/api/data/fgb/diagline_poso.fgb",        title: "Diagline Poso",         project: "Poso",       color: "#a855f7", dash: "2, 5" },
+      { id: "diag_tabu",   filePath: "/api/data/fgb/diagline_tabularasa.fgb",  title: "Diagline Tabularasa",   project: "Tabularasa", color: "#a855f7", dash: "2, 5" },
+      { id: "main_poso",   filePath: "/api/data/fgb/mainline_poso2.fgb",       title: "Mainline Poso",         project: "Poso",       color: "#10b981", dash: "0" },
+      { id: "main_tabu",   filePath: "/api/data/fgb/mainline_tabularasa.fgb",  title: "Mainline Tabularasa",   project: "Tabularasa", color: "#10b981", dash: "0" },
+      { id: "patch_poso",  filePath: "/api/data/fgb/patchtest_poso.fgb",       title: "Patch Test Poso",       project: "Poso",       color: "#f59e0b", dash: "0" },
+      { id: "patch_tabu",  filePath: "/api/data/fgb/patchtest_tabularasa.fgb", title: "Patch Test Tabularasa", project: "Tabularasa", color: "#f59e0b", dash: "0" },
     ]
   },
 ];

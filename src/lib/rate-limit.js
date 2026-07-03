@@ -15,7 +15,7 @@
 const requestLog = new Map(); // key: IP, value: array of timestamps (ms)
 
 const WINDOW_MS = 60 * 1000; // jendela waktu: 1 menit
-const MAX_REQUESTS = 30;     // maksimal 30 request per IP per menit
+const MAX_REQUESTS = 100;     // maksimal 30 request per IP per menit
 
 export function checkRateLimit(ip) {
   const now = Date.now();
