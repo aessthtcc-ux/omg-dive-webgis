@@ -18,8 +18,8 @@ import path from 'path';
 // ==== KONFIGURASI ====
 const SOURCE_DIR = './public/data';
 const BLOB_PREFIX = 'data';
-const API_BASE = 'http://localhost:3000/api/data'; // ganti ke domain production kalau mau test di sana
-const REFERER = 'http://localhost:3000/';           // ganti juga kalau test ke production
+const API_BASE = 'https://omg-dive.vercel.app/api/data';
+const REFERER = 'https://omg-dive.vercel.app/';
 const REQUEST_DELAY_MS = 150; // jeda antar request supaya tidak kena rate limit sendiri
 // =======================
 
