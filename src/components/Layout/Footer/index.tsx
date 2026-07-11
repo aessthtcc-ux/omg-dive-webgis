@@ -110,6 +110,28 @@ const Footer: FC = () => {
               <MapPin size={13} className="text-primary flex-shrink-0" />
               <span>{t("Pramuka Island, Kepulauan Seribu, DKI Jakarta")}</span>
             </div>
+            <Link
+              href="https://www.youtube.com/playlist?list=PLEd2pkPTsy5M"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group inline-flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl bg-white/[0.03] hover:bg-red-500/10 border border-white/10 hover:border-red-500/40 transition-all duration-300 w-fit"
+            >
+              <div className="flex items-center justify-center w-7 h-7 rounded-lg bg-red-500/15 group-hover:bg-red-500 transition-colors duration-300 flex-shrink-0">
+                <Youtube size={13} className="text-red-400 group-hover:text-white transition-colors duration-300" />
+              </div>
+              <div className="flex flex-col leading-tight">
+                <span className="text-[9px] uppercase tracking-widest text-white/30 group-hover:text-red-300/70 font-black transition-colors duration-300">
+                  {t("YouTube Playlist")}
+                </span>
+                <span className="text-xs text-white/70 group-hover:text-white font-semibold transition-colors duration-300">
+                  {t("Watch how we build OMG-DIVE")}
+                </span>
+              </div>
+              <ArrowUpRight
+                size={14}
+                className="text-white/30 group-hover:text-red-400 -translate-x-1 group-hover:translate-x-0 opacity-0 group-hover:opacity-100 transition-all duration-300 flex-shrink-0 ml-auto"
+              />
+            </Link>
           </div>
 
           {/* Navigation Column */}
